@@ -4,12 +4,29 @@ import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.terminal.gwt.client.UIDL;
 
 /**
+ * EditorFacade defines an interface for a code editor.
  * 
+ * This was done so that it would be possible to use various
+ * editors via this same interface. Don't know if this is bit of an overkill.
+ * Currently implemented only by AceEditorFacade.
  */
 public interface EditorFacade {
 
+	/**
+	 * Returns a {@link com.google.gwt.user.client.ui.Widget Widget} containing this editor.
+	 * 
+	 * @return
+	 */
 	public Widget getWidget();
 
+	/**
+	 * Initializes the editor.
+	 * 
+	 * Must be called before any other methods (except {@link #getWidget()}).
+	 * 
+	 * @return successful initialization
+	 */
+	// TODO: this might be refactored somehow, to get rid of the call-order-dependency...
 	public boolean initializeEditor();
 
 	public void settingsFromUIDL(UIDL uidl);

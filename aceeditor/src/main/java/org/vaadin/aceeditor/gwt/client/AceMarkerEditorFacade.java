@@ -139,9 +139,7 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 
 	/* @Override */
 	public void setUserId(String userId) {
-//		VConsole.log("setUserId(" + userId + ")");
 		if (!sameUser(userId, this.userId)) {
-//			VConsole.log("!sameUser");
 			this.userId = userId;
 			redrawMarkers();
 		}
@@ -163,9 +161,7 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 
 	/* @Override */
 	public void putMarker(String markerId, Marker marker) {
-//		VConsole.log("putMarker " + markerId + ": " + marker);
 		AceMarker mm = aceMarkerFromMarker(marker);
-//		VConsole.log("AceMarker " + mm);
 		AceMarker existing = markers.put(markerId, mm);
 
 		if (existing != null) {
@@ -468,10 +464,4 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 		}
 		return false;
 	}
-
-	// public void applyMarkerDiff(String markerId, Diff<Marker> diff) {
-	// putMarker(markerId, diff.applyTo(getMarker(markerId)));
-	//
-	// }
-
 }

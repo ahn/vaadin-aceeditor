@@ -21,8 +21,6 @@ import com.vaadin.terminal.gwt.client.ui.VOverlay;
 public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		DoubleClickHandler, ChangeHandler {
 	protected ListBox choiceList = new ListBox();
-	// private String[] choices;
-	// private String[] titles;
 
 	private String startOfValue = "";
 
@@ -56,8 +54,6 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
 		setWidth(WIDTH + "px");
 		setHeight(HEIGHT + "px");
-		// choiceList.setWidth(WIDTH+"px");
-		// choiceList.setHeight(HEIGHT+"px");
 		add(choiceList);
 		choiceList.setStyleName("list");
 		choiceList.setVisibleItemCount(2);
@@ -95,8 +91,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		} else {
 			show();
 			// Note that setting the selection programmatically does not cause
-			// the
-			// ChangeHandler.onChange(ChangeEvent) event to be fired.
+			// the ChangeHandler.onChange(ChangeEvent) event to be fired.
 			// Doing it manually.
 			choiceList.setSelectedIndex(0);
 			this.onChange(null);
@@ -129,8 +124,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		open = false;
 		if (ac) {
 			// This happens when user clicks outside this popup (or something
-			// similar)
-			// while autohide is on. We must cancel the suggestion.
+			// similar) while autohide is on. We must cancel the suggestion.
 			if (listener != null)
 				listener.noSuggestionSelected();
 		}

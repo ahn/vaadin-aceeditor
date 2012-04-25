@@ -115,7 +115,6 @@ public class VAceEditor extends Composite implements Paintable,
 			editor.setSelection(selPos, selPos + selLen, false, false);
 		}
 
-//		VConsole.log("updateFromUIDL ended");
 	}
 
 	protected boolean textUpdateAllowed() {
