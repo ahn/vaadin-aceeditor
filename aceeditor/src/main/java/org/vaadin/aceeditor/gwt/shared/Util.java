@@ -84,4 +84,21 @@ public class Util {
 		}
 		return text.substring(lineStart, firstCharAt);
 	}
+	
+	// There's no string join method in java libs??
+		public static String join(String[] lines) {
+			StringBuilder sb = new StringBuilder();
+			boolean first = true;
+			for (String li : lines) {
+				if (first) {
+					sb.append(li);
+					first = false;
+				}
+				else {
+					sb.append("\n").append(li);
+				}
+				
+			}
+			return sb.toString();
+		}
 }
