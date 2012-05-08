@@ -51,7 +51,7 @@
               -->
 
               <!-- Comma-separated list of widgetsets in the package -->
-              <Vaadin-Widgetsets>org.vaadin.aceeditor.gwt.AceWidgetSet</Vaadin-Widgetsets>
+              <Vaadin-Widgetsets>org.vaadin.aceeditor.gwt.AceEditorWidgetSet</Vaadin-Widgetsets>
             </manifestEntries>
           </archive>
         </configuration>
@@ -67,7 +67,7 @@
         <version>${gwt.plugin.version}</version>
         <configuration>
           <!-- if you don't specify any modules, the plugin will find them -->
-          <!-- <modules> <module>org.vaadin.aceeditor.gwt.AceWidgetSet</module> </modules> -->
+          <!-- <modules> <module>org.vaadin.aceeditor.gwt.AceEditorWidgetSet</module> </modules> -->
           <webappDirectory>${project.build.directory}/${project.build.finalName}/VAADIN/widgetsets</webappDirectory>
           <!-- On Mac running Snow Leopard, add "-d32" -->
           <!-- This causes error messages (but build works) in phase "package": two processes would use the same debug 
@@ -109,7 +109,7 @@
           <execution>
             <configuration>
               <!-- if you don't specify any modules, the plugin will find them -->
-              <!-- <modules> <module>org.vaadin.aceeditor.gwt.AceWidgetSet</module> </modules> -->
+              <!-- <modules> <module>org.vaadin.aceeditor.gwt.AceEditorWidgetSet</module> </modules> -->
             </configuration>
             <goals>
               <goal>update-widgetset</goal>
