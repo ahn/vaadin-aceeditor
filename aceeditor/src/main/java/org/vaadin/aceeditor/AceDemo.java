@@ -36,7 +36,14 @@ import com.vaadin.ui.Window;
  */
 @SuppressWarnings("serial")
 public class AceDemo extends Application {
-
+	
+	// ACE_MODE_URL is the place where Ace mode js files are.
+	// TODO: come up with a better way to dynamically load Ace js files.
+	// This is just a temporary location, may not always be up etc.
+	private static String ACE_MODE_URL =
+			"http://antti.virtuallypreinstalled.com/cored/VAADIN/widgetsets/org.vaadin.codeeditor.collab.ide.gwt.CollabIDEWidgetset/ace";
+	private static String ACE_THEME_URL = ACE_MODE_URL;
+	
 	private AceSuggestibleEditor ace = new AceSuggestibleEditor();
 
 	private static final Pattern wtfLolPlz = Pattern.compile("WTF|LOL|PLZ",
@@ -373,15 +380,13 @@ public class AceDemo extends Application {
 	}
 
 	private static String createModeURL(AceMode mode) {
-		// XXX: Hopefully the mode file is on this location on this server...
-		return "./VAADIN/widgetsets/org.vaadin.codeeditor.gwt.AceEditorWidgetset/ace/mode-"
-				+ mode.toString() + ".js";
+		// XXX
+		return ACE_MODE_URL+"/mode-"+mode.toString()+".js";
 	}
 
 	private static String createThemeURL(AceTheme theme) {
-		// XXX: Hopefully the theme file is on this location on this server...
-		return "./VAADIN/widgetsets/org.vaadin.codeeditor.gwt.AceEditorWidgetset/ace/theme-"
-				+ theme.toString() + ".js";
+		// XXX
+		return ACE_THEME_URL+"/theme-"+theme.toString()+".js";
 	}
 
 	private void addSearchMarkers(String text, String word) {
