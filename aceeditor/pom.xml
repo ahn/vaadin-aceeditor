@@ -6,7 +6,7 @@
   <artifactId>aceeditor</artifactId>
   <packaging>jar</packaging>
   <version>0.2.0</version>
-  <name>Vaadin Widget</name>
+  <name>AceEditor</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
