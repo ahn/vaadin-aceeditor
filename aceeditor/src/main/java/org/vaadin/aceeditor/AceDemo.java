@@ -339,7 +339,7 @@ public class AceDemo extends Application {
 			public void valueChange(ValueChangeEvent event) {
 				AceMode mode = AceMode.valueOf((String) event.getProperty()
 						.getValue());
-				ace.setMode(mode, createModeURL(mode));
+				ace.setMode(mode);
 			}
 		});
 		ns.select("javascript");
@@ -358,7 +358,7 @@ public class AceDemo extends Application {
 			public void valueChange(ValueChangeEvent event) {
 				AceTheme theme = AceTheme.valueOf((String) event.getProperty()
 						.getValue());
-				ace.setTheme(theme, createThemeURL(theme));
+				ace.setTheme(theme);
 			}
 		});
 		ns.select("eclipse");
@@ -381,16 +381,6 @@ public class AceDemo extends Application {
 		});
 		ns.select("12px");
 		return ns;
-	}
-
-	private static String createModeURL(AceMode mode) {
-		// XXX
-		return ACE_MODE_URL+"/mode-"+mode.toString()+".js";
-	}
-
-	private static String createThemeURL(AceTheme theme) {
-		// XXX
-		return ACE_THEME_URL+"/theme-"+theme.toString()+".js";
 	}
 
 	private void addSearchMarkers(String text, String word) {

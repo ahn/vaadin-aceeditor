@@ -14,13 +14,64 @@
 
 	<script src="ace/ace.js" />
 
-	<!-- Inluding some of the Ace modes and themes.
-		If you need other modes or themes, you must include them somewhere. -->
+	<!--
+		Pre-loading all the mode and theme files.
+		TODO: find a good way to dynamically load them when needed.
+	-->
+	<script src="ace/mode-c_cpp.js" />
+	<script src="ace/mode-clojure.js" />
+	<script src="ace/mode-coffee.js" />
+	<script src="ace/mode-coldfusion.js" />
+	<script src="ace/mode-csharp.js" />
+	<script src="ace/mode-css.js" />
+	<script src="ace/mode-groovy.js" />
+	<script src="ace/mode-haxe.js" />
+	<script src="ace/mode-html.js" />
 	<script src="ace/mode-java.js" />
 	<script src="ace/mode-javascript.js" />
-	<script src="ace/mode-html.js" />
-	<script src="ace/mode-css.js" />
+	<script src="ace/mode-json.js" />
+	<script src="ace/mode-latex.js" />
+	<script src="ace/mode-lua.js" />
+	<script src="ace/mode-markdown.js" />
+	<script src="ace/mode-ocaml.js" />
+	<script src="ace/mode-perl.js" />
+	<script src="ace/mode-pgsql.js" />
+	<script src="ace/mode-php.js" />
+	<script src="ace/mode-powershell.js" />
+	<script src="ace/mode-python.js" />
+	<script src="ace/mode-ruby.js" />
+	<script src="ace/mode-scad.js" />
+	<script src="ace/mode-scala.js" />
+	<script src="ace/mode-scss.js" />
+	<script src="ace/mode-sql.js" />
+	<script src="ace/mode-svg.js" />
+	<script src="ace/mode-textile.js" />
+	<script src="ace/mode-xml.js" />
+	
+	<script src="ace/theme-chrome.js" />
+	<script src="ace/theme-clouds_midnight.js" />
+	<script src="ace/theme-cobalt.js" />
+	<script src="ace/theme-crimson_editor.js" />
+	<script src="ace/theme-dawn.js" />
+	<script src="ace/theme-dreamweaver.js" />
 	<script src="ace/theme-eclipse.js" />
+	<script src="ace/theme-idle_fingers.js" />
+	<script src="ace/theme-kr_theme.js" />
+	<script src="ace/theme-merbivore_soft.js" />
+	<script src="ace/theme-merbivore.js" />
+	<script src="ace/theme-mono_industrial.js" />
+	<script src="ace/theme-monokai.js" />
+	<script src="ace/theme-pastel_on_dark.js" />
+	<script src="ace/theme-solarized_dark.js" />
+	<script src="ace/theme-solarized_light.js" />
+	<script src="ace/theme-textmate.js" />
+	<script src="ace/theme-tomorrow_night_blue.js" />
+	<script src="ace/theme-tomorrow_night_bright.js" />
+	<script src="ace/theme-tomorrow_night_eighties.js" />
+	<script src="ace/theme-tomorrow_night.js" />
+	<script src="ace/theme-tomorrow.js" />
+	<script src="ace/theme-twilight.js" />
+	<script src="ace/theme-vibrant_ink.js" />
 
 	<source path='client' />
 	<source path='shared' />
