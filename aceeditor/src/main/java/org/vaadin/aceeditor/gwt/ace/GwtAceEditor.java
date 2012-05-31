@@ -22,7 +22,7 @@ public class GwtAceEditor extends JavaScriptObject {
 	public static native GwtAceEditor create(Element parent, String editorId) /*-{
 		var aceDiv = $doc.createElement("div");
 		if (editorId !== null) {
-			aceDiv.id = aceDiv;
+			aceDiv.id = editorId;
 		}
 		aceDiv.style.width = "100%";
 		aceDiv.style.height = "100%";
