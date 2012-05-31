@@ -389,6 +389,13 @@ public class AceEditorFacade implements EditorFacade, GwtAceChangeHandler,
 		ignoreAceEvents = false;
 	}
 
+	public void resize() {
+		if (editor!=null) {
+			editor.resize();
+		}
+		
+	}
+
 	// protected static native void consolelog(JavaScriptObject obj) /*-{
 	// console.log(obj);
 	// }-*/;

@@ -6,13 +6,14 @@ import org.vaadin.aceeditor.gwt.client.EditorFacade.TextChangeListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.vaadin.terminal.gwt.client.ApplicationConnection;
+import com.vaadin.terminal.gwt.client.ContainerResizedListener;
 import com.vaadin.terminal.gwt.client.Paintable;
 import com.vaadin.terminal.gwt.client.UIDL;
 import com.vaadin.terminal.gwt.client.VConsole;
 import com.vaadin.terminal.gwt.client.ui.VTextField;
 
 public class VAceEditor extends Composite implements Paintable,
-		TextChangeListener, CursorChangeListener {
+		TextChangeListener, CursorChangeListener, ContainerResizedListener {
 
 	private String text;
 	private int cursor;
@@ -51,7 +52,7 @@ public class VAceEditor extends Composite implements Paintable,
 	protected ApplicationConnection client;
 	protected String paintableId;
 
-	protected EditorFacade editor;
+	protected AceEditorFacade editor;
 	private boolean aceInitialized = false;
 
 	private boolean immediate = false;
@@ -183,6 +184,12 @@ public class VAceEditor extends Composite implements Paintable,
 
 	private void setIET(int iet) {
 		this.iet = iet;
+	}
+
+	// Implementing ContainerResizedListener, to make the editor
+	// recalculate its layout when its parent subwindow resizes, etc.
+	public void iLayout() {
+		editor.resize();
 	}
 
 }

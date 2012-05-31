@@ -12,7 +12,7 @@ import com.vaadin.terminal.gwt.client.ValueMap;
 
 public class VAceMarkerEditor extends VAceEditor {
 
-	protected MarkerEditorFacade markerEditor;
+	protected AceMarkerEditorFacade markerEditor;
 
 	public VAceMarkerEditor() {
 		super(false);
