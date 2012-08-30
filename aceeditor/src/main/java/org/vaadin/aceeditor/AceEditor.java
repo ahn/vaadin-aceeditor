@@ -24,6 +24,7 @@ public class AceEditor extends AbstractTextField {
 	private AceTheme theme = null;
 	private String fontSize = "12px";
 	private Boolean hScrollVisible = false;
+	private Boolean useWrapMode = false;
 	private String modeFileURL;
 	private String themeFileURL;
 
@@ -134,6 +135,15 @@ public class AceEditor extends AbstractTextField {
 		this.hScrollVisible = hScrollVisible;
 		requestRepaint();
 	}
+	
+	public Boolean getUseWrapMode() {
+		return useWrapMode;
+	}
+
+	public void setUseWrapMode(Boolean useWrapMode) {
+		this.useWrapMode = useWrapMode;
+		requestRepaint();
+	}
 
 	@Override
 	public void paintContent(PaintTarget target) throws PaintException {
@@ -154,5 +164,7 @@ public class AceEditor extends AbstractTextField {
 			target.addAttribute("ace-font-size", fontSize);
 		}
 		target.addAttribute("ace-hscroll-visible", hScrollVisible);
+		target.addAttribute("ace-use-wrapmode", useWrapMode);
 	}
+
 }

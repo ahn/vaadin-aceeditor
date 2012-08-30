@@ -107,7 +107,7 @@ public class AceDemo extends Application {
 
 		ace.setSizeFull();
 
-		ace.setValue("var x;\nvar y = 'LOL!';\n");
+		ace.setValue("var x;\nvar y = 'LOL!';\n//This is a long line, a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long line to be wrapped!\n");
 
 		ShortcutAction suggestAction = new ShortcutAction("Suggest",
 				ShortcutAction.KeyCode.SPACEBAR,
@@ -137,8 +137,22 @@ public class AceDemo extends Application {
 		sideBar.addComponent(createSelectMode());
 		sideBar.addComponent(createSelectTheme());
 		sideBar.addComponent(createSelectFontSize());
+		sideBar.addComponent(createUseWrapMode());
 
 		return sideBar;
+	}
+
+	private Component createUseWrapMode() {
+		CheckBox useWrapMode = new CheckBox("Wrap Mode");
+		useWrapMode.setImmediate(true);
+		useWrapMode.addListener(new Button.ClickListener() {
+			/* @Override */
+			public void buttonClick(ClickEvent event) {
+				boolean useWrapMode = event.getButton().booleanValue();
+				ace.setUseWrapMode(useWrapMode);
+			}
+		});
+		return useWrapMode;
 	}
 
 	private Component createGetSet() {

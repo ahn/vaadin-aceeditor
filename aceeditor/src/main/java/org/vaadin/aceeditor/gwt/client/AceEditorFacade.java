@@ -82,6 +82,10 @@ public class AceEditorFacade implements EditorFacade, GwtAceChangeHandler,
 			boolean visible = uidl.getBooleanAttribute("ace-hscroll-visible");
 			editor.setHScrollBarAlwaysVisible(visible);
 		}
+		if (uidl.hasAttribute("ace-use-wrapmode")) {
+			boolean useWrapMode = uidl.getBooleanAttribute("ace-use-wrapmode");
+			editor.setUseWrapMode(useWrapMode);
+		}
 	}
 
 	private void setMode(AceMode mode, String url) {

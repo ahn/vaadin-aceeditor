@@ -331,4 +331,9 @@ public class GwtAceEditor extends JavaScriptObject {
 		return this.renderer.getScrollTopRow();
 	}-*/;
 
+	//WRAPMODE
+	public final native void setUseWrapMode(boolean useWrapMode) /*-{
+		this.getSession().setUseWrapMode(useWrapMode);
+	}-*/;
+
 }
