@@ -3,18 +3,54 @@ package org.vaadin.aceeditor.gwt.ace;
 /**
  * Ace mode defines the language used in the editor.
  * 
- * <p>
- * To use a mode, the corresponding mode js file must've been loaded. You can do
- * the loading (among other ways) either by
- * 
- * 1) defining it in a .gwt.xml file, or
- * 
- * 2) giving the script file URL to
- * {@link org.vaadin.codeeditor.AceEditor#setMode(AceMode, String)}
- * </p>
  */
 public enum AceMode {
-	c_cpp, clojure, coffee, coldfusion, csharp, css, groovy, haxe, html, java, javascript, json, latex, lua, markdown, ocaml, perl, pgsql, php, powershell, python, ruby, scad, scala, scss, sql, svg, textile, xml;
+	ascii_doc,
+	c_cpp,
+	c9search,
+	clojure,
+	coffee,
+	coldfusion,
+	csharp,
+	css,
+	diff,
+	glsl,
+	golang,
+	groovy,
+	haxe,
+	html,
+	jade,
+	java,
+	javascript,
+	json,
+	jsp,
+	jsx,
+	latex,
+	less,
+	liquid,
+	lua,
+	luapage,
+	markdown,
+	ocaml,
+	perl,
+	pgsql,
+	php,
+	powershell,
+	python,
+	ruby,
+	scad,
+	scala,
+	scss,
+	sh,
+	sql,
+	svg,
+	tcl,
+	text,
+	textile,
+	typescript,
+	xml,
+	xquery,
+	yaml;
 
 	public static AceMode forFile(String filename) {
 		int lastDot = filename.lastIndexOf(".");
