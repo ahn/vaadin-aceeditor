@@ -8,12 +8,12 @@ import java.util.Map.Entry;
 
 import org.vaadin.aceeditor.gwt.ace.GwtAceAnnotation;
 import org.vaadin.aceeditor.gwt.ace.GwtAceChangeEvent;
+import org.vaadin.aceeditor.gwt.ace.GwtAceChangeEvent.Data.Action;
 import org.vaadin.aceeditor.gwt.ace.GwtAceEditor;
 import org.vaadin.aceeditor.gwt.ace.GwtAceRange;
 import org.vaadin.aceeditor.gwt.ace.GwtAceSelection;
-import org.vaadin.aceeditor.gwt.ace.GwtAceChangeEvent.Data.Action;
 import org.vaadin.aceeditor.gwt.shared.AceMarkerData;
-import org.vaadin.aceeditor.gwt.shared.EditMarkerData;
+import org.vaadin.aceeditor.gwt.shared.CollaboratorAceMarkerData;
 import org.vaadin.aceeditor.gwt.shared.ErrorMarkerData;
 import org.vaadin.aceeditor.gwt.shared.LockMarkerData;
 import org.vaadin.aceeditor.gwt.shared.Marker;
@@ -39,7 +39,7 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 
 		AceMarker(Marker marker, String cls, String type, boolean inFront,
 				boolean visible) {
-			//VConsole.log("NEW AceMarker " + marker.toString());
+//			VConsole.log("NEW AceMarker " + marker.toString());
 			this.marker = marker;
 			this.start = marker.getStart();
 			this.end = marker.getEnd();
@@ -47,8 +47,7 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 			this.type = type;
 			this.inFront = inFront;
 			this.visible = visible;
-			this.stretching = (marker.getType() == Marker.Type.EDIT ||
-							   marker.getType() == Marker.Type.SUGGESTION); // ?
+			this.stretching = (marker.getType() == Marker.Type.SUGGESTION); // ?
 		}
 		
 		GwtAceRange getRange() {
@@ -200,10 +199,7 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 	}
 
 	private boolean isFragileMarker(Marker m) {
-		if (m.getType() == Marker.Type.EDIT) {
-			EditMarkerData emd = (EditMarkerData) m.getData();
-			return !emd.getUserId().equals(userId);
-		}
+		// XXX
 		return false;
 	}
 
@@ -213,12 +209,13 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 			AceMarkerData amd = (AceMarkerData) m.getData();
 			return new AceMarker(m, amd.getCls(), amd.getType(),
 					amd.isInFront(), true);
-		} else if (m.getType() == Marker.Type.EDIT) {
-			boolean visible = !((EditMarkerData) m.getData()).getUserId()
-					.equals(userId);
-			return new AceMarker(m, markerClassOf(m), markerTypeOf(m), false,
-					visible);
-		} else {
+		}
+		else if (m.getType() == Marker.Type.COLLABACE) {
+			CollaboratorAceMarkerData camd = (CollaboratorAceMarkerData)m.getData();
+			return new AceMarker(m, camd.getCls(), camd.getType(), camd.isInFront(),
+					!camd.getUserId().equals(userId));
+		}
+		else {
 			return new AceMarker(m, markerClassOf(m), markerTypeOf(m), false,
 					true);
 		}
@@ -250,10 +247,6 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 	}
 
 	private String markerClassOf(Marker marker) {
-		if (marker.getType() == Marker.Type.EDIT) {
-			EditMarkerData ed = (EditMarkerData) marker.getData();
-			return "acemarker-1 EDIT " + ed.getUserStyle();
-		}
 		if (marker.getType() == Marker.Type.LOCK) {
 			LockMarkerData lmd = (LockMarkerData) marker.getData();
 			if (lmd != null && lmd.getLockerId() != null
@@ -267,9 +260,6 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 
 	private static String markerTypeOf(Marker marker) {
 		if (marker.getType() == Marker.Type.LOCK) {
-			return "line";
-		}
-		if (marker.getType() == Marker.Type.EDIT) {
 			return "line";
 		}
 		return "text";

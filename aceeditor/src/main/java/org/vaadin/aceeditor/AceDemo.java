@@ -78,6 +78,9 @@ public class AceDemo extends Application {
 
 	protected boolean listening = false;
 
+	private LinkedList<String> searchMarkerIds = new LinkedList<String>();
+	private LinkedList<String> errorMarkerIds = new LinkedList<String>();
+
 	@Override
 	public void init() {
 
@@ -387,14 +390,17 @@ public class AceDemo extends Application {
 	}
 
 	private void addSearchMarkers(String text, String word) {
-		ace.clearMarkersOfType(Marker.Type.SEARCH);
+		for (String markerId : searchMarkerIds ) {
+			ace.removeMarker(markerId);
+		}
+		searchMarkerIds.clear();
 		if (word.isEmpty()) {
 			return;
 		}
 		int i = text.indexOf(word);
 		while (i != -1) {
 			Marker m = Marker.newSearchMarker(i, i + word.length());
-			ace.addMarker(m);
+			searchMarkerIds.add(ace.addMarker(m));
 			i = text.indexOf(word, i + 1);
 		}
 	}

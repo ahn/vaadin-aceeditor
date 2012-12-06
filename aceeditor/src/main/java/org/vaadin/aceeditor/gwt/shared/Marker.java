@@ -12,7 +12,7 @@ package org.vaadin.aceeditor.gwt.shared;
 public class Marker implements Comparable<Marker> {
 
 	public enum Type {
-		INVISIBLE, CURSOR, ERROR, NOTE, LOCK, EDIT, SEARCH, ACE, SUGGESTION
+		 ERROR, LOCK, ACE, COLLABACE, SUGGESTION
 	}
 
 	public interface Data {
@@ -75,23 +75,12 @@ public class Marker implements Comparable<Marker> {
 		return new Marker(Type.ERROR, start, end, new ErrorMarkerData(msg));
 	}
 
-	public static Marker newCursorMarker(int start, int end, String collabId) {
-		return new Marker(Type.CURSOR, start, end, new CursorMarkerData(
-				collabId));
-	}
-
-	public static Marker newNoteMarker(int start, int end) {
-		return new Marker(Type.NOTE, start, end);
-	}
-
-	public static Marker newEditMarker(int start, int end, String userId,
-			String userStyle) {
-		return new Marker(Type.EDIT, start, end, new EditMarkerData(userId,
-				userStyle));
-	}
-
 	public static Marker newSearchMarker(int start, int end) {
-		return new Marker(Type.SEARCH, start, end);
+		return newAceMarker(start, end, "acemarker-1 SEARCH", "text", false);
+	}
+	
+	public static Marker newNoteMarker(int start, int end) {
+		return newAceMarker(start, end, "acemarker-1 NOTE", "text", false);
 	}
 
 	/**
@@ -126,6 +115,16 @@ public class Marker implements Comparable<Marker> {
 			String type, boolean inFront) {
 		return new Marker(Marker.Type.ACE, start, end, new AceMarkerData(cls,
 				type, inFront));
+	}
+	
+	/**
+	 * Like newAceMarker but  
+	 *
+	 */
+	public static Marker newCollaboratorAceMarker(int start, int end, String cls,
+			String type, boolean inFront, String userId) {
+		return new Marker(Marker.Type.COLLABACE, start, end, new CollaboratorAceMarkerData(cls,
+				type, inFront, userId));
 	}
 
 	public static Marker newSuggestionMarker(int start, int end) {
@@ -162,12 +161,14 @@ public class Marker implements Comparable<Marker> {
 			return new ErrorMarkerData(dataString);
 		case ACE:
 			return new AceMarkerData(dataString);
+		case COLLABACE:
+			return new CollaboratorAceMarkerData(dataString);
 		case LOCK:
 			return new LockMarkerData(dataString);
-		case EDIT:
-			return new EditMarkerData(dataString);
+		default:
+			return null;
 		}
-		return null;
+		
 	}
 
 	public int getStart() {
