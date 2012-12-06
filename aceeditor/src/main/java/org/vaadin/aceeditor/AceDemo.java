@@ -37,17 +37,6 @@ import com.vaadin.ui.Window;
 @SuppressWarnings("serial")
 public class AceDemo extends Application {
 	
-	// ACE_MODE_URL is the place where Ace mode js files are.
-	// TODO: come up with a better way to dynamically load Ace js files.
-	// This is just a temporary location, may not always be up etc.
-	// Another way is to define required modes and themes in your
-	// widgetset.gwt.xml file, example:
-	// <script src="ace/mode-java.js" />
-	// <script src="ace/theme-eclipse.js" />
-	private static String ACE_MODE_URL =
-			"http://antti.virtuallypreinstalled.com/cored/VAADIN/widgetsets/org.vaadin.codeeditor.collab.ide.gwt.CollabIDEWidgetset/ace";
-	private static String ACE_THEME_URL = ACE_MODE_URL;
-	
 	private AceSuggestibleEditor ace = new AceSuggestibleEditor();
 
 	private static final Pattern wtfLolPlz = Pattern.compile("WTF|LOL|PLZ",

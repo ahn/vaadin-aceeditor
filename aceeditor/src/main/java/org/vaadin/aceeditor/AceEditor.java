@@ -62,6 +62,8 @@ public class AceEditor extends AbstractTextField {
 	/**
 	 * Sets the Ace mode after loading it from the given URL (if necessary).
 	 * 
+	 * TODO: implement a better way to load modes dynamically 
+	 * 
 	 * @param mode
 	 * @param modeFileURL
 	 */
@@ -94,6 +96,8 @@ public class AceEditor extends AbstractTextField {
 
 	/**
 	 * Sets the Ace theme after loading it from the given URL (if necessary).
+	 * 
+	 * TODO: implement a better way to load themes dynamically
 	 * 
 	 * @param theme
 	 * @param themeFileURL
