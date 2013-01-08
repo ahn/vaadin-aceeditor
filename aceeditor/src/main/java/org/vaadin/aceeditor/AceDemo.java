@@ -24,6 +24,7 @@ import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.OptionGroup;
+import com.vaadin.ui.Panel;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
@@ -79,7 +80,6 @@ public class AceDemo extends Application {
 	protected boolean listening = false;
 
 	private LinkedList<String> searchMarkerIds = new LinkedList<String>();
-	private LinkedList<String> errorMarkerIds = new LinkedList<String>();
 
 	@Override
 	public void init() {
@@ -113,23 +113,37 @@ public class AceDemo extends Application {
 
 	private Component createSideBar() {
 		VerticalLayout sideBar = new VerticalLayout();
-		sideBar.setWidth("200px");
+		sideBar.setWidth("250px");
 
 		sideBar.addComponent(createGetSet());
 		sideBar.addComponent(createGetCursor());
 		sideBar.addComponent(createSelectAll());
 		sideBar.addComponent(createImmediate());
 		sideBar.addComponent(createReadonly());
-		sideBar.addComponent(createSearch());
-		sideBar.addComponent(createLockLine());
-		sideBar.addComponent(createClearMarkers());
-		sideBar.addComponent(createCheckErrors());
+		
+		Panel p2 = new Panel("Ace");
+		VerticalLayout la2 = new VerticalLayout();
+		p2.addComponent(la2);
+		sideBar.addComponent(p2);
+		la2.addComponent(createSelectMode());
+		la2.addComponent(createSelectTheme());
+		la2.addComponent(createSelectFontSize());
+		la2.addComponent(createUseWrapMode());
+		
+		Panel p1 = new Panel("Markers");
+		VerticalLayout la1 = new VerticalLayout();
+		p1.addComponent(la1);
+		la1.addComponent(new Label("Markers interfere with Ace's builtin error checkers (if any) :("));
+		sideBar.addComponent(p1);
+		la1.addComponent(createSearch());
+		la1.addComponent(createAddComment());
+		la1.addComponent(createLockLine());
+		la1.addComponent(createClearMarkers());
+		la1.addComponent(createCheckErrors());
+		
 		sideBar.addComponent(createSelectTCEM());
 		sideBar.addComponent(createSelectTCT());
-		sideBar.addComponent(createSelectMode());
-		sideBar.addComponent(createSelectTheme());
-		sideBar.addComponent(createSelectFontSize());
-		sideBar.addComponent(createUseWrapMode());
+		
 
 		return sideBar;
 	}
@@ -223,6 +237,24 @@ public class AceDemo extends Application {
 		});
 		return readonly;
 	}
+	
+	private Component createAddComment() {
+		VerticalLayout la = new VerticalLayout();
+		final TextField tf = new TextField("Comment current line");
+		tf.setWidth("100%");
+		la.addComponent(tf);
+		Button searchButton = new Button("Add comment");
+		searchButton.addListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				int[] line = currentLine();
+				String s = (String) tf.getValue();
+				ace.addMarker(Marker.newCommentMarker(line[0], line[1], s));
+			}
+		});
+		searchButton.setWidth("100%");
+		la.addComponent(searchButton);
+		return la;
+	}
 
 	private Component createSearch() {
 		VerticalLayout la = new VerticalLayout();
@@ -247,13 +279,8 @@ public class AceDemo extends Application {
 		lockLine.addListener(new Button.ClickListener() {
 			/* @Override */
 			public void buttonClick(Button.ClickEvent event) {
-				int cursor = ace.getCursorPosition();
-				String text = (String) ace.getValue();
-				int start = text.lastIndexOf("\n", cursor - 1) + 1;
-				int end = text.indexOf("\n", start + 1);
-				if (end == -1)
-					end = text.length();
-				ace.addMarker(Marker.newLockMarker(start, end));
+				int[] line = currentLine();
+				ace.addMarker(Marker.newLockMarker(line[0], line[1]));
 			}
 		});
 		lockLine.setWidth("100%");
@@ -291,7 +318,6 @@ public class AceDemo extends Application {
 			}
 		});
 		la.addComponent(checkErrors);
-		la.addComponent(new Label("(interferes with builtin (if any) :-( )"));
 		return la;
 	}
 
@@ -403,6 +429,17 @@ public class AceDemo extends Application {
 			searchMarkerIds.add(ace.addMarker(m));
 			i = text.indexOf(word, i + 1);
 		}
+	}
+	
+	private int[] currentLine() {
+		int cursor = ace.getCursorPosition();
+		String text = (String) ace.getValue();
+		int start = text.lastIndexOf("\n", cursor - 1) + 1;
+		int end = text.indexOf("\n", start + 1);
+		if (end == -1) {
+			end = text.length();
+		}
+		return new int[] {start, end};
 	}
 
 }
