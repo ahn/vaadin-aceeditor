@@ -14,6 +14,7 @@ import org.vaadin.aceeditor.gwt.ace.GwtAceRange;
 import org.vaadin.aceeditor.gwt.ace.GwtAceSelection;
 import org.vaadin.aceeditor.gwt.shared.AceMarkerData;
 import org.vaadin.aceeditor.gwt.shared.CollaboratorAceMarkerData;
+import org.vaadin.aceeditor.gwt.shared.CommentMarkerData;
 import org.vaadin.aceeditor.gwt.shared.ErrorMarkerData;
 import org.vaadin.aceeditor.gwt.shared.LockMarkerData;
 import org.vaadin.aceeditor.gwt.shared.Marker;
@@ -234,6 +235,12 @@ public class AceMarkerEditorFacade extends AceEditorFacade implements
 				return null;
 			}
 			return GwtAceAnnotation.create("info", lmd.getMessage(), 0);
+		} else if (m.getType() == Marker.Type.COMMENT) {
+			CommentMarkerData cmd = (CommentMarkerData) m.getData();
+			if (cmd == null || cmd.getComment() == null) {
+				return null;
+			}
+			return GwtAceAnnotation.create("info", cmd.getComment(), 0);
 		}
 		return null;
 	}

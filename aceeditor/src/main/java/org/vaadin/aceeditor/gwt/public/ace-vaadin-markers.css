@@ -30,4 +30,8 @@
     opacity: .2;
 }
 
+.acemarker-1.COMMENT {
+  background: orange;
+  opacity: .4;
+}
 

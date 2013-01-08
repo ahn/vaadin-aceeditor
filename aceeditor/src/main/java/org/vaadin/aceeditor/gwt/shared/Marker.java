@@ -12,7 +12,7 @@ package org.vaadin.aceeditor.gwt.shared;
 public class Marker implements Comparable<Marker> {
 
 	public enum Type {
-		 ERROR, LOCK, ACE, COLLABACE, SUGGESTION
+		ERROR, LOCK, ACE, COLLABACE, SUGGESTION, COMMENT
 	}
 
 	public interface Data {
@@ -81,6 +81,10 @@ public class Marker implements Comparable<Marker> {
 	
 	public static Marker newNoteMarker(int start, int end) {
 		return newAceMarker(start, end, "acemarker-1 NOTE", "text", false);
+	}
+
+	public static Marker newCommentMarker(int start, int end, String msg) {
+		return new Marker(Type.COMMENT, start, end, new CommentMarkerData(msg));
 	}
 
 	/**
@@ -165,10 +169,12 @@ public class Marker implements Comparable<Marker> {
 			return new CollaboratorAceMarkerData(dataString);
 		case LOCK:
 			return new LockMarkerData(dataString);
+		case COMMENT:
+			return new CommentMarkerData(dataString);
 		default:
 			return null;
 		}
-		
+
 	}
 
 	public int getStart() {
