@@ -5,7 +5,7 @@
   <groupId>org.vaadin</groupId>
   <artifactId>aceeditor</artifactId>
   <packaging>jar</packaging>
-  <version>0.3.0-SNAPSHOT</version>
+  <version>0.3.0</version>
   <name>AceEditor</name>
 
   <properties>
@@ -128,7 +128,7 @@
           <stopPort>9966</stopPort>
           <stopKey>aceeditor</stopKey>
           <!-- Redeploy every x seconds if changes are detected, 0 for no automatic redeployment -->
-          <scanIntervalSeconds>0</scanIntervalSeconds>
+          <scanIntervalSeconds>2</scanIntervalSeconds>
           <!-- make sure Jetty also finds the widgetset -->
           <webAppConfig>
             <contextPath>/aceeditor</contextPath>
