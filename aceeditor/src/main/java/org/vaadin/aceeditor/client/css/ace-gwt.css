@@ -1,0 +1,11 @@
+.ace_editor {
+	position: relative !important;
+}
+
+.AceEditorWidget {
+	background: white;
+	border: 1px solid lightgray;
+}
+
+
+

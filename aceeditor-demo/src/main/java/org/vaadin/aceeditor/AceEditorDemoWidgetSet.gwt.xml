@@ -1,0 +1,6 @@
+<module>
+    <inherits name="com.vaadin.DefaultWidgetSet" />
+    <inherits name="org.vaadin.aceeditor.AceEditorWidgetSet" />
+    
+    
+</module>

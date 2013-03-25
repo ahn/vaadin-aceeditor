@@ -1,0 +1,12 @@
+
+.ace_marker-layer .mymarker1 {
+    background: green;
+    border-bottom: 2px solid black;
+    position: absolute;
+    z-index: 5;
+}
+
+.ace_marker-layer .myerrormarker1 {
+    border-bottom: 2px dotted red;
+    position: absolute;
+}

@@ -1,174 +1,457 @@
 package org.vaadin.aceeditor;
 
-import org.vaadin.aceeditor.gwt.ace.AceMode;
-import org.vaadin.aceeditor.gwt.ace.AceTheme;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import com.vaadin.terminal.PaintException;
-import com.vaadin.terminal.PaintTarget;
+import org.vaadin.aceeditor.client.AceClientAnnotation;
+import org.vaadin.aceeditor.client.AceEditorServerRpc;
+import org.vaadin.aceeditor.client.AceEditorState;
+import org.vaadin.aceeditor.client.AceMarker;
+import org.vaadin.aceeditor.client.AceClientRange;
+
+import com.vaadin.annotations.JavaScript;
+import com.vaadin.annotations.StyleSheet;
+import com.vaadin.event.FieldEvents.BlurEvent;
+import com.vaadin.event.FieldEvents.BlurListener;
+import com.vaadin.event.FieldEvents.BlurNotifier;
+import com.vaadin.event.FieldEvents.FocusEvent;
+import com.vaadin.event.FieldEvents.FocusListener;
+import com.vaadin.event.FieldEvents.FocusNotifier;
+import com.vaadin.event.FieldEvents.TextChangeEvent;
+import com.vaadin.event.FieldEvents.TextChangeListener;
+import com.vaadin.event.FieldEvents.TextChangeNotifier;
+import com.vaadin.ui.AbstractField;
 import com.vaadin.ui.AbstractTextField;
+import com.vaadin.ui.AbstractTextField.TextChangeEventMode;
+import com.vaadin.util.ReflectTools;
 
-/**
- * Vaadin Ace editor.
- * 
- * @see <a href="http://ace.ajax.org">Ace Editor</a>
- * 
- */
-@SuppressWarnings({ "serial", "unchecked" })
-@com.vaadin.ui.ClientWidget(org.vaadin.aceeditor.gwt.client.VAceEditor.class)
-public class AceEditor extends AbstractTextField {
+@SuppressWarnings("serial")
+@JavaScript("client/js/ace/ace.js")
+@StyleSheet("client/css/ace-gwt.css")
+public class AceEditor extends AbstractField<String> implements BlurNotifier,
+		FocusNotifier, TextChangeNotifier {
 
-	private static final String DEFAULT_WIDTH = "400px";
-	private static final String DEFAULT_HEIGHT = "300px";
+	private static final String DEFAULT_ACE_PATH = "http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
 
-	private AceMode mode = null;
-	private AceTheme theme = null;
-	private String fontSize = "12px";
-	private Boolean hScrollVisible = false;
-	private Boolean useWrapMode = false;
-	private String modeFileURL;
-	private String themeFileURL;
+	public interface SelectionChangeListener {
+		public static final Method selectionChangedMethod = ReflectTools
+				.findMethod(SelectionChangeListener.class, "selectionChanged",
+						SelectionChangeEvent.class);;
 
-	/**
-	 * Initializes the editor with an empty string as content.
-	 */
+		public void selectionChanged(SelectionChangeEvent e);
+	}
+
+	private long latestMarkerId = 0L;
+	private String text = "";
+	private AceRange selection = new AceRange(0, 0, 0, 0, "");
+
+	private boolean isFiringTextChangeEvent;
+	private boolean latestFocus = false;
+
+	private Map<Long, AceMarker> markers = new HashMap<Long, AceMarker>();
+
+	private AceEditorServerRpc rpc = new AceEditorServerRpc() {
+
+		@Override
+		public void changedDelayed(String t, AceClientRange sel, boolean focus) {
+			changed(t, sel, focus);
+		}
+
+		@Override
+		public void sendNow() {
+			// nothing
+		}
+
+		private void changed(String t, AceClientRange sel, boolean focus) {
+
+			if (!t.equals(text)) {
+				text = t;
+
+				// TODO: when to call setInternalValue??
+				setInternalValue(text);
+
+				fireTextChangeEvent();
+			}
+
+			if (latestFocus != focus) {
+				latestFocus = focus;
+				if (focus) {
+					fireFocus();
+				} else {
+					fireBlur();
+				}
+			}
+			if (!sel.equals(selection)) {
+				selection = new AceRange(sel, text);
+				getState().selection = sel;
+				fireSelectionChanged();
+			}
+		}
+
+		@Override
+		public void markersChanged(List<AceMarker> markers) {
+
+			for (AceMarker m : markers) {
+				System.out.println("MMM " + m);
+			}
+
+			getState().markers = markers;
+
+		}
+
+		@Override
+		public void annotationsChanged(
+				Set<AceClientAnnotation> markerAnnotations) {
+			getState().markerAnnotations = markerAnnotations;
+		}
+	};
+
 	public AceEditor() {
 		super();
-		setValue("");
-		setWidth(DEFAULT_WIDTH);
-		setHeight(DEFAULT_HEIGHT);
+		setWidth("300px");
+		setHeight("200px");
+
+		setModePath(DEFAULT_ACE_PATH);
+		setThemePath(DEFAULT_ACE_PATH);
+		setWorkerPath(DEFAULT_ACE_PATH);
+
+		registerRpc(rpc);
 	}
 
-	/**
-	 * 
-	 */
-	public AceMode getMode() {
-		return mode;
+	protected void fireSelectionChanged() {
+		fireEvent(new SelectionChangeEvent(this));
 	}
 
-	/**
-	 * Sets the Ace mode.
-	 * 
-	 * <p>
-	 * NOTE: The corresponding mode JavaScript file must be loaded. If it's not
-	 * already, use {@link #setMode(AceMode, String)} with the file URL.
-	 * </p>
-	 * 
-	 * @param mode
-	 */
-	public void setMode(AceMode mode) {
-		setMode(mode, null);
+	protected void fireBlur() {
+		fireEvent(new BlurEvent(this));
 	}
 
-	/**
-	 * Sets the Ace mode after loading it from the given URL (if necessary).
-	 * 
-	 * TODO: implement a better way to load modes dynamically 
-	 * 
-	 * @param mode
-	 * @param modeFileURL
-	 */
-	public void setMode(AceMode mode, String modeFileURL) {
-		this.mode = mode;
-		this.modeFileURL = modeFileURL;
-		requestRepaint();
-	}
-
-	/**
-	 * 
-	 */
-	public AceTheme getTheme() {
-		return theme;
-	}
-
-	/**
-	 * Sets the Ace theme.
-	 * 
-	 * <p>
-	 * NOTE: The corresponding theme JavaScript file must be loaded. If it's not
-	 * already, use {@link #setTheme(AceTheme, String)} with the file URL.
-	 * </p>
-	 * 
-	 * @param theme
-	 */
-	public void setTheme(AceTheme theme) {
-		setTheme(theme, null);
-	}
-
-	/**
-	 * Sets the Ace theme after loading it from the given URL (if necessary).
-	 * 
-	 * TODO: implement a better way to load themes dynamically
-	 * 
-	 * @param theme
-	 * @param themeFileURL
-	 */
-	public void setTheme(AceTheme theme, String themeFileURL) {
-		this.theme = theme;
-		this.themeFileURL = themeFileURL;
-		requestRepaint();
-	}
-
-	/**
-	 * 
-	 */
-	public String getFontSize() {
-		return fontSize;
-	}
-
-	/**
-	 * 
-	 * @param fontSize
-	 */
-	public void setFontSize(String fontSize) {
-		this.fontSize = fontSize;
-		requestRepaint();
-	}
-
-	/**
-	 * 
-	 */
-	public boolean gethScrollVisible() {
-		return hScrollVisible;
-	}
-
-	/**
-	 * 
-	 * @param hScrollVisible
-	 */
-	public void sethScrollVisible(Boolean hScrollVisible) {
-		this.hScrollVisible = hScrollVisible;
-		requestRepaint();
-	}
-	
-	public Boolean getUseWrapMode() {
-		return useWrapMode;
-	}
-
-	public void setUseWrapMode(Boolean useWrapMode) {
-		this.useWrapMode = useWrapMode;
-		requestRepaint();
+	protected void fireFocus() {
+		fireEvent(new FocusEvent(this));
 	}
 
 	@Override
-	public void paintContent(PaintTarget target) throws PaintException {
-		super.paintContent(target);
-		if (mode != null) {
-			target.addAttribute("ace-mode", mode.toString());
+	public Class<? extends String> getType() {
+		return String.class;
+	}
+
+	@Override
+	protected AceEditorState getState() {
+		return (AceEditorState) super.getState();
+	}
+
+	@Override
+	protected void setInternalValue(String newValue) {
+		super.setInternalValue(newValue);
+		getState().text = newValue;
+	}
+
+	@Override
+	public void addTextChangeListener(TextChangeListener listener) {
+		addListener(TextChangeListener.EVENT_ID, TextChangeEvent.class,
+				listener, TextChangeListener.EVENT_METHOD);
+	}
+
+	@Override
+	@Deprecated
+	public void addListener(TextChangeListener listener) {
+		addTextChangeListener(listener);
+	}
+
+	@Override
+	public void removeTextChangeListener(TextChangeListener listener) {
+		removeListener(TextChangeListener.EVENT_ID, TextChangeEvent.class,
+				listener);
+	}
+
+	@Override
+	@Deprecated
+	public void removeListener(TextChangeListener listener) {
+		removeTextChangeListener(listener);
+	}
+
+	@Override
+	public void addFocusListener(FocusListener listener) {
+		addListener(FocusEvent.EVENT_ID, FocusEvent.class, listener,
+				FocusListener.focusMethod);
+	}
+
+	@Override
+	@Deprecated
+	public void addListener(FocusListener listener) {
+		addFocusListener(listener);
+	}
+
+	@Override
+	public void removeFocusListener(FocusListener listener) {
+		removeListener(FocusEvent.EVENT_ID, FocusEvent.class, listener);
+	}
+
+	@Override
+	@Deprecated
+	public void removeListener(FocusListener listener) {
+		removeFocusListener(listener);
+	}
+
+	@Override
+	public void addBlurListener(BlurListener listener) {
+		addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
+				BlurListener.blurMethod);
+	}
+
+	@Override
+	@Deprecated
+	public void addListener(BlurListener listener) {
+		addBlurListener(listener);
+	}
+
+	@Override
+	public void removeBlurListener(BlurListener listener) {
+		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
+	}
+
+	@Override
+	@Deprecated
+	public void removeListener(BlurListener listener) {
+		removeBlurListener(listener);
+	}
+
+	public void addSelectionChangeListener(SelectionChangeListener listener) {
+		addListener(SelectionChangeEvent.EVENT_ID, SelectionChangeEvent.class,
+				listener, SelectionChangeListener.selectionChangedMethod);
+		getState().listenToSelectionChanges = true;
+	}
+
+	public void removeSelectionChangeListener(SelectionChangeListener listener) {
+		removeListener(SelectionChangeEvent.EVENT_ID,
+				SelectionChangeEvent.class, listener);
+		getState().listenToSelectionChanges = !getListeners(
+				SelectionChangeEvent.class).isEmpty();
+	}
+
+	public long addMarker(AceMarker marker) {
+		marker.serverId = newMarkerId();
+		markers.put(marker.serverId, marker);
+		getState().markers = new LinkedList<AceMarker>(markers.values());
+		return marker.serverId;
+	}
+
+	public AceMarker removeMarker(AceMarker marker) {
+		if (marker.serverId < 0) {
+			return null;
 		}
-		if (modeFileURL != null) {
-			target.addAttribute("ace-mode-url", modeFileURL);
+		return removeMarker(marker.serverId);
+	}
+
+	public AceMarker removeMarker(long serverId) {
+		AceMarker m = markers.remove(serverId);
+		if (m != null) {
+			getState().markers = new LinkedList<AceMarker>(markers.values());
 		}
-		if (theme != null) {
-			target.addAttribute("ace-theme", theme.toString());
+		return m;
+	}
+
+	public void clearMarkers() {
+		markers = new HashMap<Long, AceMarker>();
+		getState().markers = new LinkedList<AceMarker>(markers.values());
+	}
+
+	public void addRowAnnotation(AceAnnotation ann, int row) {
+		Set<AceClientAnnotation> manns = getState().markerAnnotations;
+		if (manns == null) {
+			// ok
+		} else if (manns.isEmpty()) {
+			getState().markerAnnotations = null;
+		} else {
+			throw new IllegalStateException(
+					"AceEditor can contain either row annotations or marker annotations, not both.");
 		}
-		if (themeFileURL != null) {
-			target.addAttribute("ace-theme-url", themeFileURL);
+
+		AceClientAnnotation rann = new AceClientAnnotation(ann.getMessage(),
+				AceClientAnnotation.Type.valueOf(ann.getType().toString()), row);
+		if (getState().rowAnnotations == null
+				|| getState().rowAnnotations.isEmpty()) {
+			getState().rowAnnotations = new HashSet<AceClientAnnotation>();
 		}
-		if (fontSize != null) {
-			target.addAttribute("ace-font-size", fontSize);
+		getState().rowAnnotations.add(rann);
+	}
+
+	public void addMarkerAnnotation(AceAnnotation ann, AceMarker marker) {
+		addMarkerAnnotation(ann, marker.serverId);
+	}
+
+	public void addMarkerAnnotation(AceAnnotation ann, long markerId) {
+		Set<AceClientAnnotation> ranns = getState().rowAnnotations;
+		if (ranns == null) {
+			// ok
+		} else if (ranns.isEmpty()) {
+			getState().rowAnnotations = null;
+		} else {
+			throw new IllegalStateException(
+					"AceEditor can contain either row annotations or marker annotations, not both.");
 		}
-		target.addAttribute("ace-hscroll-visible", hScrollVisible);
-		target.addAttribute("ace-use-wrapmode", useWrapMode);
+		AceClientAnnotation cann = new AceClientAnnotation(ann.getMessage(),
+				AceClientAnnotation.Type.valueOf(ann.getType().toString()), 0);
+		cann.markerId = markerId;
+
+		if (getState().markerAnnotations == null
+				|| getState().markerAnnotations.isEmpty()) {
+			getState().markerAnnotations = new HashSet<AceClientAnnotation>();
+		}
+		getState().markerAnnotations.add(cann);
+	}
+
+	public void clearRowAnnotations() {
+		if (getState().markerAnnotations == null) {
+			getState().rowAnnotations = Collections.emptySet();
+		} else {
+			getState().rowAnnotations = null;
+		}
+	}
+
+	public void clearMarkerAnnotations() {
+		if (getState().rowAnnotations == null) {
+			getState().markerAnnotations = Collections.emptySet();
+		} else {
+			getState().markerAnnotations = null;
+		}
+	}
+
+	private long newMarkerId() {
+		return ++latestMarkerId;
+	}
+
+	/**
+	 * Sets the mode how the TextField triggers {@link TextChangeEvent}s.
+	 * 
+	 * @param inputEventMode
+	 *            the new mode
+	 * 
+	 * @see TextChangeEventMode
+	 */
+	public void setTextChangeEventMode(TextChangeEventMode inputEventMode) {
+		getState().changeMode = inputEventMode.toString();
+	}
+
+	/**
+	 * The text change timeout modifies how often text change events are
+	 * communicated to the application when {@link #getTextChangeEventMode()} is
+	 * {@link TextChangeEventMode#LAZY} or {@link TextChangeEventMode#TIMEOUT}.
+	 * 
+	 * 
+	 * @see #getTextChangeEventMode()
+	 * 
+	 * @param timeout
+	 *            the timeout in milliseconds
+	 */
+	public void setTextChangeTimeout(int timeoutMs) {
+		getState().changeTimeout = timeoutMs;
+
+	}
+
+	public static class TextChangeEventImpl extends TextChangeEvent {
+		private final String text;
+		private final AceRange selection;
+
+		private TextChangeEventImpl(final AceEditor ace, String text,
+				AceRange selection) {
+			super(ace);
+			this.text = text;
+			this.selection = selection;
+		}
+
+		@Override
+		public AbstractTextField getComponent() {
+			return (AbstractTextField) super.getComponent();
+		}
+
+		@Override
+		public String getText() {
+			return text;
+		}
+
+		@Override
+		public int getCursorPosition() {
+			return selection.getCursorPosition();
+		}
+	}
+
+	public AceRange getSelection() {
+		return selection;
+	}
+
+	public int getCursorPosition() {
+		return selection.getCursorPosition();
+	}
+
+	public void setCursorPosition(int pos) {
+		setSelection(pos, pos);
+	}
+
+	public void setSelection(int start, int end) {
+		setSelection(AceRange.fromPositions(start, end, text));
+		
+	}
+	
+	public void setSelection(AceRange selection) {
+		getState().selection = selection;
+	}
+
+	private void fireTextChangeEvent() {
+		if (!isFiringTextChangeEvent) {
+			isFiringTextChangeEvent = true;
+			try {
+				fireEvent(new TextChangeEventImpl(this, text, selection));
+			} finally {
+				isFiringTextChangeEvent = false;
+			}
+		}
+	}
+
+	public void setWordWrap(boolean ww) {
+		getState().wordwrap = ww;
+	}
+
+	public void setThemePath(String path) {
+		setAceConfig("themePath", path);
+	}
+
+	public void setModePath(String path) {
+		setAceConfig("modePath", path);
+	}
+
+	public void setWorkerPath(String path) {
+		setAceConfig("workerPath", path);
+	}
+
+	private void setAceConfig(String key, String value) {
+		getState().config.put(key, value);
+	}
+
+	public void setMode(AceMode mode) {
+		getState().mode = mode.toString();
+	}
+
+	public void setMode(String mode) {
+		getState().mode = mode;
+	}
+
+	public void setTheme(AceTheme theme) {
+		getState().theme = theme.toString();
+	}
+
+	public void setTheme(String theme) {
+		getState().theme = theme;
+	}
+
+	public void setUseWorker(boolean useWorker) {
+		getState().useWorker = useWorker;
 	}
 
 }
