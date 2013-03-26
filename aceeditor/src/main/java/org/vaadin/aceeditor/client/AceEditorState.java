@@ -25,7 +25,7 @@ public class AceEditorState extends AbstractFieldState {
 	public String theme = "textmate";
 	
 	@DelegateToWidget("setMarkers")
-	public List<AceMarker> markers = Collections.emptyList();
+	public List<AceClientMarker> markers = Collections.emptyList();
 	
 	@DelegateToWidget("setRowAnnotations")
 	public Set<AceClientAnnotation> rowAnnotations = null;

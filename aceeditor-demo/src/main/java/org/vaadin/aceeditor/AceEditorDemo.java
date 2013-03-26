@@ -1,9 +1,10 @@
 package org.vaadin.aceeditor;
 
+import org.vaadin.aceeditor.AceEditor.SelectionChangeEvent;
 import org.vaadin.aceeditor.AceEditor.SelectionChangeListener;
-import org.vaadin.aceeditor.client.AceMarker;
-import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
-import org.vaadin.aceeditor.client.AceMarker.Type;
+import org.vaadin.aceeditor.client.AceClientMarker;
+import org.vaadin.aceeditor.client.AceClientMarker.OnTextChange;
+import org.vaadin.aceeditor.client.AceClientMarker.Type;
 
 import com.vaadin.annotations.PreserveOnRefresh;
 import com.vaadin.annotations.StyleSheet;
@@ -14,7 +15,6 @@ import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
-import com.vaadin.ui.themes.BaseTheme;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
@@ -27,6 +27,7 @@ import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
+import com.vaadin.ui.themes.BaseTheme;
 
 
 @StyleSheet("ace-markers.css")
@@ -115,6 +116,7 @@ public class AceEditorDemo extends UI {
 			@Override
 			public void selectionChanged(SelectionChangeEvent e) {
 				cursor.setValue(""+ed.getCursorPosition());
+				
 			}
 		});
 		
@@ -206,10 +208,10 @@ public class AceEditorDemo extends UI {
 		
 		final NativeSelect changeSelect = new NativeSelect("OnTextChange");
 		ho.addComponent(changeSelect);
-		for (OnTextChange item : AceMarker.OnTextChange.values()) {
+		for (OnTextChange item : AceClientMarker.OnTextChange.values()) {
 			changeSelect.addItem(item);
 		}
-		changeSelect.select(AceMarker.OnTextChange.DEFAULT);
+		changeSelect.select(AceClientMarker.OnTextChange.DEFAULT);
 		changeSelect.setNullSelectionAllowed(false);
 		
 		layout.addComponent(ho);
@@ -224,9 +226,9 @@ public class AceEditorDemo extends UI {
 					return;
 				}
 				String css = cssField.getValue();
-				AceMarker.Type type = (AceMarker.Type)typeSelect.getValue();
+				AceClientMarker.Type type = (AceClientMarker.Type)typeSelect.getValue();
 				boolean inFront = inFrontCheck.getValue();
-				AceMarker.OnTextChange onChange = (OnTextChange) changeSelect.getValue();
+				AceClientMarker.OnTextChange onChange = (OnTextChange) changeSelect.getValue();
 				AceMarker m = new AceMarker(selection, css, type, inFront, onChange);
 				final long markerId = ed.addMarker(m);
 				final Button mb = new Button(""+markerId);

@@ -5,7 +5,8 @@ import org.vaadin.aceeditor.client.AceClientRange;
 
 /**
  * 
- * An AceClientRange that can calculate its position based on (col, row, text).
+ * A range that in addition to defining start and end as (column ,row)
+ * can calculate the start and end *positions* based on text.
  *
  */
 public class AceRange extends AceClientRange {

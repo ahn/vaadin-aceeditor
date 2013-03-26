@@ -1,6 +1,9 @@
 package org.vaadin.aceeditor;
 
-
+/**
+ * An annotation for {@link AceEditor}.
+ *
+ */
 public class AceAnnotation {
 	
 	public enum Type {

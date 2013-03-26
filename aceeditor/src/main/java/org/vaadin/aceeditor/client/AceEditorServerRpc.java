@@ -16,7 +16,7 @@ public interface AceEditorServerRpc extends ServerRpc {
 	public void sendNow();
 
 	@Delayed(lastOnly=true)
-	public void markersChanged(List<AceMarker> markers);
+	public void markersChanged(List<AceClientMarker> markers);
 
 	@Delayed(lastOnly=true)
 	public void annotationsChanged(Set<AceClientAnnotation> markerAnnotations);

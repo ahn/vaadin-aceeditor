@@ -1,6 +1,10 @@
 package org.vaadin.aceeditor.client;
 
-public class AceMarker {
+import java.io.Serializable;
+
+
+@SuppressWarnings("serial")
+public class AceClientMarker implements Serializable {
 	
 	public enum Type {
 		line,
@@ -37,17 +41,11 @@ public class AceMarker {
 	public Type type;
 	public boolean inFront = false;
 	
-	public AceMarker() {
+	public AceClientMarker() {
 		
 	}
 	
-	public AceMarker(AceClientRange range, String cssClass, Type type, boolean inFront, OnTextChange onChange) {
-		this.range = range.isBackwards() ? range.reversed() : range;
-		this.cssClass = cssClass;
-		this.type = type;
-		this.inFront = inFront;
-		this.onChange = onChange;
-	}
+	
 	
 	@Override
 	public String toString() {

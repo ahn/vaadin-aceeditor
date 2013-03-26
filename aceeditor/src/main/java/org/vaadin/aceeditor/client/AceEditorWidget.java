@@ -56,9 +56,9 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 
 	private class ClientMarker {
-		private AceMarker marker;
+		private AceClientMarker marker;
 		private String clientId;
-		private ClientMarker(AceMarker marker, String clientId) {
+		private ClientMarker(AceClientMarker marker, String clientId) {
 			this.marker = marker;
 			this.clientId = clientId;
 		}
@@ -166,13 +166,13 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setTheme(theme);
 	}
 
-	public void setMarkers(List<AceMarker> markers) {
+	public void setMarkers(List<AceClientMarker> markers) {
 		if (!isInitialized()) {
 			return;
 		}
 		
 		HashMap<Long,ClientMarker> mmm = new HashMap<Long,ClientMarker>();
-		for (AceMarker m : markers) {
+		for (AceClientMarker m : markers) {
 			ClientMarker existing = markersInEditor.get(m.serverId);
 			if (existing==null) {
 				String clientId = editor.addMarker(convertRange(m.range), m.cssClass, m.type.toString(), m.inFront);
@@ -276,27 +276,27 @@ public class AceEditorWidget extends FocusWidget implements
 		
 		if (act==Action.insertLines || act==Action.insertText) {
 			for (ClientMarker cm : markersInEditor.values()) {
-				AceMarker m = cm.marker;
+				AceClientMarker m = cm.marker;
 				VConsole.log("adjusting " + m);
-				if (m.onChange==AceMarker.OnTextChange.ADJUST) {
+				if (m.onChange==AceClientMarker.OnTextChange.ADJUST) {
 					if (moveMarkerOnInsert(m, range)) {
 						moved.add(cm);
 					}
 				}
-				else if (m.onChange==AceMarker.OnTextChange.REMOVE) {
+				else if (m.onChange==AceClientMarker.OnTextChange.REMOVE) {
 					removed.add(cm);
 				}
 			}
 		}
 		else if (act==Action.removeLines || act==Action.removeText) {
 			for (ClientMarker cm : markersInEditor.values()) {
-				AceMarker m = cm.marker;
-				if (m.onChange==AceMarker.OnTextChange.ADJUST) {
+				AceClientMarker m = cm.marker;
+				if (m.onChange==AceClientMarker.OnTextChange.ADJUST) {
 					if (moveMarkerOnRemove(m, range)) {
 						moved.add(cm);
 					}
 				}
-				else if (m.onChange==AceMarker.OnTextChange.REMOVE) {
+				else if (m.onChange==AceClientMarker.OnTextChange.REMOVE) {
 					removed.add(cm);
 				}
 			}
@@ -324,7 +324,7 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 	}
 	
-	private boolean moveMarkerOnInsert(AceMarker m, GwtAceRange range) {
+	private boolean moveMarkerOnInsert(AceClientMarker m, GwtAceRange range) {
 		int startRow = range.getStart().getRow();
 		int startCol = range.getStart().getColumn();
 		int dRow = range.getEnd().getRow() - startRow;
@@ -362,7 +362,7 @@ public class AceEditorWidget extends FocusWidget implements
 		return true; // TODO???
 	}
 	
-	private boolean moveMarkerOnRemove(AceMarker m, GwtAceRange range) {
+	private boolean moveMarkerOnRemove(AceClientMarker m, GwtAceRange range) {
 		int[] p1 = overlapping(range, m.range.getStartRow(), m.range.getStartCol());
 		if (p1 != null) {
 			m.range.setStartRow(p1[0]);
@@ -410,7 +410,7 @@ public class AceEditorWidget extends FocusWidget implements
 		for (ClientMarker cm : moved) {
 			VConsole.log("UPDATING "+cm.clientId+" "+cm.marker);
 			editor.removeMarker(cm.clientId);
-			AceMarker m = cm.marker;
+			AceClientMarker m = cm.marker;
 			cm.clientId = editor.addMarker(convertRange(m.range), m.cssClass, m.type.toString(), m.inFront);
 			VConsole.log("UPDATED "+cm.clientId+" "+cm.marker);
 		}
@@ -547,8 +547,8 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 	}
 
-	public List<AceMarker> getMarkers() {
-		LinkedList<AceMarker> markers = new LinkedList<AceMarker>();
+	public List<AceClientMarker> getMarkers() {
+		LinkedList<AceClientMarker> markers = new LinkedList<AceClientMarker>();
 		for (ClientMarker cm : markersInEditor.values()) {
 			markers.add(cm.marker);
 		}

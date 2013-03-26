@@ -1,6 +1,9 @@
 package org.vaadin.aceeditor.client;
 
-public class AceClientAnnotation {
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+public class AceClientAnnotation implements Serializable {
 	
 	public enum Type {
 		error,

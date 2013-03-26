@@ -3,7 +3,7 @@ package org.vaadin.aceeditor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.vaadin.aceeditor.client.AceMarker;
+import org.vaadin.aceeditor.client.AceClientMarker;
 
 import com.vaadin.event.FieldEvents.TextChangeEvent;
 import com.vaadin.event.FieldEvents.TextChangeListener;
@@ -39,7 +39,7 @@ public class ErrorChecker implements TextChangeListener {
 		while (i < text.length() && matcher.find(i)) {
 			i = matcher.end() + 1;
 			AceRange range = new AceRange(matcher.start(), matcher.end(), text);
-			AceMarker m = new AceMarker(range, "myerrormarker1", AceMarker.Type.text, false, AceMarker.OnTextChange.ADJUST);
+			AceMarker m = new AceMarker(range, "myerrormarker1", AceClientMarker.Type.text, false, AceClientMarker.OnTextChange.ADJUST);
 			editor.addMarker(m);
 			
 			AceAnnotation ann = new AceAnnotation("X's not allowed here! ("+matcher.group()+")", AceAnnotation.Type.error);

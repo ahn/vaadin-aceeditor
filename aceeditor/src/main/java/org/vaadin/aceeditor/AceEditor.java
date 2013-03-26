@@ -10,10 +10,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.vaadin.aceeditor.client.AceClientAnnotation;
+import org.vaadin.aceeditor.client.AceClientMarker;
+import org.vaadin.aceeditor.client.AceClientRange;
 import org.vaadin.aceeditor.client.AceEditorServerRpc;
 import org.vaadin.aceeditor.client.AceEditorState;
-import org.vaadin.aceeditor.client.AceMarker;
-import org.vaadin.aceeditor.client.AceClientRange;
 
 import com.vaadin.annotations.JavaScript;
 import com.vaadin.annotations.StyleSheet;
@@ -31,6 +31,11 @@ import com.vaadin.ui.AbstractTextField;
 import com.vaadin.ui.AbstractTextField.TextChangeEventMode;
 import com.vaadin.util.ReflectTools;
 
+/**
+ * 
+ * AceEditor wraps an Ace code editor inside a TextField-like Vaadin component.
+ *
+ */
 @SuppressWarnings("serial")
 @JavaScript("client/js/ace/ace.js")
 @StyleSheet("client/css/ace-gwt.css")
@@ -39,6 +44,20 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 	private static final String DEFAULT_ACE_PATH = "http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
 
+	public static class SelectionChangeEvent extends Event {
+		public static String EVENT_ID = "aceeditor-selection";
+		private final AceRange selection;
+
+		public SelectionChangeEvent(AceEditor ed) {
+			super(ed);
+			this.selection = ed.getSelection();
+		}
+
+		public AceRange getSelection() {
+			return selection;
+		}
+	}
+	
 	public interface SelectionChangeListener {
 		public static final Method selectionChangedMethod = ReflectTools
 				.findMethod(SelectionChangeListener.class, "selectionChanged",
@@ -95,14 +114,8 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 
 		@Override
-		public void markersChanged(List<AceMarker> markers) {
-
-			for (AceMarker m : markers) {
-				System.out.println("MMM " + m);
-			}
-
+		public void markersChanged(List<AceClientMarker> markers) {
 			getState().markers = markers;
-
 		}
 
 		@Override
@@ -238,7 +251,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public long addMarker(AceMarker marker) {
 		marker.serverId = newMarkerId();
 		markers.put(marker.serverId, marker);
-		getState().markers = new LinkedList<AceMarker>(markers.values());
+		getState().markers = new LinkedList<AceClientMarker>(markers.values());
 		return marker.serverId;
 	}
 
@@ -252,14 +265,14 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public AceMarker removeMarker(long serverId) {
 		AceMarker m = markers.remove(serverId);
 		if (m != null) {
-			getState().markers = new LinkedList<AceMarker>(markers.values());
+			getState().markers = new LinkedList<AceClientMarker>(markers.values());
 		}
 		return m;
 	}
 
 	public void clearMarkers() {
 		markers = new HashMap<Long, AceMarker>();
-		getState().markers = new LinkedList<AceMarker>(markers.values());
+		getState().markers = new LinkedList<AceClientMarker>(markers.values());
 	}
 
 	public void addRowAnnotation(AceAnnotation ann, int row) {
@@ -282,7 +295,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		getState().rowAnnotations.add(rann);
 	}
 
-	public void addMarkerAnnotation(AceAnnotation ann, AceMarker marker) {
+	public void addMarkerAnnotation(AceAnnotation ann, AceClientMarker marker) {
 		addMarkerAnnotation(ann, marker.serverId);
 	}
 
@@ -341,13 +354,11 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 	/**
 	 * The text change timeout modifies how often text change events are
-	 * communicated to the application when {@link #getTextChangeEventMode()} is
+	 * communicated to the application when {@link #setTextChangeEventMode} is
 	 * {@link TextChangeEventMode#LAZY} or {@link TextChangeEventMode#TIMEOUT}.
 	 * 
-	 * 
-	 * @see #getTextChangeEventMode()
-	 * 
-	 * @param timeout
+	 *
+	 * @param timeoutMs
 	 *            the timeout in milliseconds
 	 */
 	public void setTextChangeTimeout(int timeoutMs) {
