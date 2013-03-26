@@ -45,7 +45,14 @@ public class AceEditorDemo extends UI {
 	}
 
 	public AceEditorDemo() {
-		editor.setValue("Hello!");
+		String s = "";
+		for (int i=0; i<10; i++) {
+			for (int k=0; k<i; k++) {
+				s += "Hello! ";
+			}
+			s += "Hello!\n";
+		}
+		editor.setValue(s);
 	}
 	
 	@Override
