@@ -1,4 +1,3 @@
-
 Vaadin AceEditor
 ================
 
@@ -10,7 +9,7 @@ From version 0.7.0 onwards this add-on requires Vaadin 7. The earlier Vaadin 6 v
 
 ## Demo
 
-[Online demo of Vaadin AceEditor](http://antti.virtuallypreinstalled/aceeditor). The source code of the demo available [here](...).
+[Online demo of Vaadin AceEditor](http://antti.virtuallypreinstalled.com/aceeditor/). The source code of the demo available [here](https://github.com/ahn/vaadin-aceeditor/tree/master/aceeditor-demo).
 
 ## Getting started
 
