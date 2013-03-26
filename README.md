@@ -7,6 +7,8 @@ Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
 
 From version 0.7.0 onwards this add-on requires Vaadin 7. The earlier Vaadin 6 version most likely won't be maintained any more. The new Vaadin 7 version is somewhat changed from the earlier version. Some things are still missing but hopefully will be implemented at some point.
 
+This add-on is still in an experimental phase, interfaces etc. are subject to change.
+
 ## Demo
 
 [Online demo of Vaadin AceEditor](http://antti.virtuallypreinstalled.com/aceeditor/). The source code of the demo available [here](https://github.com/ahn/vaadin-aceeditor/tree/master/aceeditor-demo).
