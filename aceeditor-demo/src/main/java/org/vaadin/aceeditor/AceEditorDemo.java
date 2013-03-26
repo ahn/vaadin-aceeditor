@@ -37,7 +37,7 @@ public class AceEditorDemo extends UI {
 
 	
 	
-	private AceEditor ed = new AceEditor();
+	private AceEditor editor = new AceEditor();
 	
 	private NativeSelect markerAnnotationSelect = new NativeSelect("Marker");
 	{
@@ -49,7 +49,7 @@ public class AceEditorDemo extends UI {
 		for (int i=12345; i<100000; i += 11111) {
 			s += i+"\n";
 		}
-		ed.setValue(s);
+		editor.setValue(s);
 	}
 	
 	@Override
@@ -65,16 +65,22 @@ public class AceEditorDemo extends UI {
 		
 		split.setFirstComponent(leftBar);
 		
-		ed.setSizeFull();
+		editor.setSizeFull();
 		
-		ed.setThemePath("/static/ace");
-		ed.setModePath("/static/ace");
-		ed.setWorkerPath("/static/ace");
+		// The Ace files are at webapp/static/ace directory.
+		// http://stackoverflow.com/a/3722122
+		editor.setThemePath("/aceeditor/static/static/ace");
+		editor.setModePath("/aceeditor/static/static/ace");
+		editor.setWorkerPath("/aceeditor/static/static/ace");
 		
-
+//		editor.setThemePath("/static/ace");
+//		editor.setModePath("/static/ace");
+//		editor.setWorkerPath("/static/ace");
+		
+		
 		leftBar.addComponent(createValueTextArea());
 		leftBar.addComponent(createCursorPanel());
-		leftBar.addComponent(createAppearanceSelect());
+		leftBar.addComponent(createThemeModePanel());
 		leftBar.addComponent(createOptionsPanel());
 		leftBar.addComponent(createMarkerPanel());
 		leftBar.addComponent(createRowAnnotationPanel());
@@ -83,12 +89,7 @@ public class AceEditorDemo extends UI {
 		leftBar.addComponent(createMarkerAnnotationPanel());
 		leftBar.addComponent(createErrorEditor());
 		
-		
-		
-		
-
-
-		split.setSecondComponent(ed);
+		split.setSecondComponent(editor);
 		
 	}
 
@@ -104,7 +105,7 @@ public class AceEditorDemo extends UI {
 			public void buttonClick(ClickEvent event) {
 				try {
 					int v = Integer.valueOf(cursor.getValue());
-					ed.setCursorPosition(v);
+					editor.setCursorPosition(v);
 				}
 				catch (NumberFormatException e) {
 					return;
@@ -112,10 +113,10 @@ public class AceEditorDemo extends UI {
 			}
 		});
 		
-		ed.addSelectionChangeListener(new SelectionChangeListener() {
+		editor.addSelectionChangeListener(new SelectionChangeListener() {
 			@Override
 			public void selectionChanged(SelectionChangeEvent e) {
-				cursor.setValue(""+ed.getCursorPosition());
+				cursor.setValue(""+editor.getCursorPosition());
 				
 			}
 		});
@@ -133,7 +134,7 @@ public class AceEditorDemo extends UI {
 		readOnly.addValueChangeListener(new ValueChangeListener() {
 			@Override
 			public void valueChange(ValueChangeEvent event) {
-				ed.setReadOnly(readOnly.getValue());
+				editor.setReadOnly(readOnly.getValue());
 			}
 		});
 		
@@ -142,7 +143,7 @@ public class AceEditorDemo extends UI {
 		wordwrap.addValueChangeListener(new ValueChangeListener() {
 			@Override
 			public void valueChange(ValueChangeEvent event) {
-				ed.setWordWrap(wordwrap.getValue());
+				editor.setWordWrap(wordwrap.getValue());
 			}
 		});
 		
@@ -171,14 +172,14 @@ public class AceEditorDemo extends UI {
 		get.addClickListener(new ClickListener() {
 			@Override
 			public void buttonClick(ClickEvent event) {
-				ta.setValue(ed.getValue());
+				ta.setValue(editor.getValue());
 			}
 		});
 		
 		set.addClickListener(new ClickListener() {
 			@Override
 			public void buttonClick(ClickEvent event) {
-				ed.setValue(ta.getValue());
+				editor.setValue(ta.getValue());
 			}
 		});
 		
@@ -220,7 +221,7 @@ public class AceEditorDemo extends UI {
 		layout.addComponent(button);
 		button.addClickListener(new ClickListener() {
 			public void buttonClick(ClickEvent event) {
-				AceRange selection = ed.getSelection();
+				AceRange selection = editor.getSelection();
 				if (selection.getEndPosition()==selection.getStartPosition()) {
 					Notification.show("Select some text first");
 					return;
@@ -230,14 +231,14 @@ public class AceEditorDemo extends UI {
 				boolean inFront = inFrontCheck.getValue();
 				AceClientMarker.OnTextChange onChange = (OnTextChange) changeSelect.getValue();
 				AceMarker m = new AceMarker(selection, css, type, inFront, onChange);
-				final long markerId = ed.addMarker(m);
+				final long markerId = editor.addMarker(m);
 				final Button mb = new Button(""+markerId);
 				markerLayout.addComponent(mb);
 				markerAnnotationSelect.addItem(markerId);
 				mb.addClickListener(new ClickListener() {
 					@Override
 					public void buttonClick(ClickEvent event) {
-						ed.removeMarker(markerId);
+						editor.removeMarker(markerId);
 						markerLayout.removeComponent(mb);
 						markerAnnotationSelect.removeItem(markerId);
 					}
@@ -289,7 +290,7 @@ public class AceEditorDemo extends UI {
 					return;
 				}
 				String msg = msgField.getValue();
-				ed.addRowAnnotation(new AceAnnotation(msg, type), row);
+				editor.addRowAnnotation(new AceAnnotation(msg, type), row);
 			}
 		});
 		
@@ -297,7 +298,7 @@ public class AceEditorDemo extends UI {
 		clear.addClickListener(new ClickListener() {
 			@Override
 			public void buttonClick(ClickEvent event) {
-				ed.clearRowAnnotations();
+				editor.clearRowAnnotations();
 			}
 		});
 		
@@ -339,7 +340,7 @@ public class AceEditorDemo extends UI {
 					Notification.show("Select marker");
 					return;
 				}
-				ed.addMarkerAnnotation(new AceAnnotation(msg, type), markerId);
+				editor.addMarkerAnnotation(new AceAnnotation(msg, type), markerId);
 			}
 		});
 		
@@ -347,7 +348,7 @@ public class AceEditorDemo extends UI {
 		clear.addClickListener(new ClickListener() {
 			@Override
 			public void buttonClick(ClickEvent event) {
-				ed.clearRowAnnotations();
+				editor.clearRowAnnotations();
 			}
 		});
 		
@@ -358,7 +359,7 @@ public class AceEditorDemo extends UI {
 		return new Panel("Marker Annotations", layout);
 	}
 
-	private Component createAppearanceSelect() {
+	private Component createThemeModePanel() {
 		
 		VerticalLayout layout = new VerticalLayout();
 		layout.setMargin(true);
@@ -375,7 +376,7 @@ public class AceEditorDemo extends UI {
 		themeSelect.addValueChangeListener(new ValueChangeListener() {
 			@Override
 			public void valueChange(ValueChangeEvent event) {
-				ed.setTheme((AceTheme)themeSelect.getValue());
+				editor.setTheme((AceTheme)themeSelect.getValue());
 			}
 		});
 		themeSelect.select(AceTheme.eclipse);
@@ -390,7 +391,7 @@ public class AceEditorDemo extends UI {
 		modeSelect.addValueChangeListener(new ValueChangeListener() {
 			@Override
 			public void valueChange(ValueChangeEvent event) {
-				ed.setMode((AceMode)modeSelect.getValue());
+				editor.setMode((AceMode)modeSelect.getValue());
 			}
 		});
 		modeSelect.select(AceMode.text);
@@ -403,7 +404,7 @@ public class AceEditorDemo extends UI {
 		cb.addValueChangeListener(new ValueChangeListener() {
 			@Override
 			public void valueChange(ValueChangeEvent event) {
-				ed.setUseWorker(cb.getValue());
+				editor.setUseWorker(cb.getValue());
 			}
 		});
 		

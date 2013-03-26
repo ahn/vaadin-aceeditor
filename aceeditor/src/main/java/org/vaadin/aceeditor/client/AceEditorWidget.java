@@ -3,14 +3,13 @@ package org.vaadin.aceeditor.client;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.vaadin.aceeditor.client.gwt.GwtAceAnnotation;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeCursorHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent;
+import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent.Data.Action;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeSelectionHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
@@ -19,7 +18,6 @@ import org.vaadin.aceeditor.client.gwt.GwtAceFocusBlurHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAcePosition;
 import org.vaadin.aceeditor.client.gwt.GwtAceRange;
 import org.vaadin.aceeditor.client.gwt.GwtAceSelection;
-import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent.Data.Action;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.DOM;
@@ -36,7 +34,6 @@ public class AceEditorWidget extends FocusWidget implements
 
 	public interface ChangeListener {
 		public void changed();
-		public void markersChanged();
 	}
 
 	public interface FocusChangeListener {
@@ -82,6 +79,8 @@ public class AceEditorWidget extends FocusWidget implements
 	private Map<Long,ClientMarker> markersInEditor = Collections.emptyMap();
 
 	private Set<AceClientAnnotation> markerAnnotations = null;
+
+	private boolean settingText = false;
 	
 	private static String nextId() {
 		return "_AceEditorWidget_" + (++idCounter);
@@ -137,19 +136,56 @@ public class AceEditorWidget extends FocusWidget implements
 		// Not setting text when focused. This is for (among other things?) to prevent
 		// my own older values appearing when they arrive from the server.
 		// TODO: a better solution for this would be better.
-		if (focused) {
-			return;
-		}
+//		if (focused) {
+//			return;
+//		}
 		
 		if (text == null) {
 			text = "";
 		}
 		
 		if (!text.equals(this.text)) {
-			removeAllMarkers();
 			this.text = text;
+			settingText = true;
 			editor.setText(text);
+			settingText = false;
 		}
+	}
+	
+	public void setListenToSelectionChanges(boolean listen) {
+		listenSelections = listen;
+	}
+
+	public void setSelection(AceClientRange s) {
+		if (!isInitialized()) {
+			return;
+		}
+		if (selection.equals(s)) {
+			return;
+		}
+		
+		// XXX:
+		// Not setting selection when focused. This is for (among other things?) to prevent
+		// my own older values appearing when they arrive from the server.
+		// TODO: a better solution for this would be better.
+		if (focused) {
+			return;
+		}
+		
+		selection = s;
+		
+		int r1 = s.getStartRow();
+		int c1 = s.getStartCol();
+		int r2 = s.getEndRow();
+		int c2 = s.getEndCol();
+		boolean backwards = r1 > r2 || (r1 == r2 && c1 > c2);
+		GwtAceRange range;
+		if (backwards) {
+			range = GwtAceRange.create(r2, c2, r1, c1);
+		} else {
+			range = GwtAceRange.create(r1, c1, r2, c2);
+		}
+		editor.setSelection(range, backwards);
 	}
 
 	public void setMode(String mode) {
@@ -166,7 +202,7 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setTheme(theme);
 	}
 
-	public void setMarkers(List<AceClientMarker> markers) {
+	public void setMarkers(Set<AceClientMarker> markers) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -190,9 +226,16 @@ public class AceEditorWidget extends FocusWidget implements
 		
 		markersInEditor = mmm;
 		
+		adjustMarkerAnnotations();
+	}
+	
+	private void adjustMarkerAnnotations() {
 		if (markerAnnotations != null) {
 			markerAnnotations = adjustedAnnotations(markerAnnotations);
 			setAnnotationsToEditor(markerAnnotations);
+			if (changeListener!=null) {
+				changeListener.changed();
+			}
 		}
 	}
 	
@@ -228,7 +271,6 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 		
 		markerAnnotations = adjustedAnnotations(manns);
-		
 		setAnnotationsToEditor(markerAnnotations);
 	}
 	
@@ -252,20 +294,19 @@ public class AceEditorWidget extends FocusWidget implements
 
 	@Override
 	public void onChange(GwtAceChangeEvent e) {
+		if (settingText) {
+			return;
+		}
 		String newText = editor.getText();
 		if (newText.equals(text)) {
 			return;
 		}
 		adjustMarkers(e);
-		if (markerAnnotations!=null) {
-			markerAnnotations = adjustedAnnotations(markerAnnotations);
-			setAnnotationsToEditor(markerAnnotations);
-		}
+		adjustMarkerAnnotations();
 		text = newText;
 		if (changeListener != null) {
 			changeListener.changed();
 		}
-
 	}
 
 	private void adjustMarkers(GwtAceChangeEvent e) {
@@ -304,25 +345,20 @@ public class AceEditorWidget extends FocusWidget implements
 		
 		removeMarkers(removed);
 		updateMarkers(moved);
-		
-		if (!removed.isEmpty() || !moved.isEmpty()) {
-			if (changeListener != null) {
-				changeListener.markersChanged();
-			}
-		}
 	}
 	
-	private void removeAllMarkers() {
-		if (!markersInEditor.isEmpty()) {
-			for (ClientMarker m : markersInEditor.values()) {
-				editor.removeMarker(m.clientId);
-			}
-			markersInEditor.clear();
-			if (changeListener!=null) {
-				changeListener.markersChanged();
-			}
-		}
-	}
+//	private void removeAllMarkers() {
+//		if (!markersInEditor.isEmpty()) {
+//			for (ClientMarker m : markersInEditor.values()) {
+//				editor.removeMarker(m.clientId);
+//			}
+//			markersInEditor.clear();
+//			if (changeListener!=null) {
+//				changeListener.changed();
+//			}
+//			adjustMarkerAnnotations();
+//		}
+//	}
 	
 	private boolean moveMarkerOnInsert(AceClientMarker m, GwtAceRange range) {
 		int startRow = range.getStart().getRow();
@@ -506,33 +542,6 @@ public class AceEditorWidget extends FocusWidget implements
 	public boolean isFocused() {
 		return focused;
 	}
-
-	public void setListenToSelectionChanges(boolean listen) {
-		listenSelections = listen;
-	}
-
-	public void setSelection(AceClientRange s) {
-		if (!isInitialized()) {
-			return;
-		}
-		if (selection.equals(s)) {
-			return;
-		}
-		selection = s;
-		
-		int r1 = s.getStartRow();
-		int c1 = s.getStartCol();
-		int r2 = s.getEndRow();
-		int c2 = s.getEndCol();
-		boolean backwards = r1 > r2 || (r1 == r2 && c1 > c2);
-		GwtAceRange range;
-		if (backwards) {
-			range = GwtAceRange.create(r2, c2, r1, c1);
-		} else {
-			range = GwtAceRange.create(r1, c1, r2, c2);
-		}
-		editor.setSelection(range, backwards);
-	}
 	
 	private GwtAceRange convertRange(AceClientRange s) {
 		int r1 = s.getStartRow();
@@ -547,8 +556,8 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 	}
 
-	public List<AceClientMarker> getMarkers() {
-		LinkedList<AceClientMarker> markers = new LinkedList<AceClientMarker>();
+	public Set<AceClientMarker> getMarkers() {
+		HashSet<AceClientMarker> markers = new HashSet<AceClientMarker>();
 		for (ClientMarker cm : markersInEditor.values()) {
 			markers.add(cm.marker);
 		}

@@ -1,17 +1,13 @@
 package org.vaadin.aceeditor;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.vaadin.aceeditor.client.AceClientAnnotation;
 import org.vaadin.aceeditor.client.AceClientMarker;
 import org.vaadin.aceeditor.client.AceClientRange;
+import org.vaadin.aceeditor.client.AceDocument;
 import org.vaadin.aceeditor.client.AceEditorServerRpc;
 import org.vaadin.aceeditor.client.AceEditorState;
 
@@ -73,13 +69,11 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	private boolean isFiringTextChangeEvent;
 	private boolean latestFocus = false;
 
-	private Map<Long, AceMarker> markers = new HashMap<Long, AceMarker>();
-
 	private AceEditorServerRpc rpc = new AceEditorServerRpc() {
 
 		@Override
-		public void changedDelayed(String t, AceClientRange sel, boolean focus) {
-			changed(t, sel, focus);
+		public void changedDelayed(AceDocument doc, AceClientRange sel, boolean focus) {
+			changed(doc, sel, focus);
 		}
 
 		@Override
@@ -87,10 +81,12 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 			// nothing
 		}
 
-		private void changed(String t, AceClientRange sel, boolean focus) {
-
-			if (!t.equals(text)) {
-				text = t;
+		private void changed(AceDocument doc, AceClientRange sel, boolean focus) {
+			
+			getState().document = doc;
+			
+			if (!doc.getText().equals(text)) {
+				text = doc.getText();
 
 				// TODO: when to call setInternalValue??
 				setInternalValue(text);
@@ -111,17 +107,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				getState().selection = sel;
 				fireSelectionChanged();
 			}
-		}
-
-		@Override
-		public void markersChanged(List<AceClientMarker> markers) {
-			getState().markers = markers;
-		}
-
-		@Override
-		public void annotationsChanged(
-				Set<AceClientAnnotation> markerAnnotations) {
-			getState().markerAnnotations = markerAnnotations;
 		}
 	};
 
@@ -162,7 +147,13 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
 	protected void setInternalValue(String newValue) {
 		super.setInternalValue(newValue);
-		getState().text = newValue;
+		getState().document.setText(newValue);
+	}
+	
+	@Override
+	public void setValue(String newFieldValue) {
+		super.setValue(newFieldValue);
+		getState().document.setLatestChangeByServer(true);
 	}
 
 	@Override
@@ -250,49 +241,49 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 	public long addMarker(AceMarker marker) {
 		marker.serverId = newMarkerId();
-		markers.put(marker.serverId, marker);
-		getState().markers = new LinkedList<AceClientMarker>(markers.values());
+		getState().document.getMarkers().add(marker);
+		getState().document.setLatestChangeByServer(true);
 		return marker.serverId;
 	}
 
-	public AceMarker removeMarker(AceMarker marker) {
-		if (marker.serverId < 0) {
-			return null;
-		}
-		return removeMarker(marker.serverId);
+	public void removeMarker(AceMarker marker) {
+		removeMarker(marker.serverId);
 	}
 
-	public AceMarker removeMarker(long serverId) {
-		AceMarker m = markers.remove(serverId);
-		if (m != null) {
-			getState().markers = new LinkedList<AceClientMarker>(markers.values());
+	public void removeMarker(long serverId) {
+		for (AceClientMarker m : getState().document.getMarkers()) {
+			if (m.serverId==serverId) {
+				getState().document.getMarkers().remove(m);
+				getState().document.setLatestChangeByServer(true);
+				break;
+			}
 		}
-		return m;
 	}
-
+	
 	public void clearMarkers() {
-		markers = new HashMap<Long, AceMarker>();
-		getState().markers = new LinkedList<AceClientMarker>(markers.values());
+		getState().document.getMarkers().clear();
+		getState().document.setLatestChangeByServer(true);
 	}
 
 	public void addRowAnnotation(AceAnnotation ann, int row) {
-		Set<AceClientAnnotation> manns = getState().markerAnnotations;
+		Set<AceClientAnnotation> manns = getState().document.getMarkerAnnotations();
 		if (manns == null) {
 			// ok
 		} else if (manns.isEmpty()) {
-			getState().markerAnnotations = null;
+			getState().document.setMarkerAnnotations(null);
 		} else {
 			throw new IllegalStateException(
 					"AceEditor can contain either row annotations or marker annotations, not both.");
 		}
 
+		Set<AceClientAnnotation> ranns = getState().document.getRowAnnotations();
+		if (ranns == null || ranns.isEmpty()) {
+			getState().document.setRowAnnotations(new HashSet<AceClientAnnotation>());
+		}
 		AceClientAnnotation rann = new AceClientAnnotation(ann.getMessage(),
 				AceClientAnnotation.Type.valueOf(ann.getType().toString()), row);
-		if (getState().rowAnnotations == null
-				|| getState().rowAnnotations.isEmpty()) {
-			getState().rowAnnotations = new HashSet<AceClientAnnotation>();
-		}
-		getState().rowAnnotations.add(rann);
+		getState().document.getRowAnnotations().add(rann);
+		getState().document.setLatestChangeByServer(true);
 	}
 
 	public void addMarkerAnnotation(AceAnnotation ann, AceClientMarker marker) {
@@ -300,40 +291,56 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	public void addMarkerAnnotation(AceAnnotation ann, long markerId) {
-		Set<AceClientAnnotation> ranns = getState().rowAnnotations;
+		if (!hasMarker(markerId)) {
+			throw new IllegalStateException("Editor does not contain marker with id " + markerId);
+		}
+		
+		Set<AceClientAnnotation> ranns = getState().document.getRowAnnotations();
 		if (ranns == null) {
 			// ok
 		} else if (ranns.isEmpty()) {
-			getState().rowAnnotations = null;
+			getState().document.setRowAnnotations(null);
 		} else {
 			throw new IllegalStateException(
 					"AceEditor can contain either row annotations or marker annotations, not both.");
 		}
-		AceClientAnnotation cann = new AceClientAnnotation(ann.getMessage(),
-				AceClientAnnotation.Type.valueOf(ann.getType().toString()), 0);
-		cann.markerId = markerId;
 
-		if (getState().markerAnnotations == null
-				|| getState().markerAnnotations.isEmpty()) {
-			getState().markerAnnotations = new HashSet<AceClientAnnotation>();
+		Set<AceClientAnnotation> manns = getState().document.getMarkerAnnotations();
+		if (manns == null || manns.isEmpty()) {
+			getState().document.setMarkerAnnotations(new HashSet<AceClientAnnotation>());
 		}
-		getState().markerAnnotations.add(cann);
+		AceClientAnnotation rann = new AceClientAnnotation(ann.getMessage(),
+				AceClientAnnotation.Type.valueOf(ann.getType().toString()), 0);
+		rann.markerId = markerId;
+		getState().document.getMarkerAnnotations().add(rann);
+		getState().document.setLatestChangeByServer(true);
+	}
+
+	private boolean hasMarker(long markerId) {
+		for (AceClientMarker m : getState().document.getMarkers()) {
+			if (m.serverId==markerId) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void clearRowAnnotations() {
-		if (getState().markerAnnotations == null) {
-			getState().rowAnnotations = Collections.emptySet();
+		if (getState().document.getMarkerAnnotations() == null) {
+			getState().document.setRowAnnotations(new HashSet<AceClientAnnotation>());
 		} else {
-			getState().rowAnnotations = null;
+			getState().document.setRowAnnotations(null);
 		}
+		getState().document.setLatestChangeByServer(true);
 	}
 
 	public void clearMarkerAnnotations() {
-		if (getState().rowAnnotations == null) {
-			getState().markerAnnotations = Collections.emptySet();
+		if (getState().document.getRowAnnotations() == null) {
+			getState().document.setMarkerAnnotations(new HashSet<AceClientAnnotation>());
 		} else {
-			getState().markerAnnotations = null;
+			getState().document.setMarkerAnnotations(null);
 		}
+		getState().document.setLatestChangeByServer(true);
 	}
 
 	private long newMarkerId() {

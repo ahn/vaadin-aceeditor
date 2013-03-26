@@ -90,35 +90,43 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		
 		setTextChangeEventMode(getState().changeMode);
 		setTextChangeTimeout(getState().changeTimeout);
-		
-		
+
 		// TODO: are these needed?
 //		widget.setHideErrors(getState().hideErrors);
 //		widget.setRequired(getState().required);
 //		widget.setModified(getState().modified);
-				
-		if (!widget.isInitialized()) {
+		
+		boolean firstTime = !widget.isInitialized();
+		if (firstTime) {
+			// To make sure Ace config is applied before the editor is created,
+			// we delay the initialization till first call to onStateChanged,
+			// not initializing in createWidget() right away.
 			applyConfig(getState().config);
 			widget.initialize();
-			widget.setText(getState().text);
 			widget.setMode(getState().mode);
 			widget.setTheme(getState().theme);
-			widget.setMarkers(getState().markers);
-			widget.setMarkerAnnotations(getState().markerAnnotations);
-			widget.setRowAnnotations(getState().rowAnnotations);
 			widget.setListenToSelectionChanges(getState().listenToSelectionChanges);
-			widget.setSelection(getState().selection);
 			widget.setUseWorker(getState().useWorker);
 			widget.setWordwrap(getState().wordwrap);
 		}
 		
 		widget.setPropertyReadOnly(getState().propertyReadOnly);
-		
 		widget.setTabIndex(getState().tabIndex);
-		
 		widget.setReadOnly(getState().readOnly);
+		
 		immediate = getState().immediate;
 		
+		AceDocument doc = getState().document;
+		if (firstTime || doc.isLatestChangeByServer()) {
+			widget.setText(doc.getText());
+			widget.setMarkers(doc.getMarkers());
+			widget.setRowAnnotations(doc.getRowAnnotations());
+			widget.setMarkerAnnotations(doc.getMarkerAnnotations());
+		}
+		
+		if (!widget.isFocused()) {
+			widget.setSelection(getState().selection);
+		}
 	}
 	
 	private static void applyConfig(Map<String, String> config) {
@@ -197,9 +205,15 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	
 	private void sendToServerDelayed() {
 		String text = widget.getText();
+		AceDocument doc = new AceDocument();
+		doc.setText(text);
+		doc.setMarkers(widget.getMarkers());
+		doc.setMarkerAnnotations(widget.getMarkerAnnotations());
+		doc.setLatestChangeByServer(false);
+		
 		AceClientRange sel = widget.getSelection();
 		boolean focus = widget.isFocused();
-		rpc.changedDelayed(text, sel, focus);
+		rpc.changedDelayed(doc, sel, focus);
 	}
 	
 	private void sendToServerImmediately() {
@@ -230,14 +244,5 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		// TODO Auto-generated method stub
 		
 	}
-
-	@Override
-	public void markersChanged() {
-		rpc.annotationsChanged(widget.getMarkerAnnotations());
-		rpc.markersChanged(widget.getMarkers());
-	}
-
-
-
 
 }
