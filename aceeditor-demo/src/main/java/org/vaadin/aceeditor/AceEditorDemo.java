@@ -45,11 +45,7 @@ public class AceEditorDemo extends UI {
 	}
 
 	public AceEditorDemo() {
-		String s = "";
-		for (int i=12345; i<100000; i += 11111) {
-			s += i+"\n";
-		}
-		editor.setValue(s);
+		editor.setValue("Hello!");
 	}
 	
 	@Override
@@ -68,14 +64,17 @@ public class AceEditorDemo extends UI {
 		editor.setSizeFull();
 		
 		// The Ace files are at webapp/static/ace directory.
-		// http://stackoverflow.com/a/3722122
-		editor.setThemePath("/aceeditor/static/static/ace");
-		editor.setModePath("/aceeditor/static/static/ace");
-		editor.setWorkerPath("/aceeditor/static/static/ace");
 		
-//		editor.setThemePath("/static/ace");
-//		editor.setModePath("/static/ace");
-//		editor.setWorkerPath("/static/ace");
+		editor.setThemePath("/static/ace");
+		editor.setModePath("/static/ace");
+		editor.setWorkerPath("/static/ace");
+		
+		// http://stackoverflow.com/a/3722122
+//		editor.setThemePath("/aceeditor/static/static/ace");
+//		editor.setModePath("/aceeditor/static/static/ace");
+//		editor.setWorkerPath("/aceeditor/static/static/ace");
+		
+
 		
 		
 		leftBar.addComponent(createValueTextArea());

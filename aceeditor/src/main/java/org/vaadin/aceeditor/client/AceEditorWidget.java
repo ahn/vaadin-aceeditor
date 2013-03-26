@@ -370,7 +370,7 @@ public class AceEditorWidget extends FocusWidget implements
 			return false;
 		}
 		
-		if (range.getStart().getRow() > m.range.getStartRow()) {
+		if (range.getStart().getRow() > m.range.getEndRow()) {
 			return false;
 		}
 		
