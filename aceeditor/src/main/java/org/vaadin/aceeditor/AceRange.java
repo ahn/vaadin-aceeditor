@@ -1,7 +1,7 @@
 package org.vaadin.aceeditor;
 
-import org.vaadin.aceeditor.Util;
 import org.vaadin.aceeditor.client.AceClientRange;
+import org.vaadin.aceeditor.client.Util;
 
 /**
  * 

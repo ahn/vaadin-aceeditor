@@ -1,4 +1,4 @@
-package org.vaadin.aceeditor;
+package org.vaadin.aceeditor.client;
 
 public class Util {
 
