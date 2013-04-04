@@ -45,13 +45,11 @@ public class AceEditorDemo extends UI {
 	}
 
 	public AceEditorDemo() {
-		String s = "";
-		for (int i=0; i<10; i++) {
-			for (int k=0; k<i; k++) {
-				s += "Hello! ";
-			}
-			s += "Hello!\n";
-		}
+		String s = "var s = \"Hello!\";\n"
+				+ "while (true) {\n" +
+				"    alert(s);\n" +
+				"}\n";
+		
 		editor.setValue(s);
 	}
 	
@@ -72,14 +70,14 @@ public class AceEditorDemo extends UI {
 		
 		// The Ace files are at webapp/static/ace directory.
 		
-		editor.setThemePath("/static/ace");
-		editor.setModePath("/static/ace");
-		editor.setWorkerPath("/static/ace");
+//		editor.setThemePath("/static/ace");
+//		editor.setModePath("/static/ace");
+//		editor.setWorkerPath("/static/ace");
 		
 		// http://stackoverflow.com/a/3722122
-//		editor.setThemePath("/aceeditor/static/static/ace");
-//		editor.setModePath("/aceeditor/static/static/ace");
-//		editor.setWorkerPath("/aceeditor/static/static/ace");
+		editor.setThemePath("/aceeditor/static/static/ace");
+		editor.setModePath("/aceeditor/static/static/ace");
+		editor.setWorkerPath("/aceeditor/static/static/ace");
 		
 
 		
@@ -400,7 +398,7 @@ public class AceEditorDemo extends UI {
 				editor.setMode((AceMode)modeSelect.getValue());
 			}
 		});
-		modeSelect.select(AceMode.text);
+		modeSelect.select(AceMode.javascript);
 		
 		layout.addComponent(ve);
 		
