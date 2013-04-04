@@ -1,6 +1,10 @@
 package org.vaadin.aceeditor.client;
 
-public class AceClientRange {
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+public class AceClientRange implements Serializable {
+	
 	protected int row1;
 	protected int col1;
 	protected int row2;
