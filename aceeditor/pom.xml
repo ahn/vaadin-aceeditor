@@ -5,6 +5,7 @@
 	<artifactId>aceeditor</artifactId>
 	<packaging>jar</packaging>
 	<name>AceEditor</name>
+	<version>0.7.1</version>
 	<parent>
 		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
