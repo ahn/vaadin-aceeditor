@@ -9,6 +9,9 @@ import org.vaadin.aceeditor.client.Util;
  * can calculate the start and end *positions* based on text.
  *
  */
+// TODO: would probably be better if AceRange just contained AceClientRange,
+// not extending it...
+@SuppressWarnings("serial")
 public class AceRange extends AceClientRange {
 	private final String text;
 	private int pos1 = -1;
