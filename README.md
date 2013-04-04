@@ -175,6 +175,6 @@ To create an addon package that can be uploaded to Vaadin Directory
     cd aceeditor
     mvn clean package assembly:single
 
-
+[![Build Status](https://travis-ci.org/ahn/vaadin-aceeditor.png)](https://travis-ci.org/ahn/vaadin-aceeditor)
 
 
