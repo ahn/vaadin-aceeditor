@@ -132,14 +132,6 @@ public class AceEditorWidget extends FocusWidget implements
 			return;
 		}
 		
-		// XXX:
-		// Not setting text when focused. This is for (among other things?) to prevent
-		// my own older values appearing when they arrive from the server.
-		// TODO: a better solution for this would be better.
-//		if (focused) {
-//			return;
-//		}
-		
 		if (text == null) {
 			text = "";
 		}
@@ -160,15 +152,7 @@ public class AceEditorWidget extends FocusWidget implements
 		if (!isInitialized()) {
 			return;
 		}
-		if (selection.equals(s)) {
-			return;
-		}
-		
-		// XXX:
-		// Not setting selection when focused. This is for (among other things?) to prevent
-		// my own older values appearing when they arrive from the server.
-		// TODO: a better solution for this would be better.
-		if (focused) {
+		if (s==null || selection.equals(s)) {
 			return;
 		}
 		

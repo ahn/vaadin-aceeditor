@@ -10,11 +10,23 @@ import java.util.Set;
 @SuppressWarnings("serial")
 public class AceDocument implements Serializable {
 
+	// TODO: should probably implement equals?
+	
 	private String text = "";
 	private Set<AceClientMarker> markers = new HashSet<AceClientMarker>();
 	private Set<AceClientAnnotation> rowAnnotations = null;
 	private Set<AceClientAnnotation> markerAnnotations = null;
-	private boolean latestChangeByServer = true;
+	
+	/**
+	 * 0 if no change on server
+	 * > 0 if document value changed on server and should be set on client
+	 * 
+	 * int instead of boolean because we need to make sure that the value
+	 * changes (increments), and thus the client receives the changed value.
+	 * If latestChangedByServer "changed" from true to true, that might
+	 * not be the case.
+	 */
+	private int latestChangeByServer = 0;
 	
 	public AceDocument() {
 		
@@ -52,13 +64,16 @@ public class AceDocument implements Serializable {
 		this.markerAnnotations = markerAnnotations;
 	}
 
-	public boolean isLatestChangeByServer() {
+	public int getLatestChangeByServer() {
 		return latestChangeByServer;
 	}
 
-	public void setLatestChangeByServer(boolean latestChangeByServer) {
+	public void setLatestChangeByServer(int latestChangeByServer) {
 		this.latestChangeByServer = latestChangeByServer;
 	}
 	
+	public void incrementLatestChangeByServer() {
+		this.latestChangeByServer++;
+	}
 	
 }

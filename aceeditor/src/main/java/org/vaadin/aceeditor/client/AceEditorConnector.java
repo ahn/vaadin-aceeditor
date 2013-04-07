@@ -117,14 +117,14 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		immediate = getState().immediate;
 		
 		AceDocument doc = getState().document;
-		if (firstTime || doc.isLatestChangeByServer()) {
+		if (firstTime || doc.getLatestChangeByServer() > 0) {
 			widget.setText(doc.getText());
 			widget.setMarkers(doc.getMarkers());
 			widget.setRowAnnotations(doc.getRowAnnotations());
 			widget.setMarkerAnnotations(doc.getMarkerAnnotations());
 		}
 		
-		if (!widget.isFocused()) {
+		if (firstTime || getState().selectionFromServer > 0) {
 			widget.setSelection(getState().selection);
 		}
 	}
@@ -209,7 +209,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		doc.setText(text);
 		doc.setMarkers(widget.getMarkers());
 		doc.setMarkerAnnotations(widget.getMarkerAnnotations());
-		doc.setLatestChangeByServer(false);
+		doc.setLatestChangeByServer(0);
 		
 		AceClientRange sel = widget.getSelection();
 		boolean focus = widget.isFocused();
