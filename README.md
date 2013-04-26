@@ -48,7 +48,7 @@ These instructions are for Vaadin 7 version of AceEditor.
 
 By default, Vaadin AceEditor gets the mode, theme and worker files from [this location](http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict) [(example)](http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict/theme-eclipse.js). I guess it's sort of a semi-official location for Ace files, at least it's used in [an Ace tutorial](http://ace.ajax.org/#nav=embedding).
 
-If you want to use some other location, for example to host the files on your own server, that's possible.
+If you want to use some other location, for example to host the files on your own server, here's how:
 
 Example: host the Ace files within your Vaadin app. First, put the Ace *src-min-noconflict* mode, theme and worker files (found in the `ace` directory in the
 [Vaadin Directory download package](http://vaadin.com/addon/aceeditor)
@@ -65,13 +65,23 @@ The structure should look something like this:
           ...
       VAADIN/
       WEB-INF/
+      
+And have this in your `web.xml`:
+
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/static/*</url-pattern>
+    </servlet-mapping>
 
 Then, tell the editor to use the files in the location:
 
     editor.setThemePath("/static/ace");
     editor.setModePath("/static/ace");
     editor.setWorkerPath("/static/ace");    
-
+    // or "/myapp/static/ace" depending on server configuration.
+    
+Now, Ace should read the theme/mode/worker files from your local server.
+    
 ### Other settings
 
     editor.setWordWrap(false);

@@ -20,11 +20,22 @@ public class AceEditorState extends AbstractFieldState {
 	
 	public AceDocument document = new AceDocument();
 	
+	public AceClientRange selection = null;
+	
+	/**
+	 * 0 if no selection change on server
+	 * > 0 if selection changed on server and should be set on client
+	 * 
+	 * int instead of boolean because we need to make sure that the value
+	 * changes (increments), and thus the client receives the changed value.
+	 * If selectionFromServer "changed" from true to true, that might
+	 * not be the case.
+	 */
+	public int selectionFromServer = 0;
+	
 	@DelegateToWidget("setListenToSelectionChanges")
 	public boolean listenToSelectionChanges = false;
 	
-	@DelegateToWidget("setSelection")
-	public AceClientRange selection = new AceClientRange(0,0,0,0);
 	
 	@DelegateToWidget("setUseWorker")
 	public boolean useWorker = true;
