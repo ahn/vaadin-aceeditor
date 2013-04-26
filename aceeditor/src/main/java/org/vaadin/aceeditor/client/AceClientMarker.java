@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 
 @SuppressWarnings("serial")
-public class AceClientMarker implements Serializable {
+public class AceClientMarker implements Serializable, Comparable<AceClientMarker> {
 	
 	public enum Type {
 		line,
@@ -47,9 +47,38 @@ public class AceClientMarker implements Serializable {
 	
 	
 	
+	public AceClientMarker(AceClientRange range, String cssClass, Type type, boolean inFront, OnTextChange onChange) {
+		this.range = range.isBackwards() ? range.reversed() : range;
+		this.cssClass = cssClass;
+		this.type = type;
+		this.inFront = inFront;
+		this.onChange = onChange;
+	}
+
+
+
 	@Override
 	public String toString() {
 		return "("+range+";"+cssClass+";"+type+";"+inFront+")";
+	}
+
+
+
+	@Override
+	public int compareTo(AceClientMarker other) {
+		if (range.row1 < other.range.row1) {
+			return -1;
+		}
+		if (range.row1 > other.range.row1) {
+			return 1;
+		}
+		if (range.col1 < other.range.col1) {
+			return -1;
+		}
+		if (range.col1 > other.range.col1) {
+			return 1;
+		}
+		return 0;
 	}
 	
 }

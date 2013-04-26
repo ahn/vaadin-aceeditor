@@ -18,10 +18,7 @@ import org.vaadin.aceeditor.client.AceClientMarker;
 @SuppressWarnings("serial")
 public class AceMarker extends AceClientMarker {
 	public AceMarker(AceRange range, String cssClass, Type type, boolean inFront, OnTextChange onChange) {
-		this.range = range.isBackwards() ? range.reversed() : range;
-		this.cssClass = cssClass;
-		this.type = type;
-		this.inFront = inFront;
-		this.onChange = onChange;
+		super(range, cssClass, type, inFront, onChange);
 	}
+		
 }
