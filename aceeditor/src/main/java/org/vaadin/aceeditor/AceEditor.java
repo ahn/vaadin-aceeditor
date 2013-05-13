@@ -1,15 +1,24 @@
 package org.vaadin.aceeditor;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.vaadin.aceeditor.client.AceClientAnnotation;
-import org.vaadin.aceeditor.client.AceClientMarker;
-import org.vaadin.aceeditor.client.AceClientRange;
-import org.vaadin.aceeditor.client.AceDocument;
+import org.vaadin.aceeditor.client.AceAnnotation;
+import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
+import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
+import org.vaadin.aceeditor.client.AceDoc;
+import org.vaadin.aceeditor.client.AceEditorClientRpc;
 import org.vaadin.aceeditor.client.AceEditorServerRpc;
 import org.vaadin.aceeditor.client.AceEditorState;
+import org.vaadin.aceeditor.client.AceMarker;
+import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
+import org.vaadin.aceeditor.client.AceMarker.Type;
+import org.vaadin.aceeditor.client.AceRange;
+import org.vaadin.aceeditor.client.TransportDiff;
+import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
 
 import com.vaadin.annotations.JavaScript;
 import com.vaadin.annotations.StyleSheet;
@@ -33,13 +42,18 @@ import com.vaadin.util.ReflectTools;
  *
  */
 @SuppressWarnings("serial")
-@JavaScript("client/js/ace/ace.js")
+@JavaScript({"client/js/ace/ace.js", "client/js/diff_match_patch.js"})
 @StyleSheet("client/css/ace-gwt.css")
 public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		FocusNotifier, TextChangeNotifier {
 
 	private static final String DEFAULT_ACE_PATH = "http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
-
+	
+	private Logger logger = Logger.getLogger(AceEditor.class.getName());
+	{
+		logger.setLevel(Level.INFO);
+	}
+	
 	public static class SelectionChangeEvent extends Event {
 		public static String EVENT_ID = "aceeditor-selection";
 		private final AceRange selection;
@@ -57,14 +71,38 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public interface SelectionChangeListener {
 		public static final Method selectionChangedMethod = ReflectTools
 				.findMethod(SelectionChangeListener.class, "selectionChanged",
-						SelectionChangeEvent.class);;
+						SelectionChangeEvent.class);
 
 		public void selectionChanged(SelectionChangeEvent e);
 	}
+	
+	public static class DiffEvent extends Event {
+		public static String EVENT_ID = "aceeditor-diff";
+		private final AceDocDiff diff;
+		
+		public DiffEvent(AceEditor ed, AceDocDiff diff) {
+			super(ed);
+			this.diff = diff;
+		}
+		
+		public AceDocDiff getDiff() {
+			return diff;
+		}
+	}
+	
+	public interface DiffListener {
+		public static final Method diffMethod = ReflectTools
+				.findMethod(DiffListener.class, "diff",
+						DiffEvent.class);
+		public void diff(DiffEvent e);
+	}
+	
+	private AceDoc doc = new AceDoc();
+	private AceDoc shadow = new AceDoc();
 
 	private long latestMarkerId = 0L;
 	
-	private AceRange selection = new AceRange(0, 0, 0, 0, "");
+	private TextRange selection = new TextRange("", 0, 0, 0, 0);
 	
 	// {startPos,endPos} or {startRow,startCol,endRow,endCol}
 	private Integer[] selectionToClient = null;
@@ -74,44 +112,57 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 	private AceEditorServerRpc rpc = new AceEditorServerRpc() {
 
-		@Override
-		public void changedDelayed(AceDocument doc, AceClientRange sel, boolean focus) {
-			changed(doc, sel, focus);
-		}
 
 		@Override
-		public void sendNow() {
-			// nothing
+		public void changed(TransportDiff diff, TransportRange selection, boolean focused) {
+			clientChanged(diff, selection, focused);
 		}
 
-		private void changed(AceDocument doc, AceClientRange sel, boolean focus) {
-			
-			getState().document = doc;
-			
-			if (!doc.getText().equals(getInternalValue())) {
-
-				// TODO: when to call setInternalValue??
-				setInternalValue(doc.getText());
-
-				fireTextChangeEvent();
-			}
-
-			if (latestFocus != focus) {
-				latestFocus = focus;
-				if (focus) {
-					fireFocus();
-				} else {
-					fireBlur();
-				}
-			}
-			if (!sel.equals(selection)) {
-				selection = new AceRange(sel, doc.getText());
-				getState().selection = sel;
-				fireSelectionChanged();
-			}
+		@Override
+		public void changedDelayed(TransportDiff diff, TransportRange selection, boolean focused) {
+			clientChanged(diff, selection, focused);
 		}
+		
 	};
 	
+	private boolean onRoundTrip = false;
+	
+	protected void clientChanged(TransportDiff diff, TransportRange selection,
+			boolean focused) {
+		diffFromClient(diff);
+		selectionFromClient(selection);
+		if (latestFocus != focused) {
+			latestFocus = focused;
+			if (focused) {
+				fireFocus();
+			}
+			else {
+				fireBlur();
+			}
+		}
+	}
+	
+	private void diffFromClient(TransportDiff d) {
+		String previousText = doc.getText();
+		AceDocDiff diff = AceDocDiff.fromTransportDiff(d);
+		shadow = diff.applyTo(shadow);
+		doc = diff.applyTo(doc);
+		setInternalValue(doc.getText());
+		if (!doc.getText().equals(previousText)) {
+			fireTextChangeEvent();
+		}
+		if (!diff.isIdentity()) {
+			fireDiff(diff);
+		}
+		onRoundTrip = true;
+		markAsDirty();
+	}
+	
+	private void selectionFromClient(TransportRange sel) {
+		setInternalSelection(new TextRange(doc.getText(), AceRange.fromTransport(sel)));
+		fireSelectionChanged();
+	}
+
 	public AceEditor() {
 		super();
 		setWidth("300px");
@@ -124,16 +175,20 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		registerRpc(rpc);
 	}
 
-	protected void fireSelectionChanged() {
+	private void fireSelectionChanged() {
 		fireEvent(new SelectionChangeEvent(this));
 	}
 
-	protected void fireBlur() {
+	private void fireBlur() {
 		fireEvent(new BlurEvent(this));
 	}
 
-	protected void fireFocus() {
+	private void fireFocus() {
 		fireEvent(new FocusEvent(this));
+	}
+	
+	private void fireDiff(AceDocDiff diff) {
+		fireEvent(new DiffEvent(this, diff));
 	}
 
 	@Override
@@ -149,13 +204,20 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
 	protected void setInternalValue(String newValue) {
 		super.setInternalValue(newValue);
-		getState().document.setText(newValue);
+		doc = doc.withText(newValue);
+	}
+	
+	public void setDoc(AceDoc doc) {
+		this.doc = doc;
+		setValue(doc.getText());
+		
+		// TODO: Only needed if doc changed.
+		markAsDirty();
 	}
 	
 	@Override
 	public void setValue(String newFieldValue) {
 		super.setValue(newFieldValue);
-		getState().document.incrementLatestChangeByServer();
 	}
 
 	@Override
@@ -240,113 +302,85 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		getState().listenToSelectionChanges = !getListeners(
 				SelectionChangeEvent.class).isEmpty();
 	}
-
-	public long addMarker(AceMarker marker) {
-		marker.serverId = newMarkerId();
-		getState().document.getMarkers().add(marker);
-		getState().document.incrementLatestChangeByServer();
-		return marker.serverId;
+	
+	public void addDiffListener(DiffListener listener) {
+		addListener(DiffEvent.EVENT_ID, DiffEvent.class,
+				listener, DiffListener.diffMethod);
+	}
+	
+	public void removeDiffListener(DiffListener listener) {
+		removeListener(DiffEvent.EVENT_ID, DiffEvent.class, listener);
+	}
+	
+	/**
+	 * Adds an ace marker with a generated id. The id is unique within this editor.
+	 * 
+	 * @param range
+	 * @param cssClass
+	 * @param type
+	 * @param inFront
+	 * @param onChange
+	 * @return marker id
+	 */
+	public String addMarker(AceRange range, String cssClass, Type type, boolean inFront, OnTextChange onChange) {
+		return addMarker(new AceMarker(newMarkerId(), range, cssClass, type, inFront, onChange));
+	}
+	
+	/**
+	 * Adds an ace marker. The id of the marker must be unique within this editor.
+	 * 
+	 * @param marker
+	 * @return marker id
+	 */
+	public String addMarker(AceMarker marker) {
+		logger.info("addMarker("+marker+")");
+		doc = doc.withAdditionalMarker(marker);
+		markAsDirty();
+		return marker.getMarkerId();
 	}
 
 	public void removeMarker(AceMarker marker) {
-		removeMarker(marker.serverId);
+		removeMarker(marker.getMarkerId());
 	}
 
-	public void removeMarker(long serverId) {
-		for (AceClientMarker m : getState().document.getMarkers()) {
-			if (m.serverId==serverId) {
-				getState().document.getMarkers().remove(m);
-				getState().document.incrementLatestChangeByServer();
-				break;
-			}
-		}
+	public void removeMarker(String markerId) {
+		doc = doc.withoutMarker(markerId);
+		markAsDirty();
 	}
 	
 	public void clearMarkers() {
-		getState().document.getMarkers().clear();
-		getState().document.incrementLatestChangeByServer();
+		doc = doc.withoutMarkers();
+		markAsDirty();
 	}
 
 	public void addRowAnnotation(AceAnnotation ann, int row) {
-		Set<AceClientAnnotation> manns = getState().document.getMarkerAnnotations();
-		if (manns == null) {
-			// ok
-		} else if (manns.isEmpty()) {
-			getState().document.setMarkerAnnotations(null);
-		} else {
-			throw new IllegalStateException(
-					"AceEditor can contain either row annotations or marker annotations, not both.");
-		}
-
-		Set<AceClientAnnotation> ranns = getState().document.getRowAnnotations();
-		if (ranns == null || ranns.isEmpty()) {
-			getState().document.setRowAnnotations(new HashSet<AceClientAnnotation>());
-		}
-		AceClientAnnotation rann = new AceClientAnnotation(ann.getMessage(),
-				AceClientAnnotation.Type.valueOf(ann.getType().toString()), row);
-		getState().document.getRowAnnotations().add(rann);
-		getState().document.incrementLatestChangeByServer();
+		doc = doc.withAdditionalRowAnnotation(new RowAnnotation(row, ann));
+		markAsDirty();
 	}
 
-	public void addMarkerAnnotation(AceAnnotation ann, AceClientMarker marker) {
-		addMarkerAnnotation(ann, marker.serverId);
+	public void addMarkerAnnotation(AceAnnotation ann, AceMarker marker) {
+		addMarkerAnnotation(ann, marker.getMarkerId());
 	}
 
-	public void addMarkerAnnotation(AceAnnotation ann, long markerId) {
-		if (!hasMarker(markerId)) {
-			throw new IllegalStateException("Editor does not contain marker with id " + markerId);
-		}
-		
-		Set<AceClientAnnotation> ranns = getState().document.getRowAnnotations();
-		if (ranns == null) {
-			// ok
-		} else if (ranns.isEmpty()) {
-			getState().document.setRowAnnotations(null);
-		} else {
-			throw new IllegalStateException(
-					"AceEditor can contain either row annotations or marker annotations, not both.");
-		}
-
-		Set<AceClientAnnotation> manns = getState().document.getMarkerAnnotations();
-		if (manns == null || manns.isEmpty()) {
-			getState().document.setMarkerAnnotations(new HashSet<AceClientAnnotation>());
-		}
-		AceClientAnnotation rann = new AceClientAnnotation(ann.getMessage(),
-				AceClientAnnotation.Type.valueOf(ann.getType().toString()), 0);
-		rann.markerId = markerId;
-		getState().document.getMarkerAnnotations().add(rann);
-		getState().document.incrementLatestChangeByServer();
-	}
-
-	private boolean hasMarker(long markerId) {
-		for (AceClientMarker m : getState().document.getMarkers()) {
-			if (m.serverId==markerId) {
-				return true;
-			}
-		}
-		return false;
+	public void addMarkerAnnotation(AceAnnotation ann, String markerId) {
+		doc = doc.withAdditionalMarkerAnnotation(new MarkerAnnotation(markerId, ann));
+		markAsDirty();
 	}
 
 	public void clearRowAnnotations() {
-		if (getState().document.getMarkerAnnotations() == null) {
-			getState().document.setRowAnnotations(new HashSet<AceClientAnnotation>());
-		} else {
-			getState().document.setRowAnnotations(null);
-		}
-		getState().document.incrementLatestChangeByServer();
+		Set<RowAnnotation> ranns = Collections.emptySet();
+		doc = doc.withRowAnnotations(ranns);
+		markAsDirty();
 	}
 
 	public void clearMarkerAnnotations() {
-		if (getState().document.getRowAnnotations() == null) {
-			getState().document.setMarkerAnnotations(new HashSet<AceClientAnnotation>());
-		} else {
-			getState().document.setMarkerAnnotations(null);
-		}
-		getState().document.incrementLatestChangeByServer();
+		Set<MarkerAnnotation> manns = Collections.emptySet();
+		doc = doc.withMarkerAnnotations(manns);
+		markAsDirty();
 	}
 
-	private long newMarkerId() {
-		return ++latestMarkerId;
+	private String newMarkerId() {
+		return "TODO"+(++latestMarkerId); // TODO
 	}
 
 	/**
@@ -377,13 +411,13 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 	public static class TextChangeEventImpl extends TextChangeEvent {
 		private final String text;
-		private final AceRange selection;
+		private final TextRange selection;
 
 		private TextChangeEventImpl(final AceEditor ace, String text,
 				AceRange selection) {
 			super(ace);
 			this.text = text;
-			this.selection = selection;
+			this.selection = new TextRange(text, selection);
 		}
 
 		@Override
@@ -398,16 +432,16 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 		@Override
 		public int getCursorPosition() {
-			return selection.getCursorPosition();
+			return selection.getEnd();
 		}
 	}
 
-	public AceRange getSelection() {
+	public TextRange getSelection() {
 		return selection;
 	}
 
 	public int getCursorPosition() {
-		return selection.getCursorPosition();
+		return selection.getEnd();
 	}
 
 	/**
@@ -438,10 +472,12 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	 * @param start
 	 * @param end
 	 */
+	// TODO
 	public void setSelection(int start, int end) {
 		setSelectionToClient(new Integer[]{start,end});
-		setInternalSelection(AceRange.fromPositions(start, end, getInternalValue()));
+		setInternalSelection(new TextRange(getInternalValue(), start, end));
 	}
+	
 	
 	/**
 	 * Sets the selection to be between the given (startRow,startCol) and
@@ -456,12 +492,12 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	 */
 	public void setSelectionRowCol(int startRow, int startCol, int endRow, int endCol) {
 		setSelectionToClient(new Integer[]{startRow,startCol,endRow,endCol});
-		setInternalSelection(new AceRange(startRow, startCol, endRow, endCol, getInternalValue()));
+		setInternalSelection(new TextRange(doc.getText(), startRow, startCol, endRow, endCol));
 	}
 	
-	private void setInternalSelection(AceRange selection) {
+	private void setInternalSelection(TextRange selection) {
 		this.selection = selection;
-		getState().selection = selection;
+		getState().selection = selection.asTransport();
 	}
 	
 	private void setSelectionToClient(Integer[] stc) {
@@ -523,23 +559,40 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
     public void beforeClientResponse(boolean initial) {
         super.beforeClientResponse(initial);
-        
+                
+        if (initial) {
+        	getState().initialValue = doc.asTransport();
+        	if (!doc.equals(shadow)) {
+        		shadow = doc;
+        	}
+        }
+        else if (onRoundTrip) {
+        	AceDocDiff diff = AceDocDiff.diff(shadow, doc);
+        	shadow = doc;
+        	TransportDiff td = diff.asTransport();
+    		getRpcProxy(AceEditorClientRpc.class).diff(td);
+    		
+    		onRoundTrip = false;
+    	}
+        else if (true /* TODO !shadow.equals(doc)*/) {
+        	getRpcProxy(AceEditorClientRpc.class).changedOnServer();
+        }
+
         if (selectionToClient != null) {
         	getState().selectionFromServer++;
         	// {startPos,endPos}
         	if (selectionToClient.length==2) {
-        		getState().selection = AceRange.fromPositions(
-        				selectionToClient[0],
-        				selectionToClient[1],
-        				getInternalValue());
+        		AceRange r = AceRange.fromPositions(selectionToClient[0], selectionToClient[1], doc.getText());
+        		getState().selection = r.asTransport();
         	}
         	// {startRow,startCol,endRow,endCol}
         	else if (selectionToClient.length==4) {
-        		getState().selection = new AceClientRange(
+        		TransportRange tr = new TransportRange(
         				selectionToClient[0],
         				selectionToClient[1],
         				selectionToClient[2],
         				selectionToClient[3]);
+        		getState().selection = tr;
         	}
         	selectionToClient = null;
         }
@@ -547,5 +600,9 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
         	getState().selectionFromServer = 0;
         }
     }
+
+	public AceDoc getDoc() {
+		return doc;
+	}
 
 }

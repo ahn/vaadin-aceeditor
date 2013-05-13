@@ -2,12 +2,14 @@ package org.vaadin.aceeditor;
 
 import org.vaadin.aceeditor.AceEditor.SelectionChangeEvent;
 import org.vaadin.aceeditor.AceEditor.SelectionChangeListener;
-import org.vaadin.aceeditor.client.AceClientMarker;
-import org.vaadin.aceeditor.client.AceClientMarker.OnTextChange;
-import org.vaadin.aceeditor.client.AceClientMarker.Type;
+import org.vaadin.aceeditor.client.AceAnnotation;
+import org.vaadin.aceeditor.client.AceMarker;
+import org.vaadin.aceeditor.client.AceRange;
+import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
 
 import com.vaadin.annotations.PreserveOnRefresh;
 import com.vaadin.annotations.StyleSheet;
+import com.vaadin.annotations.Theme;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.server.VaadinRequest;
@@ -30,6 +32,7 @@ import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.BaseTheme;
 
 
+@Theme("reindeer")
 @StyleSheet("ace-markers.css")
 @SuppressWarnings("serial")
 @PreserveOnRefresh
@@ -38,6 +41,12 @@ public class AceEditorDemo extends UI {
 	
 	
 	private AceEditor editor = new AceEditor();
+	
+
+	private long latestMarkerId = 0L;
+	private String newMarkerId() {
+		return "m"+(++latestMarkerId);
+	}
 	
 	private NativeSelect markerAnnotationSelect = new NativeSelect("Marker");
 	{
@@ -202,7 +211,7 @@ public class AceEditorDemo extends UI {
 		ho.addComponent(cssField);
 		final NativeSelect typeSelect = new NativeSelect("Type");
 		ho.addComponent(typeSelect);
-		for (Type item : AceMarker.Type.values()) {
+		for (AceMarker.Type item : AceMarker.Type.values()) {
 			typeSelect.addItem(item);
 		}
 		typeSelect.select(AceMarker.Type.line);
@@ -213,10 +222,10 @@ public class AceEditorDemo extends UI {
 		
 		final NativeSelect changeSelect = new NativeSelect("OnTextChange");
 		ho.addComponent(changeSelect);
-		for (OnTextChange item : AceClientMarker.OnTextChange.values()) {
+		for (AceMarker.OnTextChange item : AceMarker.OnTextChange.values()) {
 			changeSelect.addItem(item);
 		}
-		changeSelect.select(AceClientMarker.OnTextChange.DEFAULT);
+		changeSelect.select(AceMarker.OnTextChange.DEFAULT);
 		changeSelect.setNullSelectionAllowed(false);
 		
 		layout.addComponent(ho);
@@ -225,17 +234,18 @@ public class AceEditorDemo extends UI {
 		layout.addComponent(button);
 		button.addClickListener(new ClickListener() {
 			public void buttonClick(ClickEvent event) {
-				AceRange selection = editor.getSelection();
-				if (selection.getEndPosition()==selection.getStartPosition()) {
+				TextRange selection = editor.getSelection();
+				if (selection.isZeroLength()) {
 					Notification.show("Select some text first");
 					return;
 				}
 				String css = cssField.getValue();
-				AceClientMarker.Type type = (AceClientMarker.Type)typeSelect.getValue();
+				AceMarker.Type type = (AceMarker.Type)typeSelect.getValue();
 				boolean inFront = inFrontCheck.getValue();
-				AceClientMarker.OnTextChange onChange = (OnTextChange) changeSelect.getValue();
-				AceMarker m = new AceMarker(selection, css, type, inFront, onChange);
-				final long markerId = editor.addMarker(m);
+				AceMarker.OnTextChange onChange = (OnTextChange) changeSelect.getValue();
+				final String markerId = newMarkerId();
+				AceMarker m = new AceMarker(markerId, selection, css, type, inFront, onChange);
+				editor.addMarker(m);
 				final Button mb = new Button(""+markerId);
 				markerLayout.addComponent(mb);
 				markerAnnotationSelect.addItem(markerId);
@@ -339,7 +349,7 @@ public class AceEditorDemo extends UI {
 			public void buttonClick(ClickEvent event) {
 				AceAnnotation.Type type = (AceAnnotation.Type)typeSelect.getValue();
 				String msg = msgField.getValue();
-				Long markerId = (Long) markerAnnotationSelect.getValue();
+				String markerId = (String) markerAnnotationSelect.getValue();
 				if (markerId==null) {
 					Notification.show("Select marker");
 					return;

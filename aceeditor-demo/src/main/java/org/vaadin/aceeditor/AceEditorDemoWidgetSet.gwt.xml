@@ -2,5 +2,5 @@
     <inherits name="com.vaadin.DefaultWidgetSet" />
     <inherits name="org.vaadin.aceeditor.AceEditorWidgetSet" />
     
-<!--     <set-property name="user.agent" value="safari"/> -->
+    <set-property name="user.agent" value="safari"/>
 </module>

@@ -3,6 +3,10 @@ package org.vaadin.aceeditor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.vaadin.aceeditor.client.AceAnnotation;
+import org.vaadin.aceeditor.client.AceMarker;
+import org.vaadin.aceeditor.client.AceRange;
+
 import com.vaadin.event.FieldEvents.TextChangeEvent;
 import com.vaadin.event.FieldEvents.TextChangeListener;
 
@@ -12,6 +16,11 @@ public class ErrorChecker implements TextChangeListener {
 	private AceEditor editor;
 	
 	private Pattern pattern = Pattern.compile("[Xx]+");
+	
+	private long latestErrorMarkerId = 0L;
+	private String newErrorMarkerId() {
+		return "e"+(++latestErrorMarkerId);
+	}
 	
 	public ErrorChecker() {
 		
@@ -36,8 +45,8 @@ public class ErrorChecker implements TextChangeListener {
 		int i = 0;
 		while (i < text.length() && matcher.find(i)) {
 			i = matcher.end() + 1;
-			AceRange range = new AceRange(matcher.start(), matcher.end(), text);
-			AceMarker m = new AceMarker(range, "myerrormarker1", AceMarker.Type.text, false, AceMarker.OnTextChange.ADJUST);
+			AceRange range = AceRange.fromPositions(matcher.start(), matcher.end(), text);
+			AceMarker m = new AceMarker(newErrorMarkerId(), range, "myerrormarker1", AceMarker.Type.text, false, AceMarker.OnTextChange.ADJUST);
 			editor.addMarker(m);
 			
 			AceAnnotation ann = new AceAnnotation("X's not allowed here! ("+matcher.group()+")", AceAnnotation.Type.error);

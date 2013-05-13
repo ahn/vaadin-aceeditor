@@ -3,6 +3,8 @@ package org.vaadin.aceeditor.client;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
+
 import com.vaadin.shared.AbstractFieldState;
 import com.vaadin.shared.annotations.DelegateToWidget;
 
@@ -18,9 +20,7 @@ public class AceEditorState extends AbstractFieldState {
 	@DelegateToWidget("setTheme")
 	public String theme = "textmate";
 	
-	public AceDocument document = new AceDocument();
-	
-	public AceClientRange selection = null;
+	public TransportRange selection = null;
 	
 	/**
 	 * 0 if no selection change on server
@@ -33,9 +33,7 @@ public class AceEditorState extends AbstractFieldState {
 	 */
 	public int selectionFromServer = 0;
 	
-	@DelegateToWidget("setListenToSelectionChanges")
 	public boolean listenToSelectionChanges = false;
-	
 	
 	@DelegateToWidget("setUseWorker")
 	public boolean useWorker = true;
@@ -45,5 +43,7 @@ public class AceEditorState extends AbstractFieldState {
 	
 	public Map<String,String> config = new HashMap<String,String>();
 	
+	
+	public TransportDoc initialValue = null;
 	
 }

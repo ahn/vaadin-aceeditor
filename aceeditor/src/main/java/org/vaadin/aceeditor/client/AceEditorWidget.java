@@ -4,8 +4,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
+import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
+import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
+import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
 import org.vaadin.aceeditor.client.gwt.GwtAceAnnotation;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeCursorHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent;
@@ -22,7 +27,6 @@ import org.vaadin.aceeditor.client.gwt.GwtAceSelection;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusWidget;
-import com.vaadin.client.VConsole;
 
 /**
  * A {@link com.google.gwt.user.client.ui.Widget} containing
@@ -34,6 +38,7 @@ public class AceEditorWidget extends FocusWidget implements
 
 	public interface ChangeListener {
 		public void changed();
+		public void selectionChanged();
 	}
 
 	public interface FocusChangeListener {
@@ -52,12 +57,22 @@ public class AceEditorWidget extends FocusWidget implements
 		focusChangeListener = li;
 	}
 
-	private class ClientMarker {
-		private AceClientMarker marker;
+	private class MarkerInEditor {
+		private AceMarker marker;
 		private String clientId;
-		private ClientMarker(AceClientMarker marker, String clientId) {
+		private MarkerInEditor(AceMarker marker, String clientId) {
 			this.marker = marker;
 			this.clientId = clientId;
+		}
+	}
+	
+	private class AnnotationInEditor {
+		private int row;
+		private AceAnnotation ann;
+		private String markerId;
+		private AnnotationInEditor(AceAnnotation ann, String markerId) {
+			this.ann = ann;
+			this.markerId = markerId;
 		}
 	}
 	
@@ -71,16 +86,18 @@ public class AceEditorWidget extends FocusWidget implements
 	private boolean readOnly = false;
 	private boolean propertyReadOnly = false;
 	private boolean focused;
-	private AceClientRange selection;
+	private TransportRange selection;
 
-	private boolean listenSelections;
+	// key: marker markerId
+	private Map<String,MarkerInEditor> markersInEditor = Collections.emptyMap();
 
-	// key: marker serverId
-	private Map<Long,ClientMarker> markersInEditor = Collections.emptyMap();
-
-	private Set<AceClientAnnotation> markerAnnotations = null;
+	private Set<RowAnnotation> rowAnnsInEditor = Collections.emptySet();
+	private Set<AnnotationInEditor> markerAnnsInEditor = Collections.emptySet();
 
 	private boolean settingText = false;
+
+	private Set<MarkerAnnotation> markerAnnotations = Collections.emptySet();
+	private Set<RowAnnotation> rowAnnotations = Collections.emptySet();
 	
 	private static String nextId() {
 		return "_AceEditorWidget_" + (++idCounter);
@@ -127,7 +144,7 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 	}
 
-	public void setText(String text) {
+	private void setText(String text) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -143,12 +160,8 @@ public class AceEditorWidget extends FocusWidget implements
 			settingText = false;
 		}
 	}
-	
-	public void setListenToSelectionChanges(boolean listen) {
-		listenSelections = listen;
-	}
 
-	public void setSelection(AceClientRange s) {
+	public void setSelection(TransportRange s) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -158,10 +171,10 @@ public class AceEditorWidget extends FocusWidget implements
 		
 		selection = s;
 		
-		int r1 = s.getStartRow();
-		int c1 = s.getStartCol();
-		int r2 = s.getEndRow();
-		int c2 = s.getEndCol();
+		int r1 = s.row1;
+		int c1 = s.col1;
+		int r2 = s.row2;
+		int c2 = s.col2;
 		boolean backwards = r1 > r2 || (r1 == r2 && c1 > c2);
 		GwtAceRange range;
 		if (backwards) {
@@ -186,94 +199,108 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setTheme(theme);
 	}
 
-	public void setMarkers(Set<AceClientMarker> markers) {
+	public void setMarkers(Map<String, AceMarker> markers) {
 		if (!isInitialized()) {
 			return;
 		}
 		
-		HashMap<Long,ClientMarker> mmm = new HashMap<Long,ClientMarker>();
-		for (AceClientMarker m : markers) {
-			ClientMarker existing = markersInEditor.get(m.serverId);
-			if (existing==null) {
-				String clientId = editor.addMarker(convertRange(m.range), m.cssClass, m.type.toString(), m.inFront);
-				existing = new ClientMarker(m, clientId);
+		HashMap<String,MarkerInEditor> newMarkers = new HashMap<String,MarkerInEditor>();
+		for (Entry<String, AceMarker> e : markers.entrySet()) {
+			String mId = e.getKey();
+			AceMarker m = e.getValue();
+			MarkerInEditor existing = markersInEditor.get(mId);
+			if (existing!=null) {
+				editor.removeMarker(existing.clientId);
 			}
-			mmm.put(existing.marker.serverId, existing);
+			String clientId = editor.addMarker(convertRange(m.getRange()), m.getCssClass(), m.getType().toString(), m.isInFront());
+			existing = new MarkerInEditor(m, clientId);
+			newMarkers.put(mId, existing);
 		}
 		
 		
-		for (ClientMarker hehe : markersInEditor.values()) {
-			if (!mmm.containsKey(hehe.marker.serverId)) {
+		for (MarkerInEditor hehe : markersInEditor.values()) {
+			if (!newMarkers.containsKey(hehe.marker.getMarkerId())) {
 				editor.removeMarker(hehe.clientId);
 			}
 		}
 		
-		markersInEditor = mmm;
-		
+		markersInEditor = newMarkers;
 		adjustMarkerAnnotations();
 	}
 	
 	private void adjustMarkerAnnotations() {
-		if (markerAnnotations != null) {
-			markerAnnotations = adjustedAnnotations(markerAnnotations);
-			setAnnotationsToEditor(markerAnnotations);
-			if (changeListener!=null) {
-				changeListener.changed();
+		for (AnnotationInEditor aie : markerAnnsInEditor) {
+			int row = rowOfMarker(aie.markerId);
+			if (row!=-1) {
+				aie.row = row;
 			}
+		}
+		setAnnotationsToEditor();
+		if (changeListener!=null) {
+			changeListener.changed();
 		}
 	}
 	
-	public void setRowAnnotations(Set<AceClientAnnotation> ranns) {
+	public void setRowAnnotations(Set<RowAnnotation> ranns) {
 		if (!isInitialized()) {
 			return;
 		}
 		if (ranns==null) {
 			return;
 		}
-		
-		this.markerAnnotations = null;
-		
-		setAnnotationsToEditor(ranns);
+		rowAnnotations = ranns;
+		rowAnnsInEditor = ranns;
+		setAnnotationsToEditor();
 	}
 	
-	private void setAnnotationsToEditor(Set<AceClientAnnotation> annotations) {
+	private void setAnnotationsToEditor() {
 		JsArray<GwtAceAnnotation> arr = GwtAceAnnotation.createEmptyArray();
-		for (AceClientAnnotation ann : annotations) {
-			GwtAceAnnotation jsAnn = GwtAceAnnotation.create(ann.type.toString(), ann.text, ann.row);
+		for (AnnotationInEditor maie : markerAnnsInEditor) {
+			GwtAceAnnotation jsAnn = GwtAceAnnotation.create(maie.ann.getType().toString(), maie.ann.getMessage(), maie.row);
 			arr.push(jsAnn);
 		}
-		
+		for (RowAnnotation ra : rowAnnsInEditor) {
+			AceAnnotation a = ra.getAnnotation();
+			GwtAceAnnotation jsAnn = GwtAceAnnotation.create(a.getType().toString(), a.getMessage(), ra.getRow());
+			arr.push(jsAnn);
+		}
 		editor.setAnnotations(arr);
 	}
 	
-	public void setMarkerAnnotations(Set<AceClientAnnotation> manns) {
+	public void setMarkerAnnotations(Set<MarkerAnnotation> manns) {
 		if (!isInitialized()) {
 			return;
 		}
 		if (manns==null) {
 			return;
 		}
-		
-		markerAnnotations = adjustedAnnotations(manns);
-		setAnnotationsToEditor(markerAnnotations);
+		markerAnnotations = manns;
+		markerAnnsInEditor = createAIEfromMA(manns);
+		setAnnotationsToEditor();
 	}
 	
-	private Set<AceClientAnnotation> adjustedAnnotations(
-			Set<AceClientAnnotation> annotations) {
-		Set<AceClientAnnotation> adjusted = new HashSet<AceClientAnnotation>();
-		for (AceClientAnnotation a : annotations) {
-			if (a.markerId>0) {
-				ClientMarker cm = markersInEditor.get(a.markerId);
-				if (cm!=null) {
-					a.row = cm.marker.range.getStartRow();
-					adjusted.add(a);
-				}
-			}
-			else {
-				adjusted.add(a);
+	
+	
+	private Set<AnnotationInEditor> createAIEfromMA(
+			Set<MarkerAnnotation> anns) {
+		Set<AnnotationInEditor> adjusted = new HashSet<AnnotationInEditor>();
+		for (MarkerAnnotation a : anns) {
+			int row = rowOfMarker(a.getMarkerId());
+			if (row!=-1) {
+				AnnotationInEditor maie = new AnnotationInEditor(a.getAnnotation(), a.getMarkerId());
+				maie.row = row;
+				adjusted.add(maie);
 			}
 		}
 		return adjusted;
+	}
+	
+	private int rowOfMarker(String markerId) {
+		MarkerInEditor cm = markersInEditor.get(markerId);
+		if (cm==null) {
+			return -1;
+		}
+		return cm.marker.getRange().getStartRow();
 	}
 
 	@Override
@@ -296,32 +323,43 @@ public class AceEditorWidget extends FocusWidget implements
 	private void adjustMarkers(GwtAceChangeEvent e) {
 		Action act = e.getData().getAction();
 		GwtAceRange range = e.getData().getRange();
-		Set<ClientMarker> moved = new HashSet<ClientMarker>();
-		Set<ClientMarker> removed = new HashSet<ClientMarker>();
+		Set<MarkerInEditor> moved = new HashSet<MarkerInEditor>();
+		Set<MarkerInEditor> removed = new HashSet<MarkerInEditor>();
 		
 		if (act==Action.insertLines || act==Action.insertText) {
-			for (ClientMarker cm : markersInEditor.values()) {
-				AceClientMarker m = cm.marker;
-				VConsole.log("adjusting " + m);
-				if (m.onChange==AceClientMarker.OnTextChange.ADJUST) {
-					if (moveMarkerOnInsert(m, range)) {
-						moved.add(cm);
+			for (MarkerInEditor cm : markersInEditor.values()) {
+				if (cm.marker.getOnChange()==OnTextChange.ADJUST) {
+					AceRange newRange = moveMarkerOnInsert(cm.marker.getRange(), range);
+					if (newRange!=null) {
+						cm.marker = cm.marker.withNewPosition(newRange);
+						if (markerIsValid(cm.marker)) {
+							moved.add(cm);
+						}
+						else {
+							removed.add(cm);
+						}
 					}
 				}
-				else if (m.onChange==AceClientMarker.OnTextChange.REMOVE) {
+				else if (cm.marker.getOnChange()==OnTextChange.REMOVE) {
 					removed.add(cm);
 				}
 			}
 		}
 		else if (act==Action.removeLines || act==Action.removeText) {
-			for (ClientMarker cm : markersInEditor.values()) {
-				AceClientMarker m = cm.marker;
-				if (m.onChange==AceClientMarker.OnTextChange.ADJUST) {
-					if (moveMarkerOnRemove(m, range)) {
-						moved.add(cm);
+			for (MarkerInEditor cm : markersInEditor.values()) {
+				if (cm.marker.getOnChange()==OnTextChange.ADJUST) {
+					AceRange newRange = moveMarkerOnRemove(cm.marker.getRange(), range);
+					if (newRange!=null) {
+						cm.marker = cm.marker.withNewPosition(newRange);
+						if (markerIsValid(cm.marker)) {
+							moved.add(cm);
+						}
+						else {
+							removed.add(cm);
+						}
 					}
 				}
-				else if (m.onChange==AceClientMarker.OnTextChange.REMOVE) {
+				else if (cm.marker.getOnChange()==OnTextChange.REMOVE) {
 					removed.add(cm);
 				}
 			}
@@ -331,9 +369,14 @@ public class AceEditorWidget extends FocusWidget implements
 		updateMarkers(moved);
 	}
 	
+	private static boolean markerIsValid(AceMarker marker) {
+		AceRange r = marker.getRange();
+		return !r.isZeroLength() && !r.isBackwards() && r.getStartRow() >= 0 && r.getStartCol() >= 0 && r.getEndCol() >= 0; // no need to check endrow
+	}
+
 //	private void removeAllMarkers() {
 //		if (!markersInEditor.isEmpty()) {
-//			for (ClientMarker m : markersInEditor.values()) {
+//			for (TransportMarker m : markersInEditor.values()) {
 //				editor.removeMarker(m.clientId);
 //			}
 //			markersInEditor.clear();
@@ -344,61 +387,70 @@ public class AceEditorWidget extends FocusWidget implements
 //		}
 //	}
 	
-	private boolean moveMarkerOnInsert(AceClientMarker m, GwtAceRange range) {
+	private static AceRange moveMarkerOnInsert(AceRange mr, GwtAceRange range) {
 		int startRow = range.getStart().getRow();
 		int startCol = range.getStart().getColumn();
 		int dRow = range.getEnd().getRow() - startRow;
 		int dCol = range.getEnd().getColumn() - startCol;
 		
 		if (dRow==0 && dCol==0) {
-			return false;
+			return null;
 		}
 		
-		if (range.getStart().getRow() > m.range.getEndRow()) {
-			return false;
+		if (range.getStart().getRow() > mr.getEndRow()) {
+			return null;
 		}
 		
-		boolean aboveMarkerStart = startRow < m.range.getStartRow();
-		boolean beforeMarkerStartOnRow = startRow == m.range.getStartRow() && startCol <= m.range.getStartCol();
-		boolean aboveMarkerEnd = startRow < m.range.getEndRow();
-		boolean beforeMarkerEndOnRow = startRow == m.range.getEndRow() && startCol < m.range.getEndCol();	
+		boolean aboveMarkerStart = startRow < mr.getStartRow();
+		boolean beforeMarkerStartOnRow = startRow == mr.getStartRow() && startCol <= mr.getStartCol();
+		boolean aboveMarkerEnd = startRow < mr.getEndRow();
+		boolean beforeMarkerEndOnRow = startRow == mr.getEndRow() && startCol < mr.getEndCol();	
 		
+		int row1 = mr.getStartRow();
+		int col1 = mr.getStartCol();
 		if (aboveMarkerStart) {
-			m.range.setStartRow(m.range.getStartRow() + dRow);
+			row1 += dRow;
 		}
 		else if (beforeMarkerStartOnRow) {
-			m.range.setStartRow(m.range.getStartRow() + dRow);
-			m.range.setStartCol(m.range.getStartCol() + dCol);
+			row1 += dRow;
+			col1 += dCol;
 		}
 		
+		int row2 = mr.getEndRow();
+		int col2 = mr.getEndCol();
 		if (aboveMarkerEnd) {
-			m.range.setEndRow(m.range.getEndRow() + dRow);
+			row2 += dRow;
 		}
 		else if (beforeMarkerEndOnRow) {
-			m.range.setEndRow(m.range.getEndRow() + dRow);
-			m.range.setEndCol(m.range.getEndCol() + dCol);
+			row2 += dRow;
+			col2 += dCol;
 		}
 		
-		return true; // TODO???
+		return new AceRange(row1, col1, row2, col2);
 	}
 	
-	private boolean moveMarkerOnRemove(AceClientMarker m, GwtAceRange range) {
-		int[] p1 = overlapping(range, m.range.getStartRow(), m.range.getStartCol());
-		if (p1 != null) {
-			m.range.setStartRow(p1[0]);
-			m.range.setStartCol(p1[1]);
+	private static AceRange moveMarkerOnRemove(AceRange mr, GwtAceRange range) {
+		int[] p1 = overlapping(range, mr.getStartRow(), mr.getStartCol());
+		boolean changed = false;
+		if (p1 == null) {
+			p1 = new int[]{mr.getStartRow(), mr.getStartCol()};
+		}
+		else {
+			changed = true;
 		}
 		
-		int[] p2 = overlapping(range,m.range.getEndRow(), m.range.getEndCol());
-		if (p2 != null) {
-			m.range.setEndRow(p2[0]);
-			m.range.setEndCol(p2[1]);
+		int[] p2 = overlapping(range, mr.getEndRow(), mr.getEndCol());
+		if (p2 == null) {
+			p2 = new int[]{mr.getEndRow(), mr.getEndCol()};
+		}
+		else {
+			changed = true;
 		}
 		
-		return p1 != null | p2 != null;
+		return changed ? new AceRange(p1[0], p1[1], p2[0], p2[1]) : null;
 	}
 	
-	private int[] overlapping(GwtAceRange range, int row, int col) {
+	private static int[] overlapping(GwtAceRange range, int row, int col) {
 		GwtAcePosition start = range.getStart();
 		
 		if (start.getRow() > row || (start.getRow() == row && start.getColumn() >= col)) {
@@ -419,20 +471,18 @@ public class AceEditorWidget extends FocusWidget implements
 		return new int[] {start.getRow(), start.getColumn()};
 	}
 	
-	private void removeMarkers(Set<ClientMarker> removed) {
-		for (ClientMarker cm : removed) {
+	private void removeMarkers(Set<MarkerInEditor> removed) {
+		for (MarkerInEditor cm : removed) {
 			editor.removeMarker(cm.clientId);
-			markersInEditor.remove(cm.marker.serverId);
+			markersInEditor.remove(cm.marker.getMarkerId());
 		}
 	}
 	
-	private void updateMarkers(Set<ClientMarker> moved) {
-		for (ClientMarker cm : moved) {
-			VConsole.log("UPDATING "+cm.clientId+" "+cm.marker);
+	private void updateMarkers(Set<MarkerInEditor> moved) {
+		for (MarkerInEditor cm : moved) {
 			editor.removeMarker(cm.clientId);
-			AceClientMarker m = cm.marker;
-			cm.clientId = editor.addMarker(convertRange(m.range), m.cssClass, m.type.toString(), m.inFront);
-			VConsole.log("UPDATED "+cm.clientId+" "+cm.marker);
+			AceMarker m = cm.marker;
+			cm.clientId = editor.addMarker(convertRange(m.getRange()), m.getCssClass(), m.getType().toString(), m.isInFront());
 		}
 		
 	}
@@ -457,20 +507,20 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setReadOnly(this.readOnly || this.propertyReadOnly);
 	}
 
-	private static AceClientRange convertSelection(GwtAceSelection selection) {
+	private static TransportRange convertSelection(GwtAceSelection selection) {
 		GwtAcePosition start = selection.getRange().getStart();
 		GwtAcePosition end = selection.getRange().getEnd();
 		if (selection.isBackwards()) {
-			return new AceClientRange(end.getRow(), end.getColumn(), start.getRow(),
+			return new TransportRange(end.getRow(), end.getColumn(), start.getRow(),
 					start.getColumn());
 		} else {
-			return new AceClientRange(start.getRow(), start.getColumn(),
+			return new TransportRange(start.getRow(), start.getColumn(),
 					end.getRow(), end.getColumn());
 		}
 
 	}
 
-	public AceClientRange getSelection() {
+	public TransportRange getSelection() {
 		return selection;
 	}
 
@@ -507,11 +557,11 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 
 	private void selectionChanged() {
-		AceClientRange sel = convertSelection(editor.getSelection());
+		TransportRange sel = convertSelection(editor.getSelection());
 		if (!sel.equals(selection)) {
 			selection = sel;
-			if (listenSelections) {
-				changeListener.changed();
+			if (changeListener!=null) {
+				changeListener.selectionChanged();
 			}
 		}
 	}
@@ -527,11 +577,11 @@ public class AceEditorWidget extends FocusWidget implements
 		return focused;
 	}
 	
-	private GwtAceRange convertRange(AceClientRange s) {
-		int r1 = s.getStartRow();
-		int c1 = s.getStartCol();
-		int r2 = s.getEndRow();
-		int c2 = s.getEndCol();
+	private GwtAceRange convertRange(AceRange r) {
+		int r1 = r.getStartRow();
+		int c1 = r.getStartCol();
+		int r2 = r.getEndRow();
+		int c2 = r.getEndCol();
 		boolean backwards = r1 > r2 || (r1 == r2 && c1 > c2);
 		if (backwards) {
 			return GwtAceRange.create(r2, c2, r1, c1);
@@ -540,16 +590,12 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 	}
 
-	public Set<AceClientMarker> getMarkers() {
-		HashSet<AceClientMarker> markers = new HashSet<AceClientMarker>();
-		for (ClientMarker cm : markersInEditor.values()) {
-			markers.add(cm.marker);
+	private Map<String, AceMarker> getMarkers() {
+		HashMap<String, AceMarker> markers = new HashMap<String, AceMarker>();
+		for (MarkerInEditor cm : markersInEditor.values()) {
+			markers.put(cm.marker.getMarkerId(), cm.marker);
 		}
 		return markers;
-	}
-
-	public Set<AceClientAnnotation> getMarkerAnnotations() {
-		return markerAnnotations;
 	}
 
 	public void resize() {
@@ -557,6 +603,31 @@ public class AceEditorWidget extends FocusWidget implements
 			editor.resize();
 		}
 	}
+
+	
+	
+	public AceDoc getDoc() {
+		// TODO: cache?
+		
+		return new AceDoc(getText(), getMarkers(), getRowAnnotations(), getMarkerAnnotations());
+	}
+
+	
+	private Set<MarkerAnnotation> getMarkerAnnotations() {
+		return markerAnnotations;
+	}
+
+	private Set<RowAnnotation> getRowAnnotations() {
+		return rowAnnotations;
+	}
+
+	public void setDoc(AceDoc doc) {
+		setText(doc.getText());
+		setMarkers(doc.getMarkers());
+		setMarkerAnnotations(doc.getMarkerAnnotations());
+		setRowAnnotations(doc.getRowAnnotations());
+	}
+
 
 
 	
