@@ -14,7 +14,7 @@ public class GwtAceEvent extends JavaScriptObject {
 	}
 
 	enum Type {
-		change, changeCursor, changeSelection
+		change, changeCursor, changeSelection, keydown // TODO?
 	}
 
 	final public Type getType() {

@@ -35,5 +35,5 @@ public interface GwtAceKeyboardHandler {
 	 * @return command
 	 */
 	public Command handleKeyboard(JavaScriptObject data, int hashId,
-			String keyString, int keyCode, JavaScriptObject e);
+			String keyString, int keyCode, GwtAceKeyboardEvent e);
 }

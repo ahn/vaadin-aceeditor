@@ -3,14 +3,15 @@ package org.vaadin.aceeditor.client;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
-import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
 import org.vaadin.aceeditor.client.gwt.GwtAceAnnotation;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeCursorHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent;
@@ -20,11 +21,13 @@ import org.vaadin.aceeditor.client.gwt.GwtAceChangeSelectionHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
 import org.vaadin.aceeditor.client.gwt.GwtAceEvent;
 import org.vaadin.aceeditor.client.gwt.GwtAceFocusBlurHandler;
+import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAcePosition;
 import org.vaadin.aceeditor.client.gwt.GwtAceRange;
 import org.vaadin.aceeditor.client.gwt.GwtAceSelection;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusWidget;
 
@@ -36,8 +39,10 @@ public class AceEditorWidget extends FocusWidget implements
 		GwtAceChangeHandler, GwtAceFocusBlurHandler,
 		GwtAceChangeSelectionHandler, GwtAceChangeCursorHandler {
 
-	public interface ChangeListener {
+	public interface TextChangeListener {
 		public void changed();
+	}
+	public interface SelectionChangeListener {
 		public void selectionChanged();
 	}
 
@@ -45,14 +50,23 @@ public class AceEditorWidget extends FocusWidget implements
 		public void focusChanged(boolean focused);
 	}
 
-	private ChangeListener changeListener;
-
-	public void setChangeListener(ChangeListener li) {
-		changeListener = li;
+	private LinkedList<TextChangeListener> changeListeners = new LinkedList<TextChangeListener>();
+	public void addTextChangeListener(TextChangeListener li) {
+		changeListeners.add(li);
+	}
+	public void removeTextChangeListener(TextChangeListener li) {
+		changeListeners.remove(li);
+	}
+	
+	private LinkedList<SelectionChangeListener> selChangeListeners = new LinkedList<SelectionChangeListener>();
+	public void addSelectionChangeListener(SelectionChangeListener li) {
+		selChangeListeners.add(li);
+	}
+	public void removeSelectionChangeListener(SelectionChangeListener li) {
+		selChangeListeners.remove(li);
 	}
 
 	private FocusChangeListener focusChangeListener;
-
 	public void setFocusChangeListener(FocusChangeListener li) {
 		focusChangeListener = li;
 	}
@@ -86,18 +100,23 @@ public class AceEditorWidget extends FocusWidget implements
 	private boolean readOnly = false;
 	private boolean propertyReadOnly = false;
 	private boolean focused;
-	private TransportRange selection;
+	private AceRange selection;
 
 	// key: marker markerId
 	private Map<String,MarkerInEditor> markersInEditor = Collections.emptyMap();
 
 	private Set<RowAnnotation> rowAnnsInEditor = Collections.emptySet();
 	private Set<AnnotationInEditor> markerAnnsInEditor = Collections.emptySet();
-
+	
+	private Map<Integer, AceRange> invisibleMarkers = new HashMap<Integer, AceRange>();
+	private int latestInvisibleMarkerId = 0;
+	
 	private boolean settingText = false;
 
 	private Set<MarkerAnnotation> markerAnnotations = Collections.emptySet();
 	private Set<RowAnnotation> rowAnnotations = Collections.emptySet();
+
+	private GwtAceKeyboardHandler keyboardHandler;
 	
 	private static String nextId() {
 		return "_AceEditorWidget_" + (++idCounter);
@@ -120,6 +139,16 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.addFocusListener(this);
 		editor.addChangeSelectionHandler(this);
 		editor.addChangeCursorHandler(this);
+		if (keyboardHandler!=null) {
+			editor.setKeyboardHandler(keyboardHandler);
+		}
+	}
+	
+	public void setKeyboardHandler(GwtAceKeyboardHandler handler) {
+		this.keyboardHandler = handler;
+		if (isInitialized()) {
+			editor.setKeyboardHandler(handler);
+		}
 	}
 	
 	@Override
@@ -161,7 +190,7 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 	}
 
-	public void setSelection(TransportRange s) {
+	public void setSelection(AceRange s) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -171,10 +200,10 @@ public class AceEditorWidget extends FocusWidget implements
 		
 		selection = s;
 		
-		int r1 = s.row1;
-		int c1 = s.col1;
-		int r2 = s.row2;
-		int c2 = s.col2;
+		int r1 = s.getStartRow();
+		int c1 = s.getStartCol();
+		int r2 = s.getEndRow();
+		int c2 = s.getEndCol();
 		boolean backwards = r1 > r2 || (r1 == r2 && c1 > c2);
 		GwtAceRange range;
 		if (backwards) {
@@ -236,9 +265,6 @@ public class AceEditorWidget extends FocusWidget implements
 			}
 		}
 		setAnnotationsToEditor();
-		if (changeListener!=null) {
-			changeListener.changed();
-		}
 	}
 	
 	public void setRowAnnotations(Set<RowAnnotation> ranns) {
@@ -313,10 +339,11 @@ public class AceEditorWidget extends FocusWidget implements
 			return;
 		}
 		adjustMarkers(e);
+		adjustInvisibleMarkers(e);
 		adjustMarkerAnnotations();
 		text = newText;
-		if (changeListener != null) {
-			changeListener.changed();
+		for (TextChangeListener li : changeListeners) {
+			li.changed();
 		}
 	}
 
@@ -369,6 +396,25 @@ public class AceEditorWidget extends FocusWidget implements
 		updateMarkers(moved);
 	}
 	
+	private void adjustInvisibleMarkers(GwtAceChangeEvent event) {
+		Action act = event.getData().getAction();
+		GwtAceRange range = event.getData().getRange();
+		HashMap<Integer, AceRange> newMap = new HashMap<Integer, AceRange>();
+		if (act==Action.insertLines || act==Action.insertText) {
+			for (Entry<Integer, AceRange> e : invisibleMarkers.entrySet()) {
+				AceRange newRange = moveMarkerOnInsert(e.getValue(), range);
+				newMap.put(e.getKey(), newRange==null?e.getValue():newRange);
+			}
+		}
+		else if (act==Action.removeLines || act==Action.removeText) {
+			for (Entry<Integer, AceRange> e : invisibleMarkers.entrySet()) {
+				AceRange newRange = moveMarkerOnRemove(e.getValue(), range);
+				newMap.put(e.getKey(), newRange==null?e.getValue():newRange);
+			}
+		}
+		invisibleMarkers = newMap;
+	}
+	
 	private static boolean markerIsValid(AceMarker marker) {
 		AceRange r = marker.getRange();
 		return !r.isZeroLength() && !r.isBackwards() && r.getStartRow() >= 0 && r.getStartCol() >= 0 && r.getEndCol() >= 0; // no need to check endrow
@@ -402,9 +448,9 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 		
 		boolean aboveMarkerStart = startRow < mr.getStartRow();
-		boolean beforeMarkerStartOnRow = startRow == mr.getStartRow() && startCol <= mr.getStartCol();
+		boolean beforeMarkerStartOnRow = startRow == mr.getStartRow() && startCol < mr.getStartCol(); // < or <=
 		boolean aboveMarkerEnd = startRow < mr.getEndRow();
-		boolean beforeMarkerEndOnRow = startRow == mr.getEndRow() && startCol < mr.getEndCol();	
+		boolean beforeMarkerEndOnRow = startRow == mr.getEndRow() && startCol <= mr.getEndCol();	 // < or <=
 		
 		int row1 = mr.getStartRow();
 		int col1 = mr.getStartCol();
@@ -507,20 +553,20 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setReadOnly(this.readOnly || this.propertyReadOnly);
 	}
 
-	private static TransportRange convertSelection(GwtAceSelection selection) {
+	private static AceRange convertSelection(GwtAceSelection selection) {
 		GwtAcePosition start = selection.getRange().getStart();
 		GwtAcePosition end = selection.getRange().getEnd();
 		if (selection.isBackwards()) {
-			return new TransportRange(end.getRow(), end.getColumn(), start.getRow(),
+			return new AceRange(end.getRow(), end.getColumn(), start.getRow(),
 					start.getColumn());
 		} else {
-			return new TransportRange(start.getRow(), start.getColumn(),
+			return new AceRange(start.getRow(), start.getColumn(),
 					end.getRow(), end.getColumn());
 		}
 
 	}
 
-	public TransportRange getSelection() {
+	public AceRange getSelection() {
 		return selection;
 	}
 
@@ -557,11 +603,11 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 
 	private void selectionChanged() {
-		TransportRange sel = convertSelection(editor.getSelection());
+		AceRange sel = convertSelection(editor.getSelection());
 		if (!sel.equals(selection)) {
 			selection = sel;
-			if (changeListener!=null) {
-				changeListener.selectionChanged();
+			for (SelectionChangeListener li : selChangeListeners) {
+				li.selectionChanged();
 			}
 		}
 	}
@@ -571,6 +617,18 @@ public class AceEditorWidget extends FocusWidget implements
 			return;
 		}
 		editor.setUseWorker(use);
+	}
+	
+	@Override
+	public void setFocus(boolean focused) {
+		super.setFocus(focused);
+		if (focused) {
+			editor.focus();
+		}
+		else {
+			editor.blur();
+		}
+		// Waiting for the event from editor to update 'focused'.
 	}
 
 	public boolean isFocused() {
@@ -628,6 +686,27 @@ public class AceEditorWidget extends FocusWidget implements
 		setRowAnnotations(doc.getRowAnnotations());
 	}
 
+	private final Logger logger = Logger.getLogger("TEMP");
+
+	public int[] getCursorCoords() {
+		JsArrayInteger cc = editor.getCursorCoords();
+		return new int[] {cc.get(0), cc.get(1)};
+	}
+	
+
+	public int addInvisibleMarker(AceRange range) {
+		int id = ++latestInvisibleMarkerId;
+		invisibleMarkers.put(id, range);
+		return id;
+	}
+	
+	public void removeInvisibleMarker(int id) {
+		invisibleMarkers.remove(id);
+	}
+	
+	public AceRange getInvisibleMarker(int id) {
+		return invisibleMarkers.get(id);
+	}
 
 
 	

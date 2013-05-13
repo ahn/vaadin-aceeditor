@@ -20,7 +20,7 @@ public class AceEditorState extends AbstractFieldState {
 	@DelegateToWidget("setTheme")
 	public String theme = "textmate";
 	
-	public TransportRange selection = null;
+	public TransportRange selection = new TransportRange(0, 0, 0, 0);
 	
 	/**
 	 * 0 if no selection change on server

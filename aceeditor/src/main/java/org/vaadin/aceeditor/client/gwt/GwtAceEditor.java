@@ -112,8 +112,10 @@ public class GwtAceEditor extends JavaScriptObject {
 			// 	if (keyCode===undefined) {
 			//		return;
 			//	}
-			
-			var command = handler.@org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler::handleKeyboard(Lcom/google/gwt/core/client/JavaScriptObject;ILjava/lang/String;ILcom/google/gwt/core/client/JavaScriptObject;)(data, hashId, keyString, keyCode, e);
+			console.log("KEKE");
+			console.log(data);
+			console.log(e);
+			var command = handler.@org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler::handleKeyboard(Lcom/google/gwt/core/client/JavaScriptObject;ILjava/lang/String;ILorg/vaadin/aceeditor/client/gwt/GwtAceKeyboardEvent;)(data, hashId, keyString, keyCode, e);
 			if (command===@org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler$Command::NULL) {
 				return {command: "null"};
 			}

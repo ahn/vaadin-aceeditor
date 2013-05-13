@@ -124,22 +124,22 @@ public class ClientDiff {
 		return getPatchesString() + "\nMSD: " + markerSetDiff.toString() + "\nrad:" + rowAnnDiff + ", mad:" + markerAnnDiff;
 	}
 	
-	public static TransportRange adjustSelection(TransportRange sel, String text1, String text2) {
+	public static AceRange adjustSelection(AceRange sel, String text1, String text2) {
 		// This is a bit stupid to transform back and forth but diff_match_patch doesn't deal with lines...
 		if (text1.equals(text2)) {
 			return sel;
 		}
 		String[] lines1 = text1.split("\n", -1);
 		String[] lines2 = text2.split("\n", -1);
-		boolean zeroLength = sel.row1==sel.row2 && sel.col1==sel.col2;
-		int start1 = Util.cursorPosFromLineCol(lines1, sel.row1, sel.col1, 0);
-		int end1 = zeroLength ? start1 : Util.cursorPosFromLineCol(lines1, sel.row2, sel.col2, 0);
+		boolean zeroLength = sel.isZeroLength();
+		int start1 = Util.cursorPosFromLineCol(lines1, sel.getStartRow(), sel.getStartCol(), 0);
+		int end1 = zeroLength ? start1 : Util.cursorPosFromLineCol(lines1, sel.getEndRow(), sel.getEndCol(), 0);
 		JsArray<Diff> diffs = dmp.diff_main(text1, text2);
 		int start2 = dmp.diff_xIndex(diffs, start1);
 		int end2 = zeroLength ? start2 : dmp.diff_xIndex(diffs, end1);
 		int[] startRowCol = Util.lineColFromCursorPos(lines2, start2, 0);
 		int[] endRowCol = zeroLength ? startRowCol : Util.lineColFromCursorPos(lines2, end2, 0);
-		return new TransportRange(startRowCol[0], startRowCol[1], endRowCol[0], endRowCol[1]);
+		return new AceRange(startRowCol[0], startRowCol[1], endRowCol[0], endRowCol[1]);
 	}
 	
 //	public static AceMarker adjustMarkerBasedOnContext(MarkerAddition ma,

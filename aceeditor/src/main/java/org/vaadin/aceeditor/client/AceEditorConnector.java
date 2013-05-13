@@ -5,9 +5,9 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.vaadin.aceeditor.AceEditor;
-import org.vaadin.aceeditor.client.AceEditorWidget.ChangeListener;
 import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
-import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
+import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
+import org.vaadin.aceeditor.client.AceEditorWidget.TextChangeListener;
 import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
 
 import com.google.gwt.core.client.GWT;
@@ -25,7 +25,7 @@ import com.vaadin.shared.ui.Connect;
 @SuppressWarnings("serial")
 @Connect(AceEditor.class)
 public class AceEditorConnector extends AbstractHasComponentsConnector
-		implements ChangeListener, FocusChangeListener {
+		implements TextChangeListener, SelectionChangeListener, FocusChangeListener {
 
 	private static Logger logger = Logger.getLogger(AceEditorConnector.class.getName());
 	
@@ -81,7 +81,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 			AceDoc doc1 = widget.getDoc();
 			AceDoc doc2 = diff.applyTo(doc1);
-			TransportRange sel = ClientDiff.adjustSelection(widget.getSelection(), doc1.getText(), doc2.getText());
+			AceRange sel = ClientDiff.adjustSelection(widget.getSelection(), doc1.getText(), doc2.getText());
 			widget.setDoc(doc2);
 			widget.setSelection(sel);
 			
@@ -169,7 +169,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 		
 		if (firstTime || getState().selectionFromServer > 0) {
-			widget.setSelection(getState().selection);
+			widget.setSelection(AceRange.fromTransport(getState().selection));
 		}
 	}
 	
@@ -183,7 +183,8 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	@Override
 	protected Widget createWidget() {
 		widget = GWT.create(AceEditorWidget.class);
-		widget.setChangeListener(this);
+		widget.addTextChangeListener(this);
+		widget.addSelectionChangeListener(this);
 		widget.setFocusChangeListener(this);
 		return widget;
 	}
@@ -263,10 +264,10 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		logger.info("TD: " + td);
 		
 		if (immediately) {
-			serverRpc.changed(td, widget.getSelection(), widget.isFocused());
+			serverRpc.changed(td, widget.getSelection().asTransport(), widget.isFocused());
 		}
 		else {
-			serverRpc.changedDelayed(td, widget.getSelection(), widget.isFocused());
+			serverRpc.changedDelayed(td, widget.getSelection().asTransport(), widget.isFocused());
 		}
 		
 		shadow = doc;

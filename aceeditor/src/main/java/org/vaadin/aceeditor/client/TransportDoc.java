@@ -108,6 +108,8 @@ public class TransportDoc implements Serializable {
 		}
 	}
 	
+	
+	
 	public String text;
 	public Map<String, TransportMarker> markers;
 	public Set<TransportRowAnnotation> rowAnnotations;
