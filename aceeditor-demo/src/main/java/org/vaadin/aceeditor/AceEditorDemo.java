@@ -4,8 +4,8 @@ import org.vaadin.aceeditor.AceEditor.SelectionChangeEvent;
 import org.vaadin.aceeditor.AceEditor.SelectionChangeListener;
 import org.vaadin.aceeditor.client.AceAnnotation;
 import org.vaadin.aceeditor.client.AceMarker;
-import org.vaadin.aceeditor.client.AceRange;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
+import org.vaadin.aceeditor.client.AceRange;
 
 import com.vaadin.annotations.PreserveOnRefresh;
 import com.vaadin.annotations.StyleSheet;
@@ -60,6 +60,7 @@ public class AceEditorDemo extends UI {
 				"}\n";
 		
 		editor.setValue(s);
+		
 	}
 	
 	@Override
@@ -101,6 +102,7 @@ public class AceEditorDemo extends UI {
 
 		leftBar.addComponent(createMarkerAnnotationPanel());
 		leftBar.addComponent(createErrorEditor());
+		leftBar.addComponent(createSuggestionEditor());
 		
 		split.setSecondComponent(editor);
 		
@@ -452,6 +454,33 @@ public class AceEditorDemo extends UI {
 		});
 		
 		return new Panel("Error Checker", b);
+	}
+	
+	private Component createSuggestionEditor() {
+		Button b = new Button("Open suggestion demo");
+		b.setStyleName(BaseTheme.BUTTON_LINK);
+		b.addClickListener(new ClickListener() {
+
+			@Override
+			public void buttonClick(ClickEvent event) {
+				Window w = new Window("Press Ctrl+Space for suggestions.");
+				w.setWidth("50%");
+				w.setHeight("50%");
+				w.center();
+				AceEditor ee = new AceEditor();
+				ee.setValue("Press Ctrl+Space for suggestions.\nOr type a dot.");
+				
+				ee.addMarker(new AceRange(0,10,0,15), "mymarker1", AceMarker.Type.text, false, OnTextChange.ADJUST);
+				ee.setSizeFull();
+				w.setContent(ee);
+				UI.getCurrent().addWindow(w);
+				
+				new SuggestionExtension(new MySuggester()).extend(ee);
+			}
+			
+		});
+		
+		return new Panel("Suggestions", b);
 	}
 
 }
