@@ -10,9 +10,9 @@ public interface SuggesterServerRpc extends ServerRpc {
 	// TODO: it may not be necessary to send the whole text here
 	// but I guess it's simplest...
 	
-	public void suggest(String text, TransportRange range);
+	public void suggest(String text, TransportRange selection);
 
-	public void suggestionSelected(Suggestion s);
+	public void suggestionSelected(int index);
 	
 	
 }

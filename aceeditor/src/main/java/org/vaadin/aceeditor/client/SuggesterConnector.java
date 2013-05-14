@@ -3,7 +3,7 @@ package org.vaadin.aceeditor.client;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.vaadin.aceeditor.AceSuggestionExtension;
+import org.vaadin.aceeditor.SuggestionExtension;
 import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
 import org.vaadin.aceeditor.client.SuggestPopup.SuggestionSelectedListener;
 import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardEvent;
@@ -13,11 +13,12 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.vaadin.client.ServerConnector;
 import com.vaadin.client.communication.RpcProxy;
+import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
 import com.vaadin.shared.ui.Connect;
 
 @SuppressWarnings("serial")
-@Connect(AceSuggestionExtension.class)
+@Connect(SuggestionExtension.class)
 public class SuggesterConnector extends AbstractExtensionConnector implements
 		GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 
@@ -26,16 +27,31 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	private final Logger logger = Logger.getLogger(SuggesterConnector.class
 			.getName());
 
+
+	private AceEditorConnector connector;
 	private AceEditorWidget widget;
 
 	private SuggesterServerRpc serverRpc = RpcProxy.create(
 			SuggesterServerRpc.class, this);
 
+	private String suggStartText;
+	private AceRange suggStartCursor;
+	
 	private SuggesterClientRpc clientRpc = new SuggesterClientRpc() {
 		@Override
-		public void showSuggestions(List<Suggestion> suggs) {
-			logger.info("showSuggestions(" + suggs + ") --- " + suggesting);
+		public void showSuggestions(List<TransportSuggestion> suggs) {
 			setSuggs(suggs);
+		}
+
+		@Override
+		public void applySuggestionDiff(TransportDiff td) {
+			ClientDiff diff = ClientDiff.fromTransportDiff(td);
+			if (popup!=null) {
+				popup.hide();
+				popup = null;
+			}
+			widget.setTextAndAdjust(diff.applyTo(widget.getDoc()).getText());
+			widget.fireTextChanged(); // XXX we need to do this here to alert AceEditorConnector...
 		}
 	};
 
@@ -47,12 +63,26 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	private boolean startSuggestingOnNextSelectionChange;
 
+	private boolean suggestOnDot = true;
+
+
 	public SuggesterConnector() {
 		super();
 		registerRpc(SuggesterClientRpc.class, clientRpc);
 	}
+	
+	@Override
+	public void onStateChanged(StateChangeEvent stateChangeEvent) {
+		super.onStateChanged(stateChangeEvent);
+		suggestOnDot  = getState().suggestOnDot;
+	}
+	
+	@Override
+	public SuggesterState getState() {
+		return (SuggesterState) super.getState();
+	}
 
-	private void setSuggs(List<Suggestion> suggs) {
+	private void setSuggs(List<TransportSuggestion> suggs) {
 		if (suggesting) {
 			popup.setSuggestions(suggs);
 		}
@@ -69,8 +99,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	@Override
 	protected void extend(ServerConnector target) {
-
-		widget = ((AceEditorConnector) target).getWidget();
+		
+		connector = (AceEditorConnector) target;
+		widget = connector.getWidget();
 		widget.setKeyboardHandler(this);
 
 		String t = widget.getText();
@@ -84,20 +115,17 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		if (suggesting) {
 			return keyPressWhileSuggesting(keyCode);
 		}
-
 		if (e == null) {
 			return Command.DEFAULT;
 		}
-		logger.info("handleKeyboard(" + data + ", " + hashId + ", " + keyString
-				+ ", " + keyCode + ", " + e.getKeyCode() + "---"
-				+ e.isCtrlKey() + ")");
+//		logger.info("handleKeyboard(" + data + ", " + hashId + ", " + keyString
+//				+ ", " + keyCode + ", " + e.getKeyCode() + "---"
+//				+ e.isCtrlKey() + ")");
 
 		if (keyCode == 32 && e.isCtrlKey()) {
-			logger.info("Ctrl-space");
 			startSuggesting();
 			return Command.NULL;
-		} else if (".".equals(keyString)) {
-			logger.info("Dot");
+		} else if (suggestOnDot && ".".equals(keyString)) {
 			startSuggestingOnNextSelectionChange = true;
 			widget.addSelectionChangeListener(this);
 			return Command.DEFAULT;
@@ -108,19 +136,21 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	private void startSuggesting() {
 
-		String text = widget.getText();
-		AceRange sel = widget.getSelection();
-		serverRpc.suggest(text, sel.asTransport());
+		suggStartText = widget.getText();
+		suggStartCursor = widget.getSelection();
+		serverRpc.suggest(suggStartText, suggStartCursor.asTransport());
 
-		suggestionStartId = widget.addInvisibleMarker(sel);
+		suggestionStartId = widget.addInvisibleMarker(suggStartCursor);
 		widget.addSelectionChangeListener(this);
 		popup = createSuggestionPopup();
 		suggesting = true;
 	}
 
 	@Override
-	public void suggestionSelected(Suggestion s) {
-		serverRpc.suggestionSelected(s);
+	public void suggestionSelected(TransportSuggestion s) {
+		connector.setOnRoundtrip(true);
+//		AceRange suggMarker = widget.getInvisibleMarker(suggestionStartId);
+		serverRpc.suggestionSelected(s.index);
 		stopSuggesting();
 	}
 
@@ -132,9 +162,6 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	private void stopSuggesting() {
 		widget.removeSelectionChangeListener(this);
 		suggesting = false;
-		if (popup != null) {
-			popup = null;
-		}
 		if (suggestionStartId != null) {
 			widget.removeInvisibleMarker(suggestionStartId);
 		}

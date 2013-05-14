@@ -3,6 +3,7 @@ package org.vaadin.aceeditor.client;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
@@ -12,27 +13,30 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.vaadin.client.ui.VOverlay;
 
 public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		DoubleClickHandler, ChangeHandler {
-	protected ListBox choiceList = new ListBox();
+	protected ListBox choiceList;
 
 	private String startOfValue = "";
 
 	public interface SuggestionSelectedListener {
-		void suggestionSelected(Suggestion s);
+		void suggestionSelected(TransportSuggestion s);
 		void noSuggestionSelected();
 	}
 
 	private SuggestionSelectedListener listener;
 
-	private PopupPanel descriptionPopup;
+	private VOverlay descriptionPopup;
 
-	private List<Suggestion> suggs;
-	private List<Suggestion> visibleSuggs = new LinkedList<Suggestion>();
+	private List<TransportSuggestion> suggs;
+	private List<TransportSuggestion> visibleSuggs = new LinkedList<TransportSuggestion>();
+
+	
+	private Image loadingImage;
 
 	public static final int WIDTH = 100;
 	public static final int HEIGHT = 200;
@@ -46,25 +50,32 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
 	public SuggestPopup() {
 		super(true);
-
-		this.startOfValue = startOfValue.toLowerCase();
-
 		setWidth(WIDTH + "px");
-		setHeight(HEIGHT + "px");
-		add(choiceList);
-		choiceList.setStyleName("list");
-		choiceList.setVisibleItemCount(2);
-
-		choiceList.addKeyDownHandler(this);
-		choiceList.addDoubleClickHandler(this);
-
-		choiceList.addChangeHandler(this);
-
-		choiceList.setStylePrimaryName("aceeditor-suggestpopup-list");
+		SuggestionResources resources = GWT.create(SuggestionResources.class);
+		loadingImage = new Image(resources.loading());
+		setWidget(loadingImage);
 	}
 	
-	public void setSuggestions(List<Suggestion> suggs) {
+	private void createChoiceList() {
+		choiceList = new ListBox();
+		choiceList.setStyleName("list");
+		choiceList.addKeyDownHandler(this);
+		choiceList.addDoubleClickHandler(this);
+		choiceList.addChangeHandler(this);
+		choiceList.setStylePrimaryName("aceeditor-suggestpopup-list");
+		setWidget(choiceList);
+	}
+	
+	private void startLoading() {
+		if (descriptionPopup!=null) {
+			descriptionPopup.hide();
+		}
+		setWidget(loadingImage);
+	}
+	
+	public void setSuggestions(List<TransportSuggestion> suggs) {
 		this.suggs = suggs;
+		createChoiceList();
 		populateList();
 		if (choiceList.getItemCount() == 0) {
 			close();
@@ -75,14 +86,16 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		choiceList.clear();
 		visibleSuggs.clear();
 		int i = 0;
-		for (Suggestion s : suggs) {
-			if (s.getValueText().toLowerCase().startsWith(startOfValue)) {
+		for (TransportSuggestion s : suggs) {
+			if (s.suggestionText.toLowerCase().startsWith(startOfValue)) {
 				visibleSuggs.add(s);
-				choiceList.addItem(s.getDisplayText(), "" + i);
+				choiceList.addItem(s.displayText, "" + i);
 			}
 			i++;
 		}
 		if (choiceList.getItemCount() > 0) {
+			int vic = Math.max(2, Math.min(10, choiceList.getItemCount()));
+			choiceList.setVisibleItemCount(vic);
 			choiceList.setSelectedIndex(0);
 			this.onChange(null);
 		}
@@ -178,12 +191,14 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		if (suggs==null) {
 			return;
 		}
-		this.hide();
+		
 		int selected = choiceList.getSelectedIndex();
 		if (listener != null) {
 			if (selected == -1) {
+				this.hide();
 				listener.noSuggestionSelected();
 			} else {
+				startLoading();
 				listener.suggestionSelected(visibleSuggs.get(selected));
 			}
 		}
@@ -197,7 +212,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		}
 
 		int selected = choiceList.getSelectedIndex();
-		String descr = visibleSuggs.get(selected).getDescriptionText();
+		String descr = visibleSuggs.get(selected).descriptionText;
 
 		if (descr != null && !descr.isEmpty()) {
 			((HTML) descriptionPopup.getWidget()).setHTML(descr);
@@ -226,13 +241,15 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 	}
 
 	private void createDescriptionPopup() {
-		descriptionPopup = new PopupPanel();
+		descriptionPopup = new VOverlay();
+		descriptionPopup.setOwner(getOwner());
 		descriptionPopup.setStylePrimaryName("aceeditor-suggestpopup-description");
 		HTML lbl = new HTML();
 		lbl.setWordWrap(true);
 		descriptionPopup.setWidget(lbl);
 		updateDescriptionPopupPosition();
-		descriptionPopup.setSize(DESCRIPTION_WIDTH+"px", HEIGHT+"px");
+		descriptionPopup.setWidth(DESCRIPTION_WIDTH+"px");
+//		descriptionPopup.setSize(DESCRIPTION_WIDTH+"px", HEIGHT+"px");
 	}
 
 	public void setStartOfValue(String startOfValue) {

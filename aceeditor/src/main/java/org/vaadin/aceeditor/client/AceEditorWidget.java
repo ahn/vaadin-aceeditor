@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
+import org.vaadin.aceeditor.client.ClientDiff.Adjuster;
 import org.vaadin.aceeditor.client.gwt.GwtAceAnnotation;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeCursorHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent;
@@ -96,11 +97,11 @@ public class AceEditorWidget extends FocusWidget implements
 
 	private static int idCounter = 0;
 
-	private String text = null;
+	private String text = "";
 	private boolean readOnly = false;
 	private boolean propertyReadOnly = false;
 	private boolean focused;
-	private AceRange selection;
+	private AceRange selection = new AceRange(0,0,0,0);
 
 	// key: marker markerId
 	private Map<String,MarkerInEditor> markersInEditor = Collections.emptyMap();
@@ -111,12 +112,14 @@ public class AceEditorWidget extends FocusWidget implements
 	private Map<Integer, AceRange> invisibleMarkers = new HashMap<Integer, AceRange>();
 	private int latestInvisibleMarkerId = 0;
 	
-	private boolean settingText = false;
+	private boolean ignoreEditorEvents = false;
 
 	private Set<MarkerAnnotation> markerAnnotations = Collections.emptySet();
 	private Set<RowAnnotation> rowAnnotations = Collections.emptySet();
 
 	private GwtAceKeyboardHandler keyboardHandler;
+
+	private AceDoc doc;
 	
 	private static String nextId() {
 		return "_AceEditorWidget_" + (++idCounter);
@@ -174,27 +177,41 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 
 	private void setText(String text) {
-		if (!isInitialized()) {
+		if (!isInitialized() || text.equals(this.text)) {
 			return;
 		}
-		
-		if (text == null) {
-			text = "";
-		}
-		
-		if (!text.equals(this.text)) {
-			this.text = text;
-			settingText = true;
-			editor.setText(text);
-			settingText = false;
-		}
+		logger.info("setText, sel1: " + selection);
+		AceRange oldSelection = selection;
+		Adjuster adjuster = new Adjuster(this.text, text);
+		adjustInvisibleMarkersOnTextChange(adjuster);
+		this.text = text;
+		this.doc = null;
+		ignoreEditorEvents = true;
+		editor.setText(text);
+		AceRange adjSel = adjuster.adjust(oldSelection);
+		logger.info("setText, sel2: " + adjSel);
+		setSelection(adjSel, true);
+		ignoreEditorEvents = false;
 	}
 
+	
+	private void adjustInvisibleMarkersOnTextChange(Adjuster adjuster) {
+		HashMap<Integer, AceRange> ims = new HashMap<Integer, AceRange>(invisibleMarkers.size());
+		for (Entry<Integer, AceRange> e : invisibleMarkers.entrySet()) {
+			ims.put(e.getKey(), adjuster.adjust(e.getValue()));
+		}
+		invisibleMarkers = ims;
+	}
+	
 	public void setSelection(AceRange s) {
+		setSelection(s, false);
+	}
+	
+	private void setSelection(AceRange s, boolean force) {
 		if (!isInitialized()) {
 			return;
 		}
-		if (s==null || selection.equals(s)) {
+		if (s.equals(selection) && !force) {
 			return;
 		}
 		
@@ -331,7 +348,7 @@ public class AceEditorWidget extends FocusWidget implements
 
 	@Override
 	public void onChange(GwtAceChangeEvent e) {
-		if (settingText) {
+		if (ignoreEditorEvents) {
 			return;
 		}
 		String newText = editor.getText();
@@ -342,11 +359,16 @@ public class AceEditorWidget extends FocusWidget implements
 		adjustInvisibleMarkers(e);
 		adjustMarkerAnnotations();
 		text = newText;
+		doc = null;
+		fireTextChanged();
+	}
+
+	public void fireTextChanged() {
 		for (TextChangeListener li : changeListeners) {
 			li.changed();
 		}
 	}
-
+	
 	private void adjustMarkers(GwtAceChangeEvent e) {
 		Action act = e.getData().getAction();
 		GwtAceRange range = e.getData().getRange();
@@ -420,18 +442,7 @@ public class AceEditorWidget extends FocusWidget implements
 		return !r.isZeroLength() && !r.isBackwards() && r.getStartRow() >= 0 && r.getStartCol() >= 0 && r.getEndCol() >= 0; // no need to check endrow
 	}
 
-//	private void removeAllMarkers() {
-//		if (!markersInEditor.isEmpty()) {
-//			for (TransportMarker m : markersInEditor.values()) {
-//				editor.removeMarker(m.clientId);
-//			}
-//			markersInEditor.clear();
-//			if (changeListener!=null) {
-//				changeListener.changed();
-//			}
-//			adjustMarkerAnnotations();
-//		}
-//	}
+
 	
 	private static AceRange moveMarkerOnInsert(AceRange mr, GwtAceRange range) {
 		int startRow = range.getStart().getRow();
@@ -603,6 +614,9 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 
 	private void selectionChanged() {
+		if (ignoreEditorEvents) {
+			return;
+		}
 		AceRange sel = convertSelection(editor.getSelection());
 		if (!sel.equals(selection)) {
 			selection = sel;
@@ -661,13 +675,12 @@ public class AceEditorWidget extends FocusWidget implements
 			editor.resize();
 		}
 	}
-
-	
 	
 	public AceDoc getDoc() {
-		// TODO: cache?
-		
-		return new AceDoc(getText(), getMarkers(), getRowAnnotations(), getMarkerAnnotations());
+		if (doc==null) {
+			doc = new AceDoc(getText(), getMarkers(), getRowAnnotations(), getMarkerAnnotations());
+		}
+		return doc;
 	}
 
 	
@@ -684,6 +697,7 @@ public class AceEditorWidget extends FocusWidget implements
 		setMarkers(doc.getMarkers());
 		setMarkerAnnotations(doc.getMarkerAnnotations());
 		setRowAnnotations(doc.getRowAnnotations());
+		this.doc = doc;
 	}
 
 	private final Logger logger = Logger.getLogger("TEMP");
@@ -707,7 +721,43 @@ public class AceEditorWidget extends FocusWidget implements
 	public AceRange getInvisibleMarker(int id) {
 		return invisibleMarkers.get(id);
 	}
+	
+	public void setTextAndAdjust(String text) {
+		if (this.text.equals(text)) {
+			return;
+		}
+		
+		HashMap<String, AceMarker> newMarkers = adjustMarkersOnTextChange(this.text, text);
+		setText(text);
+		if (newMarkers!=null) {
+			setMarkers(newMarkers);
+		}
+	}
 
+	private HashMap<String, AceMarker> adjustMarkersOnTextChange(String text1, String text2) {
+		Map<String, AceMarker> ms = getMarkers();
+		if (ms.isEmpty()) {
+			return null;
+		}
+		HashMap<String, AceMarker> newMarkers = new HashMap<String, AceMarker>();
+		Adjuster adjuster = new Adjuster(text1, text2);
+		boolean adjusted = false;
+		for (Entry<String, AceMarker> e : ms.entrySet()) {
+			if (e.getValue().getOnChange()==OnTextChange.ADJUST) {
+				AceMarker m1 = e.getValue();
+				AceMarker m2 = m1.withNewPosition(adjuster.adjust(m1.getRange()));
+				newMarkers.put(e.getKey(), m2);
+				adjusted = true;
+			}
+			else {
+				newMarkers.put(e.getKey(), e.getValue());
+			}
+		}
+		if (!adjusted) {
+			return null;
+		}
+		return newMarkers;
+	}
 
 	
 

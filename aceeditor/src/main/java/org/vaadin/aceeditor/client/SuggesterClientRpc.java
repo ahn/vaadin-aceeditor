@@ -6,5 +6,7 @@ import com.vaadin.shared.communication.ClientRpc;
 
 public interface SuggesterClientRpc extends ClientRpc {
 	
-	public void showSuggestions(List<Suggestion> suggs);
+	public void showSuggestions(List<TransportSuggestion> suggs);
+
+	public void applySuggestionDiff(TransportDiff diff);
 }

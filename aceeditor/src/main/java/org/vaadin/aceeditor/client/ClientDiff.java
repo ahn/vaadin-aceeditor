@@ -9,7 +9,6 @@ import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.GwtTextDiff.Diff;
 import org.vaadin.aceeditor.client.GwtTextDiff.Patch;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarkerAnnotation;
-import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
 
 import com.google.gwt.core.client.JsArray;
@@ -124,22 +123,40 @@ public class ClientDiff {
 		return getPatchesString() + "\nMSD: " + markerSetDiff.toString() + "\nrad:" + rowAnnDiff + ", mad:" + markerAnnDiff;
 	}
 	
-	public static AceRange adjustSelection(AceRange sel, String text1, String text2) {
-		// This is a bit stupid to transform back and forth but diff_match_patch doesn't deal with lines...
-		if (text1.equals(text2)) {
-			return sel;
+	public static class Adjuster {
+		private String s1;
+		private String s2;
+		private String[] lines1;
+		private String[] lines2;
+		private JsArray<Diff> diffs;
+		private boolean stringsEqual;
+		private boolean calcDone;
+		public Adjuster(String s1, String s2) {
+			this.s1 = s1;
+			this.s2 = s2;
+			stringsEqual = s1.equals(s2);
 		}
-		String[] lines1 = text1.split("\n", -1);
-		String[] lines2 = text2.split("\n", -1);
-		boolean zeroLength = sel.isZeroLength();
-		int start1 = Util.cursorPosFromLineCol(lines1, sel.getStartRow(), sel.getStartCol(), 0);
-		int end1 = zeroLength ? start1 : Util.cursorPosFromLineCol(lines1, sel.getEndRow(), sel.getEndCol(), 0);
-		JsArray<Diff> diffs = dmp.diff_main(text1, text2);
-		int start2 = dmp.diff_xIndex(diffs, start1);
-		int end2 = zeroLength ? start2 : dmp.diff_xIndex(diffs, end1);
-		int[] startRowCol = Util.lineColFromCursorPos(lines2, start2, 0);
-		int[] endRowCol = zeroLength ? startRowCol : Util.lineColFromCursorPos(lines2, end2, 0);
-		return new AceRange(startRowCol[0], startRowCol[1], endRowCol[0], endRowCol[1]);
+		public AceRange adjust(AceRange r) {
+			if (stringsEqual) {
+				return r;
+			}
+			if (!calcDone) {
+				calc();
+			}
+			boolean zeroLength = r.isZeroLength();
+			int start1 = Util.cursorPosFromLineCol(lines1, r.getStartRow(), r.getStartCol(), 0);
+			int end1 = zeroLength ? start1 : Util.cursorPosFromLineCol(lines1, r.getEndRow(), r.getEndCol(), 0);
+			int start2 = dmp.diff_xIndex(diffs, start1);
+			int end2 = zeroLength ? start2 : dmp.diff_xIndex(diffs, end1);
+			int[] startRowCol = Util.lineColFromCursorPos(lines2, start2, 0);
+			int[] endRowCol = zeroLength ? startRowCol : Util.lineColFromCursorPos(lines2, end2, 0);
+			return new AceRange(startRowCol[0], startRowCol[1], endRowCol[0], endRowCol[1]);
+		}
+		private void calc() {
+			lines1 = s1.split("\n", -1);
+			lines2 = s2.split("\n", -1);
+			diffs = dmp.diff_main(s1, s2);
+		}
 	}
 	
 //	public static AceMarker adjustMarkerBasedOnContext(MarkerAddition ma,

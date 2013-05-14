@@ -68,6 +68,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	private AceDoc shadow;
 	
 	private boolean onRoundtrip = false;
+//	private boolean roundtripsAllowed = true;
 	private boolean docChangedWhileOnRountrip = false;
 
 	private AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
@@ -81,14 +82,11 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 			AceDoc doc1 = widget.getDoc();
 			AceDoc doc2 = diff.applyTo(doc1);
-			AceRange sel = ClientDiff.adjustSelection(widget.getSelection(), doc1.getText(), doc2.getText());
-			widget.setDoc(doc2);
-			widget.setSelection(sel);
 			
-			onRoundtrip = false;
-			if (docChangedWhileOnRountrip) {
-				sendToServer(true, false);
-			}
+			widget.setDoc(doc2);
+			
+			setOnRoundtrip(false);
+			
 			
 			
 		}
@@ -102,6 +100,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	private boolean listenToSelectionChanges;
 
 	private boolean selectionChanged;
+
 	
 	public AceEditorConnector() {
 		super();
@@ -271,7 +270,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 		
 		shadow = doc;
-		onRoundtrip = true; // What if delayed???
+		setOnRoundtrip(true); // What if delayed???
 		docChangedWhileOnRountrip = false;
 		selectionChanged = false;
 	}
@@ -293,7 +292,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	@Override
 	public void changed() {
 		logger.info("changed, onRoundtrip="+onRoundtrip);
-		if (onRoundtrip) {
+		if (isOnRoundtrip()) {
 			docChangedWhileOnRountrip = true;
 		}
 		else {
@@ -320,6 +319,22 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		if (listenToSelectionChanges) {
 			sendChangeAccordingToPolicy();
 		}
+	}
+
+	// TODO XXX not sure if this roundtrip thing is correct, seems to work somehow...
+	public void setOnRoundtrip(boolean on) {
+		logger.info("setOnRoundtrip " +onRoundtrip + " -> " + on);
+		if (on==onRoundtrip) {
+			return;
+		}
+		onRoundtrip = on;
+		if (!onRoundtrip && docChangedWhileOnRountrip) {
+			sendToServer(true, false);
+		}
+	}
+	
+	public boolean isOnRoundtrip() {
+		return onRoundtrip;
 	}
 
 }
