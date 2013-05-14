@@ -14,6 +14,14 @@ import org.vaadin.aceeditor.client.TransportSuggestion;
 import com.vaadin.annotations.StyleSheet;
 import com.vaadin.server.AbstractExtension;
 
+/**
+ * Extends {@link AceEditor} with suggestion possibility.
+ * 
+ * By default Ctrl+Space and dot (".") triggers a suggester.
+ * 
+ * A {@link Suggester} is queried for {@link Suggestion}s.
+ *
+ */
 @StyleSheet("suggestionpopup.css")
 @SuppressWarnings("serial")
 public class SuggestionExtension extends AbstractExtension {
@@ -51,7 +59,6 @@ public class SuggestionExtension extends AbstractExtension {
 			AceDoc doc1 = new AceDoc(suggStartText);
 			AceDoc doc2 = new AceDoc(text2);
 			AceDocDiff diff = AceDocDiff.diff(doc1, doc2);
-			System.out.println(diff.toString());
 			getRpcProxy(SuggesterClientRpc.class).applySuggestionDiff(diff.asTransport());
 		}
 	};

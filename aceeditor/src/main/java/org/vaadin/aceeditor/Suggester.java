@@ -17,9 +17,12 @@ public interface Suggester {
 	/**
 	 * Applies the suggestion to the text.
 	 * 
-	 * text and cursor are the same that were given to getSuggestions earlier
+	 * text and cursor are the same that were given to {@link #getSuggestions(String, int)} earlier.
 	 * 
-	 * @param sugg
+	 * sugg is one of the objects received from {@link #getSuggestions(String, int)}
+	 * So if you gave a subclass of {@link Suggestion}, that you shall receive.
+	 * 
+	 * @param sugg 
 	 * @param text
 	 * @param cursor
 	 * @return Text after the suggestion has been applied.
