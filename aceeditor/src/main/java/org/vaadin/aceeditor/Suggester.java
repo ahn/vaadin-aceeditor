@@ -6,11 +6,11 @@ import java.util.List;
 public interface Suggester {
 	
 	/**
-	 * Returns a list of suggestions based on text and cursor position.
+	 * Returns a list of {@link Suggestion}s based on text and cursor position.
 	 * 
 	 * @param text
 	 * @param cursor
-	 * @return list of suggestion, empty list = no suggestions
+	 * @return list of {@link Suggestion}s, empty list = no suggestions
 	 */
 	public List<Suggestion> getSuggestions(String text, int cursor);
 	

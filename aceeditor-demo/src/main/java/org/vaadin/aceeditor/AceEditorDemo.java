@@ -5,7 +5,6 @@ import org.vaadin.aceeditor.AceEditor.SelectionChangeListener;
 import org.vaadin.aceeditor.client.AceAnnotation;
 import org.vaadin.aceeditor.client.AceMarker;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
-import org.vaadin.aceeditor.client.AceRange;
 
 import com.vaadin.annotations.PreserveOnRefresh;
 import com.vaadin.annotations.StyleSheet;
@@ -469,8 +468,6 @@ public class AceEditorDemo extends UI {
 				w.center();
 				AceEditor ee = new AceEditor();
 				ee.setValue("Press Ctrl+Space for suggestions.\nOr type a dot.");
-				
-				ee.addMarker(new AceRange(0,10,0,15), "mymarker1", AceMarker.Type.text, false, OnTextChange.ADJUST);
 				ee.setSizeFull();
 				w.setContent(ee);
 				UI.getCurrent().addWindow(w);

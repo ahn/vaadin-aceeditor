@@ -85,11 +85,16 @@ public class AceDoc {
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof AceDoc) {
-			AceDoc doc = (AceDoc) other;
-			return getText().equals(doc.getText());
+			AceDoc od = (AceDoc) other;
+			return text.equals(od.text) &&
+					Util.sameMaps(this.markers, od.markers) &&
+					Util.sameSets(this.markerAnnotations, od.markerAnnotations) &&
+					Util.sameSets(this.rowAnnotations, od.rowAnnotations);
 		}
 		return false;
 	}
+
+	
 
 	@Override
 	public int hashCode() {

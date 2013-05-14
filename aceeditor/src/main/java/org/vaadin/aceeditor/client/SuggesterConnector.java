@@ -1,7 +1,6 @@
 package org.vaadin.aceeditor.client;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.vaadin.aceeditor.SuggestionExtension;
 import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
@@ -24,8 +23,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	protected static final int Y_OFFSET = 20;
 
-	private final Logger logger = Logger.getLogger(SuggesterConnector.class
-			.getName());
+//	private final Logger logger = Logger.getLogger(SuggesterConnector.class.getName());
 
 
 	private AceEditorConnector connector;
@@ -45,11 +43,8 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 		@Override
 		public void applySuggestionDiff(TransportDiff td) {
-			ClientDiff diff = ClientDiff.fromTransportDiff(td);
-			if (popup!=null) {
-				popup.hide();
-				popup = null;
-			}
+			stopSuggesting();
+			ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(td);
 			widget.setTextAndAdjust(diff.applyTo(widget.getDoc()).getText());
 			widget.fireTextChanged(); // XXX we need to do this here to alert AceEditorConnector...
 		}
@@ -99,14 +94,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	@Override
 	protected void extend(ServerConnector target) {
-		
 		connector = (AceEditorConnector) target;
 		widget = connector.getWidget();
 		widget.setKeyboardHandler(this);
-
-		String t = widget.getText();
-
-		logger.info("extending! " + t);
 	}
 
 	@Override
@@ -151,22 +141,29 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		connector.setOnRoundtrip(true);
 //		AceRange suggMarker = widget.getInvisibleMarker(suggestionStartId);
 		serverRpc.suggestionSelected(s.index);
-		stopSuggesting();
+		stopAskingForSuggestions();
 	}
 
 	@Override
 	public void noSuggestionSelected() {
-		stopSuggesting();
+		stopAskingForSuggestions();
 	}
 
-	private void stopSuggesting() {
+	private void stopAskingForSuggestions() {
 		widget.removeSelectionChangeListener(this);
 		suggesting = false;
+		widget.setFocus(true);
+	}
+	
+	private void stopSuggesting() {
+		if (popup!=null) {
+			popup.hide();
+			popup = null;
+		}
 		if (suggestionStartId != null) {
+			widget.removeContentsOfInvisibleMarker(suggestionStartId);
 			widget.removeInvisibleMarker(suggestionStartId);
 		}
-		widget.setFocus(true);
-		
 	}
 
 	private Command keyPressWhileSuggesting(int keyCode) {
@@ -202,18 +199,10 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 			startSuggestingOnNextSelectionChange = false;
 			return;
 		}
-		// TODO: not sure why this check is needed...
-//		if (popup==null || !popup.isShowing()) {
-//			return;
-//		}
 		
 		AceRange sel = widget.getSelection();
-//		if (!sel.isZeroLength()) {
-//			return; // XXX TODO ???
-//		}
 		
 		AceRange sug = widget.getInvisibleMarker(suggestionStartId);
-		logger.info("SUGGCHANGED: " +sel +  " --- " + sug);
 		if (sug.getStartRow()!=sug.getEndRow()) {
 			popup.close();
 		}
@@ -225,7 +214,6 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 			updatePopupPosition(popup);
 			String s = getWord(widget.getText(), sug.getEndRow(),
 					sug.getStartCol(), sug.getEndCol());
-			logger.info("SUGGWORD: '" + s + "'");
 			popup.setStartOfValue(s);
 		}
 	}

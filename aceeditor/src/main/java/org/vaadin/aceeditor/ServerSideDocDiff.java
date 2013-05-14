@@ -23,7 +23,7 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
 
 
 
-public class AceDocDiff {
+public class ServerSideDocDiff {
 	
 	// ThreadLocal because we may want to use dmp concurrently.
 	private static final ThreadLocal <diff_match_patch> dmp = 
@@ -38,14 +38,14 @@ public class AceDocDiff {
 	private final SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff;
 	private final SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff;
 	
-	public static AceDocDiff diff(AceDoc doc1, AceDoc doc2) {
+	public static ServerSideDocDiff diff(AceDoc doc1, AceDoc doc2) {
 		LinkedList<Patch> patches = dmp.get().patch_make(doc1.getText(), doc2.getText());
 		MarkerSetDiff msd = MarkerSetDiff.diff(doc1.getMarkers(), doc2.getMarkers(), doc2.getText());
 		SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff =
 				diffRA(doc1.getRowAnnotations(), doc2.getRowAnnotations());		
 		SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff =
 				diffMA(doc1.getMarkerAnnotations(), doc2.getMarkerAnnotations());
-		return new AceDocDiff(patches, msd, rowAnnDiff, markerAnnDiff);
+		return new ServerSideDocDiff(patches, msd, rowAnnDiff, markerAnnDiff);
 	}
 	
 
@@ -82,8 +82,8 @@ public class AceDocDiff {
 	}
 
 	
-	public static AceDocDiff fromTransportDiff(TransportDiff diff) {
-		return new AceDocDiff(
+	public static ServerSideDocDiff fromTransportDiff(TransportDiff diff) {
+		return new ServerSideDocDiff(
 				(LinkedList<Patch>) dmp.get().patch_fromText(diff.patchesAsString),
 				MarkerSetDiff.fromTransportDiff(diff.markerSetDiff),
 				rowAnnsFromTransport(diff.rowAnnDiff),
@@ -113,7 +113,7 @@ public class AceDocDiff {
 		return markerAnnDiff==null ? null :  SetDiff.fromTransport(markerAnnDiff);
 	}
 
-	private AceDocDiff(LinkedList<Patch> patches, MarkerSetDiff markerSetDiff,
+	private ServerSideDocDiff(LinkedList<Patch> patches, MarkerSetDiff markerSetDiff,
 			SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff,
 			SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff) {
 		this.patches = patches;
@@ -151,6 +151,6 @@ public class AceDocDiff {
 	
 	@Override
 	public String toString() {
-		return "---AceDocDiff---\n" + getPatchesString()+"\n"+markerSetDiff.toString()+"\nrad:"+rowAnnDiff+", mad:"+markerAnnDiff;
+		return "---ServerSideDocDiff---\n" + getPatchesString()+"\n"+markerSetDiff.toString()+"\nrad:"+rowAnnDiff+", mad:"+markerAnnDiff;
 	}
 }

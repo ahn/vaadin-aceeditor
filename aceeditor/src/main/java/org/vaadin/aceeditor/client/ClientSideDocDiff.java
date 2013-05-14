@@ -15,7 +15,7 @@ import com.google.gwt.core.client.JsArray;
 
 
 
-public class ClientDiff {
+public class ClientSideDocDiff {
 
 	// TODO???
 
@@ -26,7 +26,7 @@ public class ClientDiff {
 	private final SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff;
 	private final SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff;
 
-	public static ClientDiff fromTransportDiff(TransportDiff ad) {
+	public static ClientSideDocDiff fromTransportDiff(TransportDiff ad) {
 		
 		JsArray<Patch> patches = dmp.patch_fromText(ad.patchesAsString);
 		MarkerSetDiff msd = MarkerSetDiff.fromTransportDiff(ad.markerSetDiff);
@@ -36,17 +36,17 @@ public class ClientDiff {
 		SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnns =  ad.markerAnnDiff==null ? null : 
 				SetDiff.fromTransport(ad.markerAnnDiff);
 		
-		return new ClientDiff(patches, msd, rowAnns, markerAnns);
+		return new ClientSideDocDiff(patches, msd, rowAnns, markerAnns);
 	}
 	
-	public static ClientDiff diff(AceDoc doc1, AceDoc doc2) {
+	public static ClientSideDocDiff diff(AceDoc doc1, AceDoc doc2) {
 		JsArray<GwtTextDiff.Patch> patches = dmp.patch_make(doc1.getText(), doc2.getText());
 		MarkerSetDiff msd = MarkerSetDiff.diff(doc1.getMarkers(), doc2.getMarkers(), doc2.getText());
 
 		SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff = diffRA(doc1.getRowAnnotations(), doc2.getRowAnnotations());		
 		SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff = diffMA(doc1.getMarkerAnnotations(), doc2.getMarkerAnnotations());
 		
-		return new ClientDiff(patches, msd, rowAnnDiff, markerAnnDiff);
+		return new ClientSideDocDiff(patches, msd, rowAnnDiff, markerAnnDiff);
 	}
 	
 
@@ -82,7 +82,7 @@ public class ClientDiff {
 		return new SetDiff.Differ<RowAnnotation,TransportRowAnnotation>().diff(anns1, anns2);
 	}
 	
-	private ClientDiff(JsArray<GwtTextDiff.Patch> patches, MarkerSetDiff markerSetDiff,
+	private ClientSideDocDiff(JsArray<GwtTextDiff.Patch> patches, MarkerSetDiff markerSetDiff,
 			SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff,
 			SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff) {
 		this.textPatches = patches;

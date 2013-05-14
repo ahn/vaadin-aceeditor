@@ -2,7 +2,6 @@ package org.vaadin.aceeditor.client;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 import org.vaadin.aceeditor.AceEditor;
 import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
@@ -27,7 +26,7 @@ import com.vaadin.shared.ui.Connect;
 public class AceEditorConnector extends AbstractHasComponentsConnector
 		implements TextChangeListener, SelectionChangeListener, FocusChangeListener {
 
-	private static Logger logger = Logger.getLogger(AceEditorConnector.class.getName());
+//	private static Logger logger = Logger.getLogger(AceEditorConnector.class.getName());
 	
 	private AceEditorServerRpc serverRpc = RpcProxy.create(AceEditorServerRpc.class,
 			this);
@@ -74,11 +73,8 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	private AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
 		@Override
 		public void diff(TransportDiff ad) {
-			ClientDiff diff = ClientDiff.fromTransportDiff(ad);
-			logger.info("***** diff *****\n" + diff);
-			logger.info("***** shadow1 *****\n" + shadow);
+			ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(ad);
 			shadow = diff.applyTo(shadow);
-			logger.info("***** shadow2 *****\n" + shadow);
 
 			AceDoc doc1 = widget.getDoc();
 			AceDoc doc2 = diff.applyTo(doc1);
@@ -111,7 +107,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 	@Override
 	public void init() {
-		logger.info("init 0");
 		super.init();
 		
 		// Needed if inside a resizable subwindow.
@@ -161,9 +156,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		//immediate = getState().immediate;
 		
 		if (firstTime) {
-			logger.info("First time. Initializing doc.");
 			shadow = AceDoc.fromTransport(getState().initialValue);
-			logger.info(shadow.toString());
 			widget.setDoc(shadow);
 		}
 		
@@ -200,7 +193,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	
 	@Override
 	public void focusChanged(boolean focused) {
-		logger.info("focusChanged("+focused+")");
 		if (!focused) {
 			sendToServerImmediately(); // ???
 		}
@@ -244,11 +236,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 	private void sendToServer(boolean immediately, boolean evenIfIdentity) {
 		AceDoc doc = widget.getDoc();
-		logger.info("sendToServer");
-		logger.info("SHADOW: " + shadow);
-		logger.info("DOC:    " + doc);
-		ClientDiff diff = ClientDiff.diff(shadow, doc);
-		logger.info("DIFF:    " + diff);
+		ClientSideDocDiff diff = ClientSideDocDiff.diff(shadow, doc);
 		if (evenIfIdentity || !diff.isIdentity()) {
 			
 		}
@@ -260,7 +248,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 		
 		TransportDiff td = diff.asTransport();
-		logger.info("TD: " + td);
 		
 		if (immediately) {
 			serverRpc.changed(td, widget.getSelection().asTransport(), widget.isFocused());
@@ -291,7 +278,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 	@Override
 	public void changed() {
-		logger.info("changed, onRoundtrip="+onRoundtrip);
 		if (isOnRoundtrip()) {
 			docChangedWhileOnRountrip = true;
 		}
@@ -321,9 +307,8 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 	}
 
-	// TODO XXX not sure if this roundtrip thing is correct, seems to work somehow...
+	// TODO XXX not sure if this roundtrip thing is correct, seems to work ok...
 	public void setOnRoundtrip(boolean on) {
-		logger.info("setOnRoundtrip " +onRoundtrip + " -> " + on);
 		if (on==onRoundtrip) {
 			return;
 		}

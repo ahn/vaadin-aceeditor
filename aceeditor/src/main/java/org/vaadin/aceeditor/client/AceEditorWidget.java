@@ -7,12 +7,11 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
-import org.vaadin.aceeditor.client.ClientDiff.Adjuster;
+import org.vaadin.aceeditor.client.ClientSideDocDiff.Adjuster;
 import org.vaadin.aceeditor.client.gwt.GwtAceAnnotation;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeCursorHandler;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent;
@@ -180,7 +179,6 @@ public class AceEditorWidget extends FocusWidget implements
 		if (!isInitialized() || text.equals(this.text)) {
 			return;
 		}
-		logger.info("setText, sel1: " + selection);
 		AceRange oldSelection = selection;
 		Adjuster adjuster = new Adjuster(this.text, text);
 		adjustInvisibleMarkersOnTextChange(adjuster);
@@ -189,7 +187,6 @@ public class AceEditorWidget extends FocusWidget implements
 		ignoreEditorEvents = true;
 		editor.setText(text);
 		AceRange adjSel = adjuster.adjust(oldSelection);
-		logger.info("setText, sel2: " + adjSel);
 		setSelection(adjSel, true);
 		ignoreEditorEvents = false;
 	}
@@ -700,8 +697,6 @@ public class AceEditorWidget extends FocusWidget implements
 		this.doc = doc;
 	}
 
-	private final Logger logger = Logger.getLogger("TEMP");
-
 	public int[] getCursorCoords() {
 		JsArrayInteger cc = editor.getCursorCoords();
 		return new int[] {cc.get(0), cc.get(1)};
@@ -757,6 +752,15 @@ public class AceEditorWidget extends FocusWidget implements
 			return null;
 		}
 		return newMarkers;
+	}
+
+	public void removeContentsOfInvisibleMarker(int imId) {
+		AceRange r = getInvisibleMarker(imId);
+		if (r==null || r.isZeroLength()) {
+			return;
+		}
+		String newText = Util.replaceContents(r, text, "");
+		setTextAndAdjust(newText);
 	}
 
 	

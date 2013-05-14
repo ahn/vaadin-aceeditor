@@ -20,24 +20,24 @@ import com.vaadin.server.AbstractExtension;
  * By default Ctrl+Space and dot (".") triggers a suggester.
  * 
  * A {@link Suggester} is queried for {@link Suggestion}s.
- *
+ * 
  */
 @StyleSheet("suggestionpopup.css")
 @SuppressWarnings("serial")
 public class SuggestionExtension extends AbstractExtension {
-	
+
 	private Suggester suggester;
-	
+
 	private String suggStartText;
 	private int suggStartCursor;
 	private List<Suggestion> suggestions;
 	private AceRange suggRange;
-	
+
 	public SuggestionExtension(Suggester suggester) {
 		super();
 		this.suggester = suggester;
 	}
-	
+
 	private SuggesterServerRpc serverRpc = new SuggesterServerRpc() {
 
 		@Override
@@ -46,31 +46,33 @@ public class SuggestionExtension extends AbstractExtension {
 			suggRange = AceRange.fromTransport(sel);
 			suggStartCursor = new TextRange(text, suggRange).getEnd();
 			suggestions = suggester.getSuggestions(text, suggStartCursor);
-			getRpcProxy(SuggesterClientRpc.class).showSuggestions(asTransport(suggestions));
+			getRpcProxy(SuggesterClientRpc.class).showSuggestions(
+					asTransport(suggestions));
 		}
 
 		@Override
 		public void suggestionSelected(int index) {
-			
+
 			Suggestion sugg = suggestions.get(index);
-			String text2 = suggester.applySuggestion(
-					sugg, suggStartText, suggStartCursor);
+			String text2 = suggester.applySuggestion(sugg, suggStartText,
+					suggStartCursor);
 			// XXX too much work
 			AceDoc doc1 = new AceDoc(suggStartText);
 			AceDoc doc2 = new AceDoc(text2);
-			AceDocDiff diff = AceDocDiff.diff(doc1, doc2);
-			getRpcProxy(SuggesterClientRpc.class).applySuggestionDiff(diff.asTransport());
+			ServerSideDocDiff diff = ServerSideDocDiff.diff(doc1, doc2);
+			getRpcProxy(SuggesterClientRpc.class).applySuggestionDiff(
+					diff.asTransport());
 		}
 	};
-	
+
 	@Override
 	public SuggesterState getState() {
-		return (SuggesterState)super.getState();
+		return (SuggesterState) super.getState();
 	}
-	
+
 	private List<TransportSuggestion> asTransport(List<Suggestion> suggs) {
 		LinkedList<TransportSuggestion> tl = new LinkedList<TransportSuggestion>();
-		int i=0;
+		int i = 0;
 		for (Suggestion s : suggs) {
 			tl.add(s.asTransport(i++));
 		}
@@ -80,13 +82,10 @@ public class SuggestionExtension extends AbstractExtension {
 	public void setSuggestOnDot(boolean on) {
 		getState().suggestOnDot = on;
 	}
-	
+
 	public void extend(AceEditor editor) {
-        super.extend(editor);
-        registerRpc(serverRpc);
-    }
+		super.extend(editor);
+		registerRpc(serverRpc);
+	}
 
-
-	
-	
 }
