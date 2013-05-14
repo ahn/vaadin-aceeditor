@@ -27,5 +27,7 @@ public interface Suggester {
 	 * @param cursor
 	 * @return Text after the suggestion has been applied.
 	 */
+	// TODO: It might be nice to also specify a cursor position (or selection)
+	// after applying a suggestion.
 	public String applySuggestion(Suggestion sugg, String text, int cursor); 
 }
