@@ -36,7 +36,7 @@ public class TextRange extends AceRange {
 		return end;
 	}
 	
-	public int getCursor() {
+	public int getCursorPosition() {
 		return getEnd();
 	}
 	
