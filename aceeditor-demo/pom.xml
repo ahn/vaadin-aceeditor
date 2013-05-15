@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.7.3-SNAPSHOT</version>
+		<version>0.8.0-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>aceeditor-demo</artifactId>
@@ -12,6 +12,10 @@
 
 	<name>Vaadin AceEditor Demo Application</name>
 	<url>https://github.com/ahn/vaadin-aceeditor/</url>
+	
+	<properties>
+	   <gwt.persistentunitcachedir>target/tmp</gwt.persistentunitcachedir>
+	</properties>
 
 	<dependencies>
 		<dependency>
