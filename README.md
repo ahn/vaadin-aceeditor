@@ -114,14 +114,13 @@ Now, Ace should read the theme/mode/worker files from your local server.
 Ace supports custom markers within the code. The marker appearance is defined by a css class.
 
     String cssClass = "mymarker1";
-    AceRange range = editor.getSelection();    
+    TextRange range = editor.getSelection();    
     AceMarker.Type type = AceMarker.Type.text; // text or line
     boolean inFront = false; // whether in front or behind the text
     AceMarker.OnTextChange onChange = AceMarker.OnTextChange.ADJUST;
-    AceMarker m = new AceMarker(range, cssClass, type, inFront, onChange);
-    editor.addMarker(m);
+    String markerId = editor.addMarker(range, cssClass, type, inFront, onChange);
     // ...
-    editor.removeMarker(m);
+    editor.removeMarker(markerId);
 
 The cssClass must be defined in some css file, for example `mymarkers.css`:
 
@@ -160,8 +159,8 @@ Vaadin AceEditor has two types of Annotations: *row annotations* and *marker ann
         editor.addRowAnnotation(ann, 2);
     }
     else {
-        editor.addMarker(marker);
-        editor.addMarkerAnnotation(ann, marker);
+        String markerId = editor.addMarker(/*...*/);
+        editor.addMarkerAnnotation(ann, markerId);
     }
     // ...
     editor.clearRowAnnotations();
