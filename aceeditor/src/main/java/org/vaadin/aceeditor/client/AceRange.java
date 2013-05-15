@@ -28,7 +28,7 @@ public class AceRange {
 	
 	public static AceRange fromPositions(int start, int end, String[] lines) {
 		int[] rc1 = Util.lineColFromCursorPos(lines, start, 0);
-		int[] rc2 = start==end ? rc1 : Util.lineColFromCursorPos(lines, start, 0);
+		int[] rc2 = start==end ? rc1 : Util.lineColFromCursorPos(lines, end, 0);
 		return new AceRange(rc1[0], rc1[1], rc2[0], rc2[1]);
 	}
 
