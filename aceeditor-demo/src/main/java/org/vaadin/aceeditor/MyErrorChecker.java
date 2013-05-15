@@ -11,7 +11,7 @@ import com.vaadin.event.FieldEvents.TextChangeEvent;
 import com.vaadin.event.FieldEvents.TextChangeListener;
 
 @SuppressWarnings("serial")
-public class ErrorChecker implements TextChangeListener {
+public class MyErrorChecker implements TextChangeListener {
 	
 	private AceEditor editor;
 	
@@ -22,7 +22,7 @@ public class ErrorChecker implements TextChangeListener {
 		return "e"+(++latestErrorMarkerId);
 	}
 	
-	public ErrorChecker() {
+	public MyErrorChecker() {
 		
 	}
 	

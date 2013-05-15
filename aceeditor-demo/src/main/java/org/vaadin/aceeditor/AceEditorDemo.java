@@ -11,6 +11,7 @@ import com.vaadin.annotations.StyleSheet;
 import com.vaadin.annotations.Theme;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
+import com.vaadin.server.ExternalResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
@@ -20,6 +21,7 @@ import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.HorizontalSplitPanel;
+import com.vaadin.ui.Link;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Panel;
@@ -100,8 +102,14 @@ public class AceEditorDemo extends UI {
 		
 
 		leftBar.addComponent(createMarkerAnnotationPanel());
-		leftBar.addComponent(createErrorEditor());
-		leftBar.addComponent(createSuggestionEditor());
+		leftBar.addComponent(createErrorCheckingDemo());
+		leftBar.addComponent(createSuggestionDemo());
+		leftBar.addComponent(createErrorCorrectionDemo());
+
+		VerticalLayout linkLayout = new VerticalLayout();
+		linkLayout.addComponent(new Link("Addon at Vaadin Directory", new ExternalResource("http://vaadin.com/addon/aceeditor")));
+		linkLayout.addComponent(new Link("Source at Github", new ExternalResource("https://github.com/ahn/vaadin-aceeditor/")));
+		leftBar.addComponent(new Panel("Links", linkLayout));
 		
 		split.setSecondComponent(editor);
 		
@@ -429,7 +437,7 @@ public class AceEditorDemo extends UI {
 		return new Panel("Theme & Mode", layout);
 	}
 	
-	private Component createErrorEditor() {
+	private Component createErrorCheckingDemo() {
 		Button b = new Button("Open error-checker demo");
 		b.setStyleName(BaseTheme.BUTTON_LINK);
 		b.addClickListener(new ClickListener() {
@@ -446,7 +454,7 @@ public class AceEditorDemo extends UI {
 				w.setContent(ee);
 				UI.getCurrent().addWindow(w);
 				
-				ErrorChecker checker = new ErrorChecker();
+				MyErrorChecker checker = new MyErrorChecker();
 				checker.attachTo(ee);
 			}
 			
@@ -455,7 +463,7 @@ public class AceEditorDemo extends UI {
 		return new Panel("Error Checker", b);
 	}
 	
-	private Component createSuggestionEditor() {
+	private Component createSuggestionDemo() {
 		Button b = new Button("Open suggestion demo");
 		b.setStyleName(BaseTheme.BUTTON_LINK);
 		b.addClickListener(new ClickListener() {
@@ -478,6 +486,36 @@ public class AceEditorDemo extends UI {
 		});
 		
 		return new Panel("Suggestions", b);
+	}
+
+	private Component createErrorCorrectionDemo() {
+		Button b = new Button("Open auto-correction demo");
+		b.setStyleName(BaseTheme.BUTTON_LINK);
+		b.addClickListener(new ClickListener() {
+
+			@Override
+			public void buttonClick(ClickEvent event) {
+				Window w = new Window("Leet-speakerizer");
+				w.setWidth("50%");
+				w.setHeight("50%");
+				w.center();
+				AceEditor ee = new AceEditor();
+				ee.setTextChangeTimeout(200);
+				ee.setWordWrap(true);
+				ee.setValue("The text you type is auto-corrected to leet-speak on the server-side.\n\n" +
+						"What's nice is that none of the stuff you type gets lost, " +
+						"even when typed while visiting the server.");
+				ee.setSizeFull();
+				w.setContent(ee);
+				UI.getCurrent().addWindow(w);
+				
+				LeetSpeakerizer leeter = new LeetSpeakerizer();
+				leeter.attachTo(ee);
+			}
+			
+		});
+		
+		return new Panel("Auto-correction", b);
 	}
 
 }

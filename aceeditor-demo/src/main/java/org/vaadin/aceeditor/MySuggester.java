@@ -6,6 +6,9 @@ import java.util.List;
 
 public class MySuggester implements Suggester {
 	
+	// We can use either Suggestion class directly or its subclass as in here.
+	// With subclass we can set additional data to the class that's helpful
+	// when applying the suggestion.
 	private static class MySuggestion extends Suggestion {
 		private String insertThis;
 		MySuggestion(String displayText, String descriptionText, String suggestionText) {
@@ -27,9 +30,9 @@ public class MySuggester implements Suggester {
 
 	@Override
 	public String applySuggestion(Suggestion sugg, String text, int cursor) {
+		// sugg is one of the objects returned by getSuggestions -> it's a MySuggestion.
 		String ins = ((MySuggestion)sugg).insertThis;
 		String s1 = text.substring(0,cursor) + ins + text.substring(cursor);
-		System.out.println(s1);
 		return s1;
 	}
 
