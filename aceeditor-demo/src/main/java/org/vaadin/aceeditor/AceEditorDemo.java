@@ -439,7 +439,6 @@ public class AceEditorDemo extends UI {
 	
 	private Component createErrorCheckingDemo() {
 		Button b = new Button("Open error-checker demo");
-		b.setStyleName(BaseTheme.BUTTON_LINK);
 		b.addClickListener(new ClickListener() {
 
 			@Override
@@ -465,7 +464,6 @@ public class AceEditorDemo extends UI {
 	
 	private Component createSuggestionDemo() {
 		Button b = new Button("Open suggestion demo");
-		b.setStyleName(BaseTheme.BUTTON_LINK);
 		b.addClickListener(new ClickListener() {
 
 			@Override
@@ -490,7 +488,6 @@ public class AceEditorDemo extends UI {
 
 	private Component createErrorCorrectionDemo() {
 		Button b = new Button("Open auto-correction demo");
-		b.setStyleName(BaseTheme.BUTTON_LINK);
 		b.addClickListener(new ClickListener() {
 
 			@Override

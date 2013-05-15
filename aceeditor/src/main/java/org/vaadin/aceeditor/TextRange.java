@@ -36,6 +36,10 @@ public class TextRange extends AceRange {
 		return end;
 	}
 	
+	public int getCursor() {
+		return getEnd();
+	}
+	
 	public TextRange withNewText(String newText) {
 		return new TextRange(newText, getStart(), getEnd());
 	}
