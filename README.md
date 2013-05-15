@@ -166,6 +166,12 @@ Vaadin AceEditor has two types of Annotations: *row annotations* and *marker ann
     editor.clearRowAnnotations();
     editor.clearMarkerAnnotations();
 
+### Suggestions
+
+This addon also includes a `SuggestionExtension` for implementing a "suggester" that gives user a list of text suggestions after she presses Ctrl+Space in AceEditor. An example `MySuggester` implementation [here](https://github.com/ahn/vaadin-aceeditor/blob/master/aceeditor-demo/src/main/java/org/vaadin/aceeditor/MySuggester.java). See the "suggestion demo" [here](http://antti.virtuallypreinstalled.com/aceeditor/).
+
+    new SuggestionExtension(new MySuggester()).extend(editor);
+
 
 ## Compiling this project
 
