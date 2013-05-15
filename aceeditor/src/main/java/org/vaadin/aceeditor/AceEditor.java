@@ -70,14 +70,14 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 	public static class SelectionChangeEvent extends Event {
 		public static String EVENT_ID = "aceeditor-selection";
-		private final AceRange selection;
+		private final TextRange selection;
 
 		public SelectionChangeEvent(AceEditor ed) {
 			super(ed);
 			this.selection = ed.getSelection();
 		}
 
-		public AceRange getSelection() {
+		public TextRange getSelection() {
 			return selection;
 		}
 	}
