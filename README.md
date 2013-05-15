@@ -187,3 +187,18 @@ To create an addon package that can be uploaded to Vaadin Directory
 [![Build Status](https://travis-ci.org/ahn/vaadin-aceeditor.png)](https://travis-ci.org/ahn/vaadin-aceeditor)
 
 
+## Notes on implementation
+
+### Server-client communication
+
+This addon uses diffs to communicate between the server-side and the client-side of the AceEditor component. That is, when a user types something, the whole text is not sent to the server, just some kind of diff. Similarly if the value changes on the server. The addon utitlizes the [diff-match-patch library](https://code.google.com/p/google-diff-match-patch/ ) along with the [differential synchronization algorithm](http://neil.fraser.name/writing/sync/) for communication.
+
+Pros of this diff approach:
+
+* Less traffic between client and server.
+* The content of the editor can be changed concurrently on the server and on the client. This makes it possible to implement things like the "auto-correction demo" in the [aceeditor demo](http://antti.virtuallypreinstalled.com/aceeditor/) (code of the server-side "auto-corrector" [here](https://github.com/ahn/vaadin-aceeditor/blob/master/aceeditor-demo/src/main/java/org/vaadin/aceeditor/LeetSpeakerizer.java)). In the demo the value can be modified at the same time on the client and on the server without losing either modifications. Also, Google Docs style collaborative editor can be implemented on top of this.
+
+Cons:
+
+* Requires more cpu, for computing the diffs etc. (There's a room for optimization in the current implementation.)
+
