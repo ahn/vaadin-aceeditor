@@ -13,7 +13,7 @@
 	<modules>
 		<module>aceeditor</module>
 		<module>aceeditor-demo</module>
-		<module>aceeditor-demo2</module>
+<!-- 		<module>aceeditor-demo2</module> -->
 	</modules>
 
 
