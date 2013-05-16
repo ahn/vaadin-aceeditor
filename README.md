@@ -50,11 +50,8 @@ By default, Vaadin AceEditor gets the mode, theme and worker files from [this lo
 
 If you want to use some other location, for example to host the files on your own server, here's how:
 
-Example: host the Ace files within your Vaadin app. First, put the Ace *src-min-noconflict* mode, theme and worker files (found in the `ace` directory in the
-[Vaadin Directory download package](http://vaadin.com/addon/aceeditor)
-or in the `src-min-noconflict` directory
-[here](https://github.com/ajaxorg/ace-builds))
-to the `webapp/static/ace` directory.
+Example: host the Ace files within your Vaadin app. First, get the `ace` dir from the [Vaadin Directory download package](http://vaadin.com/addon/aceeditor). It contains the [src-min-noconflict](https://github.com/ajaxorg/ace-builds/tree/master/src-min-noconflict) Ace files compatible with this addon.
+Copy the `ace` dir to location `webapp/static/ace` in your Vaadin application.
 The structure should look something like this:
 
     webapp/
@@ -197,11 +194,11 @@ To create an addon package that can be uploaded to Vaadin Directory
 
 ### Server-client communication
 
-This addon uses diffs to communicate between the server-side and the client-side of the AceEditor component. That is, when a user types something, the whole text is not sent to the server, just some kind of diff. Similarly if the value changes on the server. The addon utitlizes the [diff-match-patch library](https://code.google.com/p/google-diff-match-patch/ ) along with the [differential synchronization algorithm](http://neil.fraser.name/writing/sync/) for communication.
+This addon uses diffs to communicate between the server-side and the client-side of the AceEditor component. That is, when a user types something, the whole text is not sent to the server, just some kind of diff from the old value to the new one. Similarly, diffs are sent if the value changes on the server. The addon utitlizes the [diff-match-patch library](https://code.google.com/p/google-diff-match-patch/ ) along with the [differential synchronization algorithm](http://neil.fraser.name/writing/sync/) for communication.
 
 Pros of this diff approach:
 
-* Less traffic between client and server.
+* Less data to be sent between client and server.
 * The content of the editor can be changed concurrently on the server and on the client. This makes it possible to implement things like the "auto-correction demo" in the [aceeditor demo](http://antti.virtuallypreinstalled.com/aceeditor/) (code of the server-side "auto-corrector" [here](https://github.com/ahn/vaadin-aceeditor/blob/master/aceeditor-demo/src/main/java/org/vaadin/aceeditor/LeetSpeakerizer.java)). In the demo the value can be modified at the same time on the client and on the server without losing either modifications. Also, Google Docs style collaborative editor can be implemented on top of this.
 
 Cons:
