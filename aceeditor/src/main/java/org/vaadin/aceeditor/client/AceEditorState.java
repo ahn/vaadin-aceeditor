@@ -43,6 +43,7 @@ public class AceEditorState extends AbstractFieldState {
 	
 	public Map<String,String> config = new HashMap<String,String>();
 	
+	public int diff_editCost = 4;
 	
 	public TransportDoc initialValue = null;
 	

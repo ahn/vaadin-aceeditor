@@ -67,7 +67,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	private AceDoc shadow;
 	
 	private boolean onRoundtrip = false;
-//	private boolean roundtripsAllowed = true;
 	private boolean docChangedWhileOnRountrip = false;
 
 	private AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
@@ -82,9 +81,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 			widget.setDoc(doc2);
 			
 			setOnRoundtrip(false);
-			
-			
-			
 		}
 
 		@Override
@@ -126,7 +122,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		setTextChangeEventMode(getState().changeMode);
 		setTextChangeTimeout(getState().changeTimeout);
 		
-		
+		ClientSideDocDiff.dmp.setDiff_EditCost(getState().diff_editCost);
 
 		// TODO: are these needed?
 //		widget.setHideErrors(getState().hideErrors);

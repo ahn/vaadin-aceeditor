@@ -54,4 +54,22 @@ public class DiffMatchPatchJSNI extends JavaScriptObject {
 	native final public JsArray<Patch> patch_make(String text1, String text2) /*-{
 		return this.patch_make(text1, text2);
 	}-*/;
+
+	native final public void setMatch_Threshold(double d) /*-{
+		this.Match_Threshold = d;
+	}-*/;
+	
+	native final public void setPatch_Margin(int m) /*-{
+		this.Patch_Margin = m;
+	}-*/;
+	
+	native final public void setMatch_Distance(int m) /*-{
+		this.Match_Distance = m;
+	}-*/;
+	
+	native final public void setDiff_EditCost(int c) /*-{
+		this.Diff_EditCost = c;
+	}-*/;
+	
+	
 }

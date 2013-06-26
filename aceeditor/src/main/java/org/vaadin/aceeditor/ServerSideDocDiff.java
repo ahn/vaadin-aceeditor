@@ -2,6 +2,7 @@ package org.vaadin.aceeditor;
 
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -90,22 +91,11 @@ public class ServerSideDocDiff {
 				markerAnnsFromTransport(diff.markerAnnDiff));
 	}
 	
-//	private static SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnsFromTransport(
-//			TransportSetDiff<TransportRowAnnotation> rowAnnDiff) {
-//		return new SetDiff.Differ<RowAnnotation,TransportRowAnnotation>().fromTransport(rowAnnDiff);
-//	}
-	
-	
 	// XXX Unnecessary copy-pasting
 	private static SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnsFromTransport(
 			TransportSetDiffForRowAnnotations rowAnnDiff) {
 		return rowAnnDiff==null ? null : SetDiff.fromTransport(rowAnnDiff);
 	}
-
-//	private static SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnsFromTransport(
-//			TransportSetDiff<TransportMarkerAnnotation> markerAnnDiff) {
-//		return new SetDiff.Differ<MarkerAnnotation,TransportMarkerAnnotation>().fromTransport(markerAnnDiff);
-//	}
 	
 	// XXX Unnecessary copy-pasting
 	private static SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnsFromTransport(
@@ -126,6 +116,9 @@ public class ServerSideDocDiff {
 		return dmp.get().patch_toText(patches);
 	}
 	
+	public List<Patch> getPatches() {
+		return Collections.unmodifiableList(patches);
+	}
 
 	
 	public AceDoc applyTo(AceDoc doc) {
@@ -134,6 +127,10 @@ public class ServerSideDocDiff {
 		Set<RowAnnotation> rowAnns = rowAnnDiff==null ? null : rowAnnDiff.applyTo(doc.getRowAnnotations());
 		Set<MarkerAnnotation> markerAnns = markerAnnDiff==null ? null : markerAnnDiff.applyTo(doc.getMarkerAnnotations());
 		return new AceDoc(text, markers, rowAnns, markerAnns);
+	}
+	
+	public String applyTo(String text) {
+		return (String)dmp.get().patch_apply(patches, text)[0];
 	}
 
 	public TransportDiff asTransport() {
@@ -153,4 +150,14 @@ public class ServerSideDocDiff {
 	public String toString() {
 		return "---ServerSideDocDiff---\n" + getPatchesString()+"\n"+markerSetDiff.toString()+"\nrad:"+rowAnnDiff+", mad:"+markerAnnDiff;
 	}
+
+
+	public static ServerSideDocDiff newMarkersAndAnnotations(
+			MarkerSetDiff msd, SetDiff<MarkerAnnotation,TransportMarkerAnnotation> mad) {
+		LinkedList<Patch> patches = new LinkedList<Patch>();
+		SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff =
+				new SetDiff<RowAnnotation, TransportRowAnnotation>();
+		return new ServerSideDocDiff(patches, msd, rowAnnDiff, mad);
+	}
+	
 }

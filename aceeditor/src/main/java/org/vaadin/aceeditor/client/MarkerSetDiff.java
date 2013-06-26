@@ -1,6 +1,7 @@
 package org.vaadin.aceeditor.client;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,7 +18,13 @@ public class MarkerSetDiff implements Serializable {
 	private final Map<String, MarkerAddition> added;
 	private final Map<String, MarkerDiff> moved;
 	private final Set<String> removed;
-
+	
+	public MarkerSetDiff(Map<String, MarkerAddition> added, Set<String> removed) {
+		this.added = added;
+		this.moved = Collections.emptyMap();
+		this.removed = removed;
+	}
+	
 	public MarkerSetDiff(Map<String, MarkerAddition> added,
 			Map<String, MarkerDiff> moved, Set<String> removed) {
 		this.added = added;

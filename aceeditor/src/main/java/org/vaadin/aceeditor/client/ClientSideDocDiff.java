@@ -17,8 +17,6 @@ import com.google.gwt.core.client.JsArray;
 
 public class ClientSideDocDiff {
 
-	// TODO???
-
 	public static final DiffMatchPatchJSNI dmp = DiffMatchPatchJSNI.newInstance();
 
 	private final JsArray<GwtTextDiff.Patch> textPatches;

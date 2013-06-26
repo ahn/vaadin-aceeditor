@@ -17,7 +17,7 @@ public class SetDiff<V extends TransportableAs<T>,T> {
 	private final Set<V> added;
 	private final Set<V> removed;
 
-	private SetDiff(Set<V> added, Set<V> removed) {
+	public SetDiff(Set<V> added, Set<V> removed) {
 		this.added = added;
 		this.removed = removed;
 	}
