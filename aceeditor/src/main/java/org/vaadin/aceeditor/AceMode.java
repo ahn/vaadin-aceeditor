@@ -1,5 +1,7 @@
 package org.vaadin.aceeditor;
 
+import java.util.HashMap;
+
 /**
  * Ace mode defines the language used in the editor.
  * 
@@ -75,26 +77,31 @@ public enum AceMode {
 		}
 		return forFileEnding(filename.substring(lastDot + 1).toLowerCase());
 	}
-
-	public static AceMode forFileEnding(String ending) {
-		if (ending.equals("js")) {
-			return javascript;
-		}
-		if (ending.equals("json")) {
-			return json;
-		}
-		if (ending.equals("c") || ending.equals("cpp") || ending.equals("cc") ||
-				ending.equals("h") || ending.equals("hpp") || ending.equals("hh"))
-			return c_cpp;
-		if (ending.equals("java"))
-			return java;
-		if (ending.equals("py"))
-			return python;
-		if (ending.equals("tex"))
-			return latex;
+	
+	private static HashMap<String, AceMode> endingModeMap = new HashMap<String, AceMode>();
+	static {
+		endingModeMap.put("js", javascript);
+		endingModeMap.put("json", json);
+		endingModeMap.put("c", c_cpp);
+		endingModeMap.put("cpp", c_cpp);
+		endingModeMap.put("cc", c_cpp);
+		endingModeMap.put("h", c_cpp);
+		endingModeMap.put("hpp", c_cpp);
+		endingModeMap.put("hh", c_cpp);
+		endingModeMap.put("java", java);
+		endingModeMap.put("py", python);
+		endingModeMap.put("tex", latex);
+		endingModeMap.put("css", css);
 		// TODO: more
+	}
 
-		return text;
+	/**
+	 * 
+	 * @param ending, example: "js"
+	 */
+	public static AceMode forFileEnding(String ending) {
+		AceMode mode = endingModeMap.get(ending);
+		return mode!=null ? mode : text;
 	}
 
 }
