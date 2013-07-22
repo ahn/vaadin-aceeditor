@@ -2,6 +2,8 @@ package org.vaadin.aceeditor.client;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.vaadin.aceeditor.AceEditor;
 import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
