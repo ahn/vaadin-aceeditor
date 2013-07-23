@@ -51,5 +51,18 @@ public class Suggestion {
 		ts.index = index;
 		return ts;
 	}
+
+	public String getDisplayText() {
+		return displayText;
+	}
+
+	public String getDescriptionText() {
+		return descriptionText;
+	}
+
+	public String getSuggestionText() {
+		return suggestionText;
+	}
+	
 	
 }
