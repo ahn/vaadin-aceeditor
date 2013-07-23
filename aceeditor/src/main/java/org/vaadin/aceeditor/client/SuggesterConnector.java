@@ -138,7 +138,8 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	@Override
 	public void suggestionSelected(TransportSuggestion s) {
-		connector.setOnRoundtrip(true);
+		// ???
+		//connector.setOnRoundtrip(true);
 //		AceRange suggMarker = widget.getInvisibleMarker(suggestionStartId);
 		serverRpc.suggestionSelected(s.index);
 		stopAskingForSuggestions();
