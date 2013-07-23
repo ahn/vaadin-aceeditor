@@ -38,10 +38,10 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 	
 	private Image loadingImage;
 
-	public static final int WIDTH = 100;
+	public static final int WIDTH = 150;
 	public static final int HEIGHT = 200;
 
-	public static final int DESCRIPTION_WIDTH = 150;
+	public static final int DESCRIPTION_WIDTH = 225;
 
 	// TODO addSuggestionSelectedListener?
 	public void setSuggestionSelectedListener(SuggestionSelectedListener ssl) {
