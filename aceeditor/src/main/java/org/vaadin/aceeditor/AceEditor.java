@@ -126,7 +126,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	private boolean latestFocus = false;
 	private long latestMarkerId = 0L;
 
-	private Logger logger = Logger.getLogger(AceEditor.class.getName());
+	private static final Logger logger = Logger.getLogger(AceEditor.class.getName());
 
 	private boolean onRoundtrip = false;
 
@@ -386,6 +386,10 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				listener);
 	}
 
+        public void setBasePath(String path) {
+            setAceConfig("basePath", path);
+        }
+        
 	/**
 	 * Sets the cursor position to be pos characters from the beginning of the
 	 * text.
