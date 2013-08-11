@@ -185,9 +185,11 @@ public class AceEditorWidget extends FocusWidget implements
 		this.text = text;
 		this.doc = null;
 		ignoreEditorEvents = true;
+		int y = editor.getScrollTop();
 		editor.setText(text);
 		AceRange adjSel = adjuster.adjust(oldSelection);
 		setSelection(adjSel, true);
+		editor.scrollToY(y);
 		ignoreEditorEvents = false;
 	}
 
