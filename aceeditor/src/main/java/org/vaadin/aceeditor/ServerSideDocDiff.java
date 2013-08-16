@@ -26,13 +26,21 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
 
 public class ServerSideDocDiff {
 	
-	// ThreadLocal because we may want to use dmp concurrently.
+	// We could use ThreadLocal but that causes a (valid) complaint
+	// of memory leak by Tomcat. Creating a new diff_match_patch every
+	// time (in getDmp()) fixes that. The creation is not a heavy operation so this it's ok.
+	/*
 	private static final ThreadLocal <diff_match_patch> dmp = 
 	         new ThreadLocal <diff_match_patch> () {
 	             @Override protected diff_match_patch initialValue() {
 	                 return new diff_match_patch();
 	         }
 	     };
+	*/
+	
+	private static diff_match_patch getDmp() {
+		return new diff_match_patch();
+	}
 	
 	private final LinkedList<Patch> patches;
 	private final MarkerSetDiff markerSetDiff;
@@ -40,7 +48,7 @@ public class ServerSideDocDiff {
 	private final SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff;
 	
 	public static ServerSideDocDiff diff(AceDoc doc1, AceDoc doc2) {
-		LinkedList<Patch> patches = dmp.get().patch_make(doc1.getText(), doc2.getText());
+		LinkedList<Patch> patches = getDmp().patch_make(doc1.getText(), doc2.getText());
 		MarkerSetDiff msd = MarkerSetDiff.diff(doc1.getMarkers(), doc2.getMarkers(), doc2.getText());
 		SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff =
 				diffRA(doc1.getRowAnnotations(), doc2.getRowAnnotations());		
@@ -85,7 +93,7 @@ public class ServerSideDocDiff {
 	
 	public static ServerSideDocDiff fromTransportDiff(TransportDiff diff) {
 		return new ServerSideDocDiff(
-				(LinkedList<Patch>) dmp.get().patch_fromText(diff.patchesAsString),
+				(LinkedList<Patch>) getDmp().patch_fromText(diff.patchesAsString),
 				MarkerSetDiff.fromTransportDiff(diff.markerSetDiff),
 				rowAnnsFromTransport(diff.rowAnnDiff),
 				markerAnnsFromTransport(diff.markerAnnDiff));
@@ -113,7 +121,7 @@ public class ServerSideDocDiff {
 	}
 
 	public String getPatchesString() {
-		return dmp.get().patch_toText(patches);
+		return getDmp().patch_toText(patches);
 	}
 	
 	public List<Patch> getPatches() {
@@ -122,7 +130,7 @@ public class ServerSideDocDiff {
 
 	
 	public AceDoc applyTo(AceDoc doc) {
-		String text = (String)dmp.get().patch_apply(patches, doc.getText())[0];
+		String text = (String)getDmp().patch_apply(patches, doc.getText())[0];
 		Map<String, AceMarker> markers = markerSetDiff.applyTo(doc.getMarkers(), text);
 		Set<RowAnnotation> rowAnns = rowAnnDiff==null ? null : rowAnnDiff.applyTo(doc.getRowAnnotations());
 		Set<MarkerAnnotation> markerAnns = markerAnnDiff==null ? null : markerAnnDiff.applyTo(doc.getMarkerAnnotations());
@@ -130,7 +138,7 @@ public class ServerSideDocDiff {
 	}
 	
 	public String applyTo(String text) {
-		return (String)dmp.get().patch_apply(patches, text)[0];
+		return (String)getDmp().patch_apply(patches, text)[0];
 	}
 
 	public TransportDiff asTransport() {
