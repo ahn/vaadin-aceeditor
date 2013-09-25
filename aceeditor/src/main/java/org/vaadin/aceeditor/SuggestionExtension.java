@@ -26,19 +26,18 @@ import com.vaadin.server.AbstractExtension;
 @SuppressWarnings("serial")
 public class SuggestionExtension extends AbstractExtension {
 
-	private Suggester suggester;
+	protected Suggester suggester;
 
-	private String suggStartText;
-	private int suggStartCursor;
-	private List<Suggestion> suggestions;
-	private AceRange suggRange;
+    protected String suggStartText;
+    protected int suggStartCursor;
+    protected List<Suggestion> suggestions;
+    protected AceRange suggRange;
 
 	public SuggestionExtension(Suggester suggester) {
-		super();
 		this.suggester = suggester;
 	}
 
-	private SuggesterServerRpc serverRpc = new SuggesterServerRpc() {
+	protected SuggesterServerRpc serverRpc = new SuggesterServerRpc() {
 
 		@Override
 		public void suggest(String text, TransportRange sel) {
@@ -70,7 +69,12 @@ public class SuggestionExtension extends AbstractExtension {
 		return (SuggesterState) super.getState();
 	}
 
-	private List<TransportSuggestion> asTransport(List<Suggestion> suggs) {
+    @Override
+    protected SuggesterState getState(boolean markAsDirty) {
+        return (SuggesterState) super.getState(markAsDirty);
+    }
+
+    protected List<TransportSuggestion> asTransport(List<Suggestion> suggs) {
 		LinkedList<TransportSuggestion> tl = new LinkedList<TransportSuggestion>();
 		int i = 0;
 		for (Suggestion s : suggs) {
@@ -88,4 +92,11 @@ public class SuggestionExtension extends AbstractExtension {
 		registerRpc(serverRpc);
 	}
 
+    public void setShowDescriptions(boolean showDescriptions) {
+        getState().showDescriptions = showDescriptions;
+    }
+
+    public boolean isShowDescriptions() {
+        return getState(false).showDescriptions;
+    }
 }

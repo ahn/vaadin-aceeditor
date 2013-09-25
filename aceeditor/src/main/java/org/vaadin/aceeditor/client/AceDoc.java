@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.vaadin.aceeditor.TextUtils;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
@@ -86,7 +87,7 @@ public class AceDoc {
 	public boolean equals(Object other) {
 		if (other instanceof AceDoc) {
 			AceDoc od = (AceDoc) other;
-			return text.equals(od.text) &&
+			return textEquals(text, od.text) &&
 					Util.sameMaps(this.markers, od.markers) &&
 					Util.sameSets(this.markerAnnotations, od.markerAnnotations) &&
 					Util.sameSets(this.rowAnnotations, od.rowAnnotations);
@@ -94,12 +95,14 @@ public class AceDoc {
 		return false;
 	}
 
-	
-
 	@Override
 	public int hashCode() {
 		return getText().hashCode();
 	}
+
+    public boolean textEquals(String a, String b) {
+        return a == null ? b == null : a.equals(b);
+    }
 
 	public AceDoc withText(String newText) {
 		return new AceDoc(newText, markers, rowAnnotations, markerAnnotations);
