@@ -1,13 +1,5 @@
 package org.vaadin.aceeditor.client;
 
-import java.util.List;
-
-import org.vaadin.aceeditor.SuggestionExtension;
-import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
-import org.vaadin.aceeditor.client.SuggestPopup.SuggestionSelectedListener;
-import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardEvent;
-import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.vaadin.client.ServerConnector;
@@ -15,6 +7,14 @@ import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
 import com.vaadin.shared.ui.Connect;
+import org.vaadin.aceeditor.SuggestionExtension;
+import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
+import org.vaadin.aceeditor.client.SuggestPopup.SuggestionSelectedListener;
+import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardEvent;
+import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
+
+import java.util.List;
+import java.util.logging.Logger;
 
 @SuppressWarnings("serial")
 @Connect(SuggestionExtension.class)
@@ -25,15 +25,14 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 //	private final Logger logger = Logger.getLogger(SuggesterConnector.class.getName());
 
+    protected AceEditorConnector connector;
+    protected AceEditorWidget widget;
 
-	private AceEditorConnector connector;
-	private AceEditorWidget widget;
-
-	private SuggesterServerRpc serverRpc = RpcProxy.create(
+    protected SuggesterServerRpc serverRpc = RpcProxy.create(
 			SuggesterServerRpc.class, this);
 
-	private String suggStartText;
-	private AceRange suggStartCursor;
+	protected String suggStartText;
+    protected AceRange suggStartCursor;
 	
 	private SuggesterClientRpc clientRpc = new SuggesterClientRpc() {
 		@Override
@@ -50,26 +49,28 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		}
 	};
 
-	private boolean suggesting = false;
+	protected boolean suggesting = false;
 
-	private SuggestPopup popup;
+	protected SuggestPopup popup;
 
-	private Integer suggestionStartId;
+	protected Integer suggestionStartId;
 
-	private boolean startSuggestingOnNextSelectionChange;
+	protected boolean startSuggestingOnNextSelectionChange;
 
-	private boolean suggestOnDot = true;
+	protected boolean suggestOnDot = true;
 
+    protected boolean showDescriptions = true;
 
 	public SuggesterConnector() {
-		super();
 		registerRpc(SuggesterClientRpc.class, clientRpc);
 	}
 	
 	@Override
 	public void onStateChanged(StateChangeEvent stateChangeEvent) {
 		super.onStateChanged(stateChangeEvent);
-		suggestOnDot  = getState().suggestOnDot;
+
+		this.suggestOnDot = getState().suggestOnDot;
+        this.showDescriptions = getState().showDescriptions;
 	}
 	
 	@Override
@@ -77,13 +78,13 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		return (SuggesterState) super.getState();
 	}
 
-	private void setSuggs(List<TransportSuggestion> suggs) {
+	protected void setSuggs(List<TransportSuggestion> suggs) {
 		if (suggesting) {
 			popup.setSuggestions(suggs);
 		}
 	}
 
-	private SuggestPopup createSuggestionPopup() {
+	protected SuggestPopup createSuggestionPopup() {
 		SuggestPopup sp = new SuggestPopup();
 		sp.setOwner(widget);
 		updatePopupPosition(sp);
@@ -124,7 +125,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		return Command.DEFAULT;
 	}
 
-	private void startSuggesting() {
+	protected void startSuggesting() {
 
 		suggStartText = widget.getText();
 		suggStartCursor = widget.getSelection();
@@ -133,6 +134,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		suggestionStartId = widget.addInvisibleMarker(suggStartCursor);
 		widget.addSelectionChangeListener(this);
 		popup = createSuggestionPopup();
+        popup.showDescriptions = this.showDescriptions;
 		suggesting = true;
 	}
 
@@ -150,13 +152,13 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		stopAskingForSuggestions();
 	}
 
-	private void stopAskingForSuggestions() {
+	protected void stopAskingForSuggestions() {
 		widget.removeSelectionChangeListener(this);
 		suggesting = false;
 		widget.setFocus(true);
 	}
 	
-	private void stopSuggesting() {
+	protected void stopSuggesting() {
 		if (popup!=null) {
 			popup.hide();
 			popup = null;
@@ -167,7 +169,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		}
 	}
 
-	private Command keyPressWhileSuggesting(int keyCode) {
+	protected Command keyPressWhileSuggesting(int keyCode) {
 		if (keyCode == 38 /* UP */) {
 			popup.up();
 		} else if (keyCode == 40 /* DOWN */) {
@@ -182,7 +184,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		return Command.NULL;
 	}
 
-	private String getWord(String text, int row, int col1, int col2) {
+	protected String getWord(String text, int row, int col1, int col2) {
 		if (col1 == col2) {
 			return "";
 		}
@@ -219,7 +221,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		}
 	}
 
-	private void updatePopupPosition(SuggestPopup popup) {
+	protected void updatePopupPosition(SuggestPopup popup) {
+        Logger.getLogger("SuggesterConnector").info("Update suggestion popup position");
+
 		int[] coords = widget.getCursorCoords();
 		int wx = Window.getClientWidth();
 		int wy = Window.getClientHeight();
@@ -227,9 +231,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		int sy = Window.getScrollTop();
 		int x = coords[0] - sx;
 		int y = coords[1] - sy + Y_OFFSET;
-		int maxx = wx - SuggestPopup.WIDTH - SuggestPopup.DESCRIPTION_WIDTH;
+		int maxx = wx - SuggestPopup.WIDTH - (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0);
 		if (x > maxx) {
-			x -= SuggestPopup.WIDTH + SuggestPopup.DESCRIPTION_WIDTH + 50;
+			x -= SuggestPopup.WIDTH + (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0) + 50;
 		}
 		int maxy = wy - SuggestPopup.HEIGHT;
 		if (y > maxy) {
@@ -237,5 +241,4 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		}
 		popup.setPopupPosition(x, y);
 	}
-
 }

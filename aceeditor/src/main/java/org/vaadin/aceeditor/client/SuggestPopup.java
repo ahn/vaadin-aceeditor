@@ -21,22 +21,23 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		DoubleClickHandler, ChangeHandler {
 	protected ListBox choiceList;
 
-	private String startOfValue = "";
+    protected String startOfValue = "";
 
 	public interface SuggestionSelectedListener {
 		void suggestionSelected(TransportSuggestion s);
 		void noSuggestionSelected();
 	}
 
-	private SuggestionSelectedListener listener;
+    protected SuggestionSelectedListener listener;
 
-	private VOverlay descriptionPopup;
+    protected VOverlay descriptionPopup;
 
-	private List<TransportSuggestion> suggs;
-	private List<TransportSuggestion> visibleSuggs = new LinkedList<TransportSuggestion>();
+    protected List<TransportSuggestion> suggs;
+    protected List<TransportSuggestion> visibleSuggs = new LinkedList<TransportSuggestion>();
 
-	
-	private Image loadingImage;
+    protected boolean showDescriptions = true;
+
+    protected Image loadingImage;
 
 	public static final int WIDTH = 150;
 	public static final int HEIGHT = 200;
@@ -56,7 +57,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		setWidget(loadingImage);
 	}
 	
-	private void createChoiceList() {
+	protected void createChoiceList() {
 		choiceList = new ListBox();
 		choiceList.setStyleName("list");
 		choiceList.addKeyDownHandler(this);
@@ -66,7 +67,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		setWidget(choiceList);
 	}
 	
-	private void startLoading() {
+	protected void startLoading() {
 		if (descriptionPopup!=null) {
 			descriptionPopup.hide();
 		}
@@ -82,7 +83,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		}
 	}
 
-	private void populateList() {
+    protected void populateList() {
 		choiceList.clear();
 		visibleSuggs.clear();
 		int i = 0;
@@ -206,7 +207,6 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
 	@Override
 	public void onChange(ChangeEvent event) {
-
 		if (descriptionPopup == null) {
 			createDescriptionPopup();
 		}
@@ -216,13 +216,14 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
 		if (descr != null && !descr.isEmpty()) {
 			((HTML) descriptionPopup.getWidget()).setHTML(descr);
-			descriptionPopup.show();
-		} else {
+            if (showDescriptions) {
+                descriptionPopup.show();
+            }
+        } else {
 			descriptionPopup.hide();
 		}
 	}
-	
-	
+
 	@Override
 	public void setPopupPosition(int left, int top) {
 		super.setPopupPosition(left, top);
@@ -231,7 +232,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		}
 	}
 	
-	private void updateDescriptionPopupPosition() {
+	protected void updateDescriptionPopupPosition() {
 		int x = getAbsoluteLeft() + WIDTH;
 		int y = getAbsoluteTop();
 		descriptionPopup.setPopupPosition(x, y);
@@ -240,7 +241,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		}
 	}
 
-	private void createDescriptionPopup() {
+	protected void createDescriptionPopup() {
 		descriptionPopup = new VOverlay();
 		descriptionPopup.setOwner(getOwner());
 		descriptionPopup.setStylePrimaryName("aceeditor-suggestpopup-description");
