@@ -511,11 +511,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		getState().useWorker = useWorker;
 	}
 
-	@Override
-	public void setValue(String newFieldValue) {
-		super.setValue(newFieldValue);
-	}
-
 	public void setWordWrap(boolean ww) {
 		getState().wordwrap = ww;
 	}
@@ -554,8 +549,8 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		ServerSideDocDiff diff = ServerSideDocDiff.fromTransportDiff(d);
 		shadow = diff.applyTo(shadow);
 		doc = diff.applyTo(doc);
-		setInternalValue(doc.getText());
-		if (!doc.getText().equals(previousText)) {
+		if (!TextUtils.equals(doc.getText(), previousText)) {
+            setValue(doc.getText(), true);
 			fireTextChangeEvent();
 		}
 		if (!diff.isIdentity()) {
