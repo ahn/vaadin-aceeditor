@@ -1,16 +1,5 @@
 package org.vaadin.aceeditor.client;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.vaadin.aceeditor.AceEditor;
-import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
-import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
-import org.vaadin.aceeditor.client.AceEditorWidget.TextChangeListener;
-import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
@@ -22,6 +11,14 @@ import com.vaadin.client.ui.AbstractHasComponentsConnector;
 import com.vaadin.client.ui.layout.ElementResizeEvent;
 import com.vaadin.client.ui.layout.ElementResizeListener;
 import com.vaadin.shared.ui.Connect;
+import org.vaadin.aceeditor.AceEditor;
+import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
+import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
+import org.vaadin.aceeditor.client.AceEditorWidget.TextChangeListener;
+import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
+
+import java.util.Map;
+import java.util.Map.Entry;
 
 @SuppressWarnings("serial")
 @Connect(AceEditor.class)
@@ -29,19 +26,19 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		implements TextChangeListener, SelectionChangeListener, FocusChangeListener {
 
 //	private static Logger logger = Logger.getLogger(AceEditorConnector.class.getName());
-	
-	private AceEditorServerRpc serverRpc = RpcProxy.create(AceEditorServerRpc.class,
-			this);
 
-	
-	private enum TextChangeEventMode {
+    protected AceEditorServerRpc serverRpc =
+            RpcProxy.create(AceEditorServerRpc.class, this);
+
+
+    protected enum TextChangeEventMode {
 		EAGER, TIMEOUT, LAZY
 	}
 
-	private TextChangeEventMode changeMode = null;
-	private int changeTimeout = 400;
+    protected TextChangeEventMode changeMode = null;
+    protected int changeTimeout = 400;
 
-	private class SendTimer extends Timer {
+    protected class SendTimer extends Timer {
 		private boolean scheduled;
 
 		@Override
@@ -61,26 +58,25 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 			scheduled = false;
 			sendToServerImmediately();
 		}
-	};
-	private SendTimer sendTimer = null;
+	}
 
-	private AceEditorWidget widget;
-	
-	private AceDoc shadow;
-	
-	private boolean onRoundtrip = false;
-	private boolean docChangedWhileOnRountrip = false;
+	protected SendTimer sendTimer = null;
 
-	private AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
+    protected AceDoc shadow;
+
+    protected boolean onRoundtrip = false;
+    protected boolean docChangedWhileOnRountrip = false;
+
+    protected AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
 		@Override
 		public void diff(TransportDiff ad) {
 			ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(ad);
 			shadow = diff.applyTo(shadow);
 
-			AceDoc doc1 = widget.getDoc();
+			AceDoc doc1 = getWidget().getDoc();
 			AceDoc doc2 = diff.applyTo(doc1);
-			
-			widget.setDoc(doc2);
+
+            getWidget().setDoc(doc2);
 			
 			setOnRoundtrip(false);
 		}
@@ -91,9 +87,9 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 	};
 
-	private boolean listenToSelectionChanges;
+    protected boolean listenToSelectionChanges;
 
-	private boolean selectionChanged;
+    protected boolean selectionChanged;
 
 	
 	public AceEditorConnector() {
@@ -109,10 +105,10 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		
 		// Needed if inside a resizable subwindow.
 		// Should we check that and only listen if yes?
-		getLayoutManager().addElementResizeListener(widget.getElement(), new ElementResizeListener() {
+		getLayoutManager().addElementResizeListener(getWidget().getElement(), new ElementResizeListener() {
 			@Override
 			public void onElementResize(ElementResizeEvent e) {
-				widget.resize();
+                getWidget().resize();
 			}
 		});
 	}
@@ -131,48 +127,47 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 //		widget.setRequired(getState().required);
 //		widget.setModified(getState().modified);
 		
-		boolean firstTime = !widget.isInitialized();
+		boolean firstTime = !getWidget().isInitialized();
 		if (firstTime) {
 			// To make sure Ace config is applied before the editor is created,
 			// we delay the initialization till then first call to onStateChanged,
 			// not initializing in createWidget() right away.
 			applyConfig(getState().config);
-			widget.initialize();
+            getWidget().initialize();
 		}
-		
-		widget.setMode(getState().mode);
-		widget.setTheme(getState().theme);
+
+        getWidget().setMode(getState().mode);
+        getWidget().setTheme(getState().theme);
 		listenToSelectionChanges = getState().listenToSelectionChanges;
-		widget.setUseWorker(getState().useWorker);
-		widget.setWordwrap(getState().wordwrap);
-		
-		widget.setPropertyReadOnly(getState().propertyReadOnly);
-		widget.setTabIndex(getState().tabIndex);
-		widget.setReadOnly(getState().readOnly);
+        getWidget().setUseWorker(getState().useWorker);
+        getWidget().setWordwrap(getState().wordwrap);
+
+        getWidget().setPropertyReadOnly(getState().propertyReadOnly);
+        getWidget().setTabIndex(getState().tabIndex);
+        getWidget().setReadOnly(getState().readOnly);
 		
 		// TODO: How should we deal with immediateness. Since there's already textChangeEventMode...
 		//immediate = getState().immediate;
 		
 		if (firstTime) {
 			shadow = AceDoc.fromTransport(getState().initialValue);
-			widget.setDoc(shadow);
+            getWidget().setDoc(shadow);
 		}
 		
 		if (firstTime || getState().selectionFromServer > 0) {
-			widget.setSelection(AceRange.fromTransport(getState().selection));
+            getWidget().setSelection(AceRange.fromTransport(getState().selection));
 		}
 	}
 	
-	private static void applyConfig(Map<String, String> config) {
+	protected static void applyConfig(Map<String, String> config) {
 		for (Entry<String, String> e : config.entrySet()) {
 			GwtAceEditor.setAceConfig(e.getKey(), e.getValue());
 		}
-		
 	}
 
 	@Override
 	protected Widget createWidget() {
-		widget = GWT.create(AceEditorWidget.class);
+        AceEditorWidget widget = GWT.create(AceEditorWidget.class);
 		widget.addTextChangeListener(this);
 		widget.addSelectionChangeListener(this);
 		widget.setFocusChangeListener(this);
@@ -194,7 +189,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		if (!focused) {
 			sendToServerImmediately(); // ???
 		}
-		
 	}
 	
 	public void setTextChangeEventMode(String mode) {
@@ -203,12 +197,12 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 			changeTextChangeEventMode(newMode);
 		}
 	}
-	
-	private void setTextChangeTimeout(int timeout) {
+
+    protected void setTextChangeTimeout(int timeout) {
 		changeTimeout = timeout;
 	}
-	
-	private void changeTextChangeEventMode(TextChangeEventMode newMode) {
+
+    protected void changeTextChangeEventMode(TextChangeEventMode newMode) {
 		if (sendTimer != null) {
 			sendTimer.cancel();
 			sendTimer = null;
@@ -232,8 +226,8 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 	}
 
-	private void sendToServer(boolean immediately, boolean evenIfIdentity) {
-		AceDoc doc = widget.getDoc();
+    protected void sendToServer(boolean immediately, boolean evenIfIdentity) {
+		AceDoc doc = getWidget().getDoc();
 		ClientSideDocDiff diff = ClientSideDocDiff.diff(shadow, doc);
 		if (evenIfIdentity || !diff.isIdentity()) {
 			
@@ -248,10 +242,9 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		TransportDiff td = diff.asTransport();
 		
 		if (immediately) {
-			serverRpc.changed(td, widget.getSelection().asTransport(), widget.isFocused());
-		}
-		else {
-			serverRpc.changedDelayed(td, widget.getSelection().asTransport(), widget.isFocused());
+			serverRpc.changed(td, getWidget().getSelection().asTransport(), getWidget().isFocused());
+		} else {
+			serverRpc.changedDelayed(td, getWidget().getSelection().asTransport(), getWidget().isFocused());
 		}
 		
 		shadow = doc;
@@ -259,12 +252,12 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		docChangedWhileOnRountrip = false;
 		selectionChanged = false;
 	}
-	
-	private void sendToServerDelayed() {
+
+    protected void sendToServerDelayed() {
 		sendToServer(false, false);
 	}
-	
-	private void sendToServerImmediately() {
+
+    protected void sendToServerImmediately() {
 		sendToServer(true, false);
 	}
 	
@@ -319,5 +312,4 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	public boolean isOnRoundtrip() {
 		return onRoundtrip;
 	}
-
 }
