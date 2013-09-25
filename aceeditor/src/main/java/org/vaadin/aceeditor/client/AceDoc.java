@@ -87,7 +87,7 @@ public class AceDoc {
 	public boolean equals(Object other) {
 		if (other instanceof AceDoc) {
 			AceDoc od = (AceDoc) other;
-			return TextUtils.equals(text, od.text) &&
+			return textEquals(text, od.text) &&
 					Util.sameMaps(this.markers, od.markers) &&
 					Util.sameSets(this.markerAnnotations, od.markerAnnotations) &&
 					Util.sameSets(this.rowAnnotations, od.rowAnnotations);
@@ -99,6 +99,10 @@ public class AceDoc {
 	public int hashCode() {
 		return getText().hashCode();
 	}
+
+    public boolean textEquals(String a, String b) {
+        return a == null ? b == null : a.equals(b);
+    }
 
 	public AceDoc withText(String newText) {
 		return new AceDoc(newText, markers, rowAnnotations, markerAnnotations);
