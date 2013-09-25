@@ -7,9 +7,9 @@
 	<name>AceEditor</name>
 <!-- 	<version>0.7.2</version> -->
 	<parent>
-		<groupId>org.vaadin.addons</groupId>
+		<groupId>com.haulmont.thirdparty</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.8.5-SNAPSHOT</version>
+		<version>0.8.6</version>
 		<relativePath>..</relativePath>
 	</parent>
 
@@ -51,29 +51,38 @@
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
+	
 	<dependencies>
-
-		<dependency>
-			<groupId>com.vaadin</groupId>
-			<artifactId>vaadin-server</artifactId>
-			<version>${vaadin.version}</version>
-		</dependency>
-		<!-- <dependency> <groupId>com.vaadin</groupId> <artifactId>vaadin-client-compiled</artifactId> 
-			<version>${vaadin.version}</version> </dependency> -->
-		<dependency>
-			<groupId>com.vaadin</groupId>
-			<artifactId>vaadin-client</artifactId>
-			<version>${vaadin.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<!-- <dependency> <groupId>com.vaadin</groupId> <artifactId>vaadin-themes</artifactId> 
-			<version>${vaadin.version}</version> </dependency> -->
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.4</version>
-			<scope>provided</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-server</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-client-compiled</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-client</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-themes</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -127,8 +136,6 @@
 				</configuration>
 			</plugin>
 		</plugins>
-
-
 
 		<!-- This is needed for the sources required by the GWT compiler to be 
 			included in the produced JARs -->
