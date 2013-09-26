@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.haulmont.thirdparty</groupId>
+	<groupId>org.vaadin.addons</groupId>
 	<artifactId>aceeditor-parent</artifactId>
-	<version>0.8.6</version>
+	<version>0.8.7-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Vaadin AceEditor Parent Project</name>
@@ -12,15 +12,14 @@
 
 	<modules>
 		<module>aceeditor</module>
-		<!--<module>aceeditor-demo</module>-->
-<!-- 		<module>aceeditor-demo2</module> -->
+		<module>aceeditor-demo</module>
 	</modules>
 
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<vaadin.version>7.1.0</vaadin.version>
-		<vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
+		<vaadin.version>[7.1.0,)</vaadin.version>
+		<vaadin.plugin.version>7.1.0</vaadin.plugin.version>
 	</properties>
 
 	<build>

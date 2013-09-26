@@ -7,9 +7,9 @@
 	<name>AceEditor</name>
 <!-- 	<version>0.7.2</version> -->
 	<parent>
-		<groupId>com.haulmont.thirdparty</groupId>
+		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.8.6</version>
+		<version>0.8.7-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 
@@ -57,31 +57,26 @@
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-server</artifactId>
             <version>${vaadin.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-client-compiled</artifactId>
             <version>${vaadin.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-client</artifactId>
             <version>${vaadin.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-themes</artifactId>
             <version>${vaadin.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.4</version>
-            <scope>provided</scope>
         </dependency>
 	</dependencies>
 

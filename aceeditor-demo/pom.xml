@@ -2,9 +2,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.haulmont.thirdparty</groupId>
+		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.8.6</version>
+		<version>0.8.7-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>aceeditor-demo</artifactId>

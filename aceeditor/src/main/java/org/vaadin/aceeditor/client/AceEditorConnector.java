@@ -85,6 +85,12 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		public void changedOnServer() {
 			sendToServer(true, true);
 		}
+
+		@Override
+		public void scrollToRow(int row) {
+			getWidget().scrollToRow(row);
+		}
+
 	};
 
     protected boolean listenToSelectionChanges;

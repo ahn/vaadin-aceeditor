@@ -96,6 +96,9 @@ public class AceEditorDemo extends UI {
 		leftBar.addComponent(createCursorPanel());
 		leftBar.addComponent(createThemeModePanel());
 		leftBar.addComponent(createOptionsPanel());
+		
+		leftBar.addComponent(createScrollPanel());
+		
 		leftBar.addComponent(createMarkerPanel());
 		leftBar.addComponent(createRowAnnotationPanel());
 		
@@ -172,6 +175,51 @@ public class AceEditorDemo extends UI {
 		la.addComponent(wordwrap);
 		
 		return new Panel("Settings", la);
+	}
+	
+	private Component createScrollPanel() {
+		VerticalLayout ve = new VerticalLayout();
+		HorizontalLayout la1 = new HorizontalLayout();
+		final TextField row = new TextField(null, "0");
+		Button b = new Button("Scroll to row");
+		b.addClickListener(new ClickListener() {
+			
+			@Override
+			public void buttonClick(ClickEvent event) {
+				try {
+					int i = Integer.valueOf(row.getValue());
+					editor.scrollToRow(i);
+				}
+				catch (NumberFormatException e) {
+					Notification.show("Give an integer.");
+				}
+			}
+		});
+		la1.addComponent(row);
+		la1.addComponent(b);
+		ve.addComponent(la1);
+		
+		HorizontalLayout la2 = new HorizontalLayout();
+		final TextField pos = new TextField(null, "0");
+		Button b2 = new Button("Scroll to position");
+		b2.addClickListener(new ClickListener() {
+			
+			@Override
+			public void buttonClick(ClickEvent event) {
+				try {
+					int i = Integer.valueOf(pos.getValue());
+					editor.scrollToPosition(i);
+				}
+				catch (NumberFormatException e) {
+					Notification.show("Give an integer.");
+				}
+			}
+		});
+		la2.addComponent(pos);
+		la2.addComponent(b2);
+		ve.addComponent(la2);
+		
+		return new Panel("Scroll to", ve);
 	}
 
 	private Component createValueTextArea() {
