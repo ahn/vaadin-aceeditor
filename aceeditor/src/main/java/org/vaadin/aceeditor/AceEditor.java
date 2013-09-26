@@ -14,6 +14,7 @@ import org.vaadin.aceeditor.client.AceEditorClientRpc;
 import org.vaadin.aceeditor.client.AceEditorServerRpc;
 import org.vaadin.aceeditor.client.AceEditorState;
 import org.vaadin.aceeditor.client.AceMarker;
+import org.vaadin.aceeditor.client.Util;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
 import org.vaadin.aceeditor.client.AceMarker.Type;
 import org.vaadin.aceeditor.client.AceRange;
@@ -494,7 +495,24 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		getState().changeTimeout = timeoutMs;
 
 	}
-
+	
+	/**
+	 * Scrolls to the given row. First row is 0.
+	 * 
+	 */
+	public void scrollToRow(int row) {
+		getRpcProxy(AceEditorClientRpc.class).scrollToRow(row);
+	}
+	
+	/**
+	 * Scrolls the to the given position (characters from the start of the file).
+	 * 
+	 */
+	public void scrollToPosition(int pos) {
+		int[] rowcol = Util.lineColFromCursorPos(getInternalValue(), pos, 0);
+		scrollToRow(rowcol[0]);
+	}
+	
 	public void setTheme(AceTheme theme) {
 		getState().theme = theme.toString();
 	}

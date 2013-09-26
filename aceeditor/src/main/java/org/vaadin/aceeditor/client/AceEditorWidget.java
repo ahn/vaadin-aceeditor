@@ -681,7 +681,10 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 		return doc;
 	}
-
+	
+	public void scrollToRow(int row) {
+		editor.scrollToRow(row);
+	}
 	
 	protected Set<MarkerAnnotation> getMarkerAnnotations() {
 		return markerAnnotations;
