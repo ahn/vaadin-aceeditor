@@ -1,18 +1,13 @@
 package org.vaadin.aceeditor.client;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.vaadin.aceeditor.TextUtils;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarkerAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 public class AceDoc {
 
@@ -32,22 +27,24 @@ public class AceDoc {
 	}
 
 	public AceDoc(String text) {
-		this.text = text;
-		markers = Collections.emptyMap();
-		rowAnnotations = Collections.emptySet();
-		markerAnnotations = Collections.emptySet();
+        this(text,
+                Collections.<String, AceMarker> emptyMap(),
+                Collections.<RowAnnotation>emptySet(),
+                Collections.<MarkerAnnotation>emptySet());
 	}
 	
 	public AceDoc(String text, Map<String, AceMarker> markers) {
-		this.text = text;
-		this.markers = markers;
-		rowAnnotations = Collections.emptySet();
-		markerAnnotations = Collections.emptySet();
+        this(text, markers,
+                Collections.<RowAnnotation>emptySet(),
+                Collections.<MarkerAnnotation>emptySet());
 	}
 
 	public AceDoc(String text, Map<String, AceMarker> markers,
 			Set<RowAnnotation> rowAnnotations,
 			Set<MarkerAnnotation> markerAnnotations) {
+        if (text == null)
+            text = "";
+
 		this.text = text;
 		this.markers = markers;
 		this.rowAnnotations = rowAnnotations;
@@ -242,8 +239,4 @@ public class AceDoc {
 		ranns.add(rann);
 		return new AceDoc(text, markers, ranns, markerAnnotations);
 	}
-
-	
-
-
 }
