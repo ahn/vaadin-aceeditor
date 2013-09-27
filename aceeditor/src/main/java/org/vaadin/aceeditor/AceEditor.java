@@ -279,7 +279,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 
 		if (selectionToClient != null) {
-			getState().selectionFromServer++;
 			// {startPos,endPos}
 			if (selectionToClient.length == 2) {
 				AceRange r = AceRange.fromPositions(selectionToClient[0],
@@ -294,8 +293,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				getState().selection = tr;
 			}
 			selectionToClient = null;
-		} else {
-			getState().selectionFromServer = 0;
 		}
 	}
 
@@ -501,7 +498,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	 * 
 	 */
 	public void scrollToRow(int row) {
-		getRpcProxy(AceEditorClientRpc.class).scrollToRow(row);
+		getState().scrollToRow = row;
 	}
 	
 	/**
@@ -549,6 +546,18 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				fireBlur();
 			}
 		}
+		
+		clearStateFromServerToClient();
+	}
+	
+	// Here we clear the selection etc. we sent earlier.
+	// The client has already received the values,
+	// and we must clear them at some point to not keep
+	// setting the same selection etc. over and over.
+	// TODO: this is a bit messy...
+	private void clearStateFromServerToClient() {
+		getState().selection = null;
+		getState().scrollToRow = -1;
 	}
 
 	@Override

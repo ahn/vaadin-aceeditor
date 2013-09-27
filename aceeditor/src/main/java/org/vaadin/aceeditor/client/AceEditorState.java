@@ -20,18 +20,7 @@ public class AceEditorState extends AbstractFieldState {
 	@DelegateToWidget("setTheme")
 	public String theme = "textmate";
 	
-	public TransportRange selection = new TransportRange(0, 0, 0, 0);
-	
-	/**
-	 * 0 if no selection change on server
-	 * > 0 if selection changed on server and should be set on client
-	 * 
-	 * int instead of boolean because we need to make sure that the value
-	 * changes (increments), and thus the client receives the changed value.
-	 * If selectionFromServer "changed" from true to true, that might
-	 * not be the case.
-	 */
-	public int selectionFromServer = 0;
+	public TransportRange selection = null;
 	
 	public boolean listenToSelectionChanges = false;
 	
@@ -46,5 +35,7 @@ public class AceEditorState extends AbstractFieldState {
 	public int diff_editCost = 4;
 	
 	public TransportDoc initialValue = null;
+	
+	public int scrollToRow = -1;
 	
 }
