@@ -1,7 +1,7 @@
 Vaadin AceEditor
 ================
 
-**[Ace code editor](http://ace.ajax.org) wrapped inside a TextField-like [Vaadin](http://vaadin.com) component.**
+**[Ace code editor](http://ace.ajax.org) wrapped inside a TextArea-like [Vaadin](http://vaadin.com) component.**
 
 Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
 
@@ -25,22 +25,25 @@ This add-on is still in an experimental phase, interfaces etc. are subject to ch
 These instructions are for Vaadin 7 version of AceEditor.
 
 ### Basics
-
-    AceEditor editor = new AceEditor();
-    editor.setValue("Hello world!");
-    layout.addComponent(editor);
-    // ...
-    String s = editor.getValue();
+```java
+AceEditor editor = new AceEditor();
+editor.setValue("Hello world!");
+layout.addComponent(editor);
+// ...
+String s = editor.getValue();
+```
 
 ### Mode & theme
 
 *Mode* defines the programming language used in the editor. *Theme* is the appearance of the editor.
 
-    editor.setMode(AceMode.python);
-    editor.setTheme(AceTheme.eclipse);
-    
-    // Use worker (if available for the current mode)
-    editor.setUseWorker(true);
+```java
+editor.setMode(AceMode.python);
+editor.setTheme(AceTheme.eclipse);
+
+// Use worker (if available for the current mode)
+editor.setUseWorker(true);
+```
 
 **NOTE**: to be able to use workers, you must host the worker files on the same server (same-origin policy restriction.) See [below](#ace-file-paths).
 
@@ -64,73 +67,87 @@ The structure should look something like this:
       WEB-INF/
       
 And have this in your `web.xml`:
-
-    <servlet-mapping>
-        <servlet-name>default</servlet-name>
-        <url-pattern>/static/*</url-pattern>
-    </servlet-mapping>
+```xml
+<servlet-mapping>
+    <servlet-name>default</servlet-name>
+    <url-pattern>/static/*</url-pattern>
+</servlet-mapping>
+```
 
 Then, tell the editor to use the files in the location:
 
-    editor.setThemePath("/static/ace");
-    editor.setModePath("/static/ace");
-    editor.setWorkerPath("/static/ace");    
-    // or "/myapp/static/ace" depending on server configuration.
-    
+```java
+editor.setThemePath("/static/ace");
+editor.setModePath("/static/ace");
+editor.setWorkerPath("/static/ace");    
+// or "/myapp/static/ace" depending on server configuration.
+``` 
 Now, Ace should read the theme/mode/worker files from your local server.
     
 ### Other settings
 
-    editor.setWordWrap(false);
-    editor.setReadOnly(false);
-    // TODO: more
-    
+```java
+editor.setWordWrap(false);
+editor.setReadOnly(false);
+// TODO: more
+```
+
 ### Listeners
 
 ##### TextChangeListener
 
-    ed.addTextChangeListener(new TextChangeListener() {
-        @Override
-		public void textChange(TextChangeEvent event) {
-			Notification.show("Text: " + event.getText());
-		}
-	});
+```java
+ed.addTextChangeListener(new TextChangeListener() {
+    @Override
+    public void textChange(TextChangeEvent event) {
+        Notification.show("Text: " + event.getText());
+    }
+});
+```
 
 ##### SelectionChangeListener
 
-    ed.addSelectionChangeListener(new SelectionChangeListener() {
-    	@Override
-		public void selectionChanged(SelectionChangeEvent e) {
-            int cursor = e.getSelection().getCursorPosition();
-			Notification.show("Cursor at: " + cursor);
-		}
-	});
-    
+```java
+ed.addSelectionChangeListener(new SelectionChangeListener() {
+    @Override
+    public void selectionChanged(SelectionChangeEvent e) {
+        int cursor = e.getSelection().getCursorPosition();
+        Notification.show("Cursor at: " + cursor);
+    }
+});
+```
+
 ### Markers
 
 Ace supports custom markers within the code. The marker appearance is defined by a css class.
 
-    String cssClass = "mymarker1";
-    TextRange range = editor.getSelection();    
-    AceMarker.Type type = AceMarker.Type.text; // text or line
-    boolean inFront = false; // whether in front or behind the text
-    AceMarker.OnTextChange onChange = AceMarker.OnTextChange.ADJUST;
-    String markerId = editor.addMarker(range, cssClass, type, inFront, onChange);
-    // ...
-    editor.removeMarker(markerId);
+```java
+String cssClass = "mymarker1";
+TextRange range = editor.getSelection();    
+AceMarker.Type type = AceMarker.Type.text; // text or line
+boolean inFront = false; // whether in front or behind the text
+AceMarker.OnTextChange onChange = AceMarker.OnTextChange.ADJUST;
+String markerId = editor.addMarker(range, cssClass, type, inFront, onChange);
+// ...
+editor.removeMarker(markerId);
+```
 
 The cssClass must be defined in some css file, for example `mymarkers.css`:
 
-    .ace_marker-layer .mymarker1 {
-        background: red;
-    	border-bottom: 2px solid black;
-    	position: absolute;
-    }
+```css
+.ace_marker-layer .mymarker1 {
+    background: red;
+	border-bottom: 2px solid black;
+	position: absolute;
+}
+```
 
 ...and then use the file:
 
-    @StyleSheet("mymarkers.css")
-    public class MyUI extends UI {
+```java
+@StyleSheet("mymarkers.css")
+public class MyUI extends UI {
+```
     
 The `OnTextChange` defines how the marker behaves when the editor text changes.
 
@@ -149,26 +166,29 @@ Vaadin AceEditor has two types of Annotations: *row annotations* and *marker ann
 
 *Marker annotations* are attached to a marker. If the marker changes position the annotation follows.
 
-    String msg = "Warning!!!";
-    AceAnnotation.Type type = AceAnnotation.Type.warning;
-    AceAnnotation ann = new AceAnnotation(msg, type);
-    if (rowAnnotations) {
-        editor.addRowAnnotation(ann, 2);
-    }
-    else {
-        String markerId = editor.addMarker(/*...*/);
-        editor.addMarkerAnnotation(ann, markerId);
-    }
-    // ...
-    editor.clearRowAnnotations();
-    editor.clearMarkerAnnotations();
+```java
+String msg = "Warning!!!";
+AceAnnotation.Type type = AceAnnotation.Type.warning;
+AceAnnotation ann = new AceAnnotation(msg, type);
+if (rowAnnotations) {
+    editor.addRowAnnotation(ann, 2);
+}
+else {
+    String markerId = editor.addMarker(/*...*/);
+    editor.addMarkerAnnotation(ann, markerId);
+}
+// ...
+editor.clearRowAnnotations();
+editor.clearMarkerAnnotations();
+```
 
 ### Suggestions
 
 This addon also includes a `SuggestionExtension` for implementing a "suggester" that gives user a list of text suggestions after she presses Ctrl+Space in AceEditor. An example `MySuggester` implementation [here](https://github.com/ahn/vaadin-aceeditor/blob/master/aceeditor-demo/src/main/java/org/vaadin/aceeditor/MySuggester.java). See the "suggestion demo" [here](http://antti.virtuallypreinstalled.com/aceeditor/).
 
-    new SuggestionExtension(new MySuggester()).extend(editor);
-
+```java
+new SuggestionExtension(new MySuggester()).extend(editor);
+```
 
 ## Compiling this project
 
