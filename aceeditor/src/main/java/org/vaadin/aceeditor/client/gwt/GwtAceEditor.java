@@ -307,6 +307,18 @@ public class GwtAceEditor extends JavaScriptObject {
 		return this.renderer.getScrollTopRow();
 	}-*/;
 
+    public final native void setShowGutter(boolean showGutter) /*-{
+        this.renderer.setShowGutter(showGutter);
+    }-*/;
+
+    public final native void setShowPrintMargin(boolean showPrintMargin) /*-{
+        this.renderer.setShowPrintMargin(showPrintMargin);
+    }-*/;
+
+    public final native void setHighlightActiveLineEnabled(boolean highlightActiveLine) /*-{
+        this.setHighlightActiveLine(highlightActiveLine);
+    }-*/;
+
 	//WRAPMODE
 	public final native void setUseWrapMode(boolean useWrapMode) /*-{
 		this.getSession().setUseWrapMode(useWrapMode);
