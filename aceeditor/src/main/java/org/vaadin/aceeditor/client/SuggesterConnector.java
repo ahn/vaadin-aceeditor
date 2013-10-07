@@ -126,6 +126,8 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	}
 
 	protected void startSuggesting() {
+        // ensure valid value of component on server before suggesting
+        connector.sendToServerImmediately();
 
 		suggStartText = widget.getText();
 		suggStartCursor = widget.getSelection();
