@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.vaadin.shared.AbstractFieldState;
 import org.vaadin.aceeditor.client.AceAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
@@ -530,6 +531,30 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		getState().wordwrap = ww;
 	}
 
+    public void setShowGutter(boolean showGutter) {
+        getState().showGutter = showGutter;
+    }
+
+    public boolean isShowGutter() {
+        return getState(false).showGutter;
+    }
+
+    public void setShowPrintMargin(boolean showPrintMargin) {
+        getState().showPrintMargin = showPrintMargin;
+    }
+
+    public boolean isShowPrintMargin() {
+        return getState(false).showPrintMargin;
+    }
+
+    public void setHighlightActiveLine(boolean highlightActiveLine) {
+        getState().highlightActiveLine = highlightActiveLine;
+    }
+
+    public boolean isHighlightActiveLine() {
+        return getState(false).highlightActiveLine;
+    }
+
 	public void setWorkerPath(String path) {
 		setAceConfig("workerPath", path);
 	}
@@ -565,7 +590,12 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		return (AceEditorState) super.getState();
 	}
 
-	@Override
+    @Override
+    protected AceEditorState getState(boolean markAsDirty) {
+        return (AceEditorState) super.getState(markAsDirty);
+    }
+
+    @Override
 	protected void setInternalValue(String newValue) {
 		super.setInternalValue(newValue);
 		doc = doc.withText(newValue);
