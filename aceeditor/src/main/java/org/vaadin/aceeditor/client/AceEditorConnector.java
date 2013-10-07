@@ -76,8 +76,18 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 			AceDoc doc1 = getWidget().getDoc();
 			AceDoc doc2 = diff.applyTo(doc1);
 
-            getWidget().setDoc(doc2);
-			
+			getWidget().setDoc(doc2);
+
+			if (selectionAfterApplyingDiff!=null) {
+				getWidget().setSelection(selectionAfterApplyingDiff);
+				selectionAfterApplyingDiff = null;
+			}
+
+			if (scrollToRowAfterApplyingDiff != -1) {
+				getWidget().scrollToRow(scrollToRowAfterApplyingDiff);
+				scrollToRowAfterApplyingDiff = -1;
+			}
+
 			setOnRoundtrip(false);
 		}
 
@@ -86,18 +96,21 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 			sendToServer(true, true);
 		}
 
-		@Override
-		public void scrollToRow(int row) {
-			getWidget().scrollToRow(row);
-		}
-
 	};
 
     protected boolean listenToSelectionChanges;
 
     protected boolean selectionChanged;
 
-	
+	// When setting selection or scrollToRow, we must make
+	// sure that the text value is set before that.
+	// That is, we must make the diff sync roundtrip and set
+	// these things after that.
+	// That's why this complication.
+	// TODO: this may not be the cleanest way to do it...
+	protected int scrollToRowAfterApplyingDiff;
+	protected AceRange selectionAfterApplyingDiff;
+
 	public AceEditorConnector() {
 		super();
 		registerRpc(AceEditorClientRpc.class, clientRpc);
@@ -160,9 +173,25 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
             getWidget().setDoc(shadow);
 		}
 		
-		if (firstTime || getState().selectionFromServer > 0) {
-            getWidget().setSelection(AceRange.fromTransport(getState().selection));
+		if (getState().selection != null) {
+			AceRange sel = AceRange.fromTransport(getState().selection);
+			if (firstTime) {
+				getWidget().setSelection(sel);
+			}
+			else {
+				selectionAfterApplyingDiff = sel;
+			}
 		}
+		
+		if (getState().scrollToRow != -1) {
+			if (firstTime) {
+				getWidget().scrollToRow(getState().scrollToRow);
+			}
+			else {
+				scrollToRowAfterApplyingDiff = getState().scrollToRow;
+			}
+		}
+		
 	}
 	
 	protected static void applyConfig(Map<String, String> config) {

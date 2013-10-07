@@ -296,7 +296,7 @@ public class GwtAceEditor extends JavaScriptObject {
 	}-*/;
 
 	public final native void scrollToRow(double row) /*-{
-		this.renderer.scrollToRow(row);
+		this.scrollToRow(row);
 	}-*/;
 
 	public final native int getScrollTop() /*-{
