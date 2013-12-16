@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.vaadin.shared.AbstractFieldState;
 import org.vaadin.aceeditor.client.AceAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
@@ -15,12 +14,12 @@ import org.vaadin.aceeditor.client.AceEditorClientRpc;
 import org.vaadin.aceeditor.client.AceEditorServerRpc;
 import org.vaadin.aceeditor.client.AceEditorState;
 import org.vaadin.aceeditor.client.AceMarker;
-import org.vaadin.aceeditor.client.Util;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
 import org.vaadin.aceeditor.client.AceMarker.Type;
 import org.vaadin.aceeditor.client.AceRange;
 import org.vaadin.aceeditor.client.TransportDiff;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
+import org.vaadin.aceeditor.client.Util;
 
 import com.vaadin.annotations.JavaScript;
 import com.vaadin.annotations.StyleSheet;
@@ -44,7 +43,10 @@ import com.vaadin.util.ReflectTools;
  * 
  */
 @SuppressWarnings("serial")
-@JavaScript({ "client/js/ace/ace.js", "client/js/diff_match_patch.js" })
+@JavaScript({
+	"client/js/ace/ace.js",
+	"client/js/ace/ext-searchbox.js",
+	"client/js/diff_match_patch.js" })
 @StyleSheet("client/css/ace-gwt.css")
 public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		FocusNotifier, TextChangeNotifier {
