@@ -11,6 +11,7 @@ import com.vaadin.client.ui.AbstractHasComponentsConnector;
 import com.vaadin.client.ui.layout.ElementResizeEvent;
 import com.vaadin.client.ui.layout.ElementResizeListener;
 import com.vaadin.shared.ui.Connect;
+
 import org.vaadin.aceeditor.AceEditor;
 import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
 import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
@@ -56,7 +57,12 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		@Override
 		public void run() {
 			scheduled = false;
-			sendToServerImmediately();
+			if (isOnRoundtrip()) {
+				docChangedWhileOnRountrip = true;
+			}
+			else {
+				sendToServerImmediately();
+			}
 		}
 	}
 
@@ -93,7 +99,9 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 		@Override
 		public void changedOnServer() {
-			sendToServer(true, true);
+			if (!isOnRoundtrip()) {
+				sendToServer(true, true);
+			}
 		}
 
 	};
@@ -135,7 +143,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	@Override
 	public void onStateChanged(StateChangeEvent stateChangeEvent) {
 		super.onStateChanged(stateChangeEvent);
-		
+
 		setTextChangeEventMode(getState().changeMode);
 		setTextChangeTimeout(getState().changeTimeout);
 		
@@ -226,7 +234,13 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	@Override
 	public void focusChanged(boolean focused) {
 		if (!focused) {
-			sendToServerImmediately(); // ???
+			// ???
+			if (isOnRoundtrip()) {
+				docChangedWhileOnRountrip = true;
+			}
+			else {
+				sendChangeAccordingToPolicy();
+			}
 		}
 	}
 	
@@ -269,10 +283,10 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		AceDoc doc = getWidget().getDoc();
 		ClientSideDocDiff diff = ClientSideDocDiff.diff(shadow, doc);
 		if (evenIfIdentity || !diff.isIdentity()) {
-			
+			// Go on...
 		}
 		else if (listenToSelectionChanges && selectionChanged) {
-			
+			// Go on...
 		}
 		else {
 			return;
@@ -333,12 +347,17 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	public void selectionChanged() {
 		selectionChanged = true;
 		if (listenToSelectionChanges) {
-			sendChangeAccordingToPolicy();
+			if (isOnRoundtrip()) {
+				docChangedWhileOnRountrip = true;
+			}
+			else {
+				sendChangeAccordingToPolicy();
+			}
 		}
 	}
 
 	// TODO XXX not sure if this roundtrip thing is correct, seems to work ok...
-	public void setOnRoundtrip(boolean on) {
+	private void setOnRoundtrip(boolean on) {
 		if (on==onRoundtrip) {
 			return;
 		}
