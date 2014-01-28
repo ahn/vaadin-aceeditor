@@ -108,7 +108,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	// these things after that.
 	// That's why this complication.
 	// TODO: this may not be the cleanest way to do it...
-	protected int scrollToRowAfterApplyingDiff;
+	protected int scrollToRowAfterApplyingDiff = -1;
 	protected AceRange selectionAfterApplyingDiff;
 
 	public AceEditorConnector() {
