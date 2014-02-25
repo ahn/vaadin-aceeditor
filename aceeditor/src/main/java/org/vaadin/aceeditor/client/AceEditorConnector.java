@@ -225,9 +225,8 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	
 	@Override
 	public void focusChanged(boolean focused) {
-		if (!focused) {
-			sendToServerImmediately(); // ???
-		}
+	        // send to server even if there's no diff
+			sendToServer(true, true);
 	}
 	
 	public void setTextChangeEventMode(String mode) {
