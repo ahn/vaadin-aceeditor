@@ -60,10 +60,16 @@ public class AceDoc {
 	}
 	
 	public Set<RowAnnotation> getRowAnnotations() {
+		if (rowAnnotations==null) {
+			return Collections.emptySet();
+		}
 		return Collections.unmodifiableSet(rowAnnotations);
 	}
 	
 	public Set<MarkerAnnotation> getMarkerAnnotations() {
+		if (markerAnnotations==null) {
+			return Collections.emptySet();
+		}
 		return Collections.unmodifiableSet(markerAnnotations);
 	}
 	
