@@ -1,5 +1,14 @@
 package org.vaadin.aceeditor.client;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.vaadin.aceeditor.AceEditor;
+import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
+import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
+import org.vaadin.aceeditor.client.AceEditorWidget.TextChangeListener;
+import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
@@ -11,15 +20,6 @@ import com.vaadin.client.ui.AbstractHasComponentsConnector;
 import com.vaadin.client.ui.layout.ElementResizeEvent;
 import com.vaadin.client.ui.layout.ElementResizeListener;
 import com.vaadin.shared.ui.Connect;
-
-import org.vaadin.aceeditor.AceEditor;
-import org.vaadin.aceeditor.client.AceEditorWidget.FocusChangeListener;
-import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
-import org.vaadin.aceeditor.client.AceEditorWidget.TextChangeListener;
-import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
-
-import java.util.Map;
-import java.util.Map.Entry;
 
 @SuppressWarnings("serial")
 @Connect(AceEditor.class)
@@ -41,28 +41,31 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
     protected class SendTimer extends Timer {
 		private boolean scheduled;
-
-		@Override
-		public void schedule(int ms) {
+		private SendCond send = SendCond.NO;
+		
+		public void schedule(int ms, SendCond send) {
 			super.schedule(ms);
+			this.send = this.send.or(send);
 			scheduled = true;
 		}
 
-		public void scheduleIfNotAlready(int ms) {
+		public void scheduleIfNotAlready(int ms, SendCond send) {
 			if (!scheduled) {
-				schedule(ms);
+				schedule(ms,send);
 			}
 		}
 
 		@Override
 		public void run() {
 			scheduled = false;
-			if (isOnRoundtrip()) {
-				docChangedWhileOnRountrip = true;
-			}
-			else {
-				sendToServerImmediately();
-			}
+			sendToServerImmediately(send);
+			send = SendCond.NO;
+		}
+		
+		@Override
+		public void cancel() {
+			super.cancel();
+			send = SendCond.NO;
 		}
 	}
 
@@ -71,7 +74,15 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
     protected AceDoc shadow;
 
     protected boolean onRoundtrip = false;
-    protected boolean docChangedWhileOnRountrip = false;
+    
+    protected enum SendCond {
+    	NO, IF_CHANGED, ALWAYS;
+		public SendCond or(SendCond sw2) {
+			return this.ordinal() > sw2.ordinal() ? this : sw2;
+		}
+    }
+    
+    protected SendCond sendAfterRoundtrip = SendCond.NO;
 
     protected AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
 		@Override
@@ -100,15 +111,14 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		@Override
 		public void changedOnServer() {
 			if (!isOnRoundtrip()) {
-				sendToServer(true, true);
+				sendToServer(SendCond.ALWAYS, true);
 			}
+			// else ? should we send after roundtrip or not?
 		}
 
 	};
 
     protected boolean listenToSelectionChanges;
-
-    protected boolean selectionChanged;
 
 	// When setting selection or scrollToRow, we must make
 	// sure that the text value is set before that.
@@ -116,7 +126,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	// these things after that.
 	// That's why this complication.
 	// TODO: this may not be the cleanest way to do it...
-	protected int scrollToRowAfterApplyingDiff;
+	protected int scrollToRowAfterApplyingDiff = -1;
 	protected AceRange selectionAfterApplyingDiff;
 
 	public AceEditorConnector() {
@@ -203,7 +213,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 				scrollToRowAfterApplyingDiff = getState().scrollToRow;
 			}
 		}
-		
 	}
 	
 	protected static void applyConfig(Map<String, String> config) {
@@ -233,14 +242,11 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	
 	@Override
 	public void focusChanged(boolean focused) {
-		if (!focused) {
-			// ???
-			if (isOnRoundtrip()) {
-				docChangedWhileOnRountrip = true;
-			}
-			else {
-				sendChangeAccordingToPolicy();
-			}
+		if (isOnRoundtrip()) {
+			sendAfterRoundtrip = sendAfterRoundtrip.or(SendCond.ALWAYS);
+		}
+		else {
+			sendToServerImmediately(SendCond.ALWAYS);
 		}
 	}
 	
@@ -262,30 +268,41 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 		this.changeMode = newMode;
 	}
+    
+    protected void sendChangeAccordingToMode(SendCond send) {
+    	sendChangeAccordingToMode(send, changeMode);
+    }
 	
-	public void sendChangeAccordingToPolicy() {
-		if (changeMode == TextChangeEventMode.EAGER) {
-			sendToServerImmediately();
-		} else if (changeMode == TextChangeEventMode.LAZY) {
+	protected void sendChangeAccordingToMode(SendCond send, TextChangeEventMode mode) {
+		if (mode == TextChangeEventMode.EAGER) {
+			if (sendTimer != null) {
+				sendTimer.cancel();
+			}
+			sendToServerImmediately(send);
+		} else if (mode == TextChangeEventMode.LAZY) {
 			if (sendTimer == null) {
 				sendTimer = new SendTimer();
 			}
-			sendTimer.schedule(changeTimeout);
-		} else if (changeMode == TextChangeEventMode.TIMEOUT) {
+			sendTimer.schedule(changeTimeout, send);
+		} else if (mode == TextChangeEventMode.TIMEOUT) {
 			if (sendTimer == null) {
 				sendTimer = new SendTimer();
 			}
-			sendTimer.scheduleIfNotAlready(changeTimeout);
+			sendTimer.scheduleIfNotAlready(changeTimeout, send);
 		}
 	}
 
-    protected void sendToServer(boolean immediately, boolean evenIfIdentity) {
+    protected void sendToServer(SendCond send, boolean immediately) {
+    	if (send==SendCond.NO) {
+    		return;
+    	}
+    	
 		AceDoc doc = getWidget().getDoc();
 		ClientSideDocDiff diff = ClientSideDocDiff.diff(shadow, doc);
-		if (evenIfIdentity || !diff.isIdentity()) {
+		if (send==SendCond.ALWAYS) {
 			// Go on...
 		}
-		else if (listenToSelectionChanges && selectionChanged) {
+		else if (send==SendCond.IF_CHANGED && !diff.isIdentity()) {
 			// Go on...
 		}
 		else {
@@ -302,31 +319,34 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		
 		shadow = doc;
 		setOnRoundtrip(true); // What if delayed???
-		docChangedWhileOnRountrip = false;
-		selectionChanged = false;
+		sendAfterRoundtrip = SendCond.NO;
 	}
 
-    protected void sendToServerDelayed() {
-		sendToServer(false, false);
+    protected void sendToServerDelayed(SendCond send) {
+		sendToServer(send, false);
 	}
+    
+    public void sendToServerImmediately() {
+    	sendToServerImmediately(SendCond.ALWAYS);
+    }
 
-    protected void sendToServerImmediately() {
-		sendToServer(true, false);
+    protected void sendToServerImmediately(SendCond send) {
+		sendToServer(send, true);
 	}
 	
 	@Override
 	public void flush() {
 		super.flush();
-		sendToServerDelayed(); // ???
+		sendWhenPossible(SendCond.ALWAYS, TextChangeEventMode.EAGER); // ???
 	}
 
 	@Override
 	public void changed() {
 		if (isOnRoundtrip()) {
-			docChangedWhileOnRountrip = true;
+			sendAfterRoundtrip = sendAfterRoundtrip.or(SendCond.IF_CHANGED);
 		}
 		else {
-			sendChangeAccordingToPolicy();
+			sendChangeAccordingToMode(SendCond.IF_CHANGED);
 		}
 	}
 
@@ -345,14 +365,26 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 	@Override
 	public void selectionChanged() {
-		selectionChanged = true;
 		if (listenToSelectionChanges) {
-			if (isOnRoundtrip()) {
-				docChangedWhileOnRountrip = true;
-			}
-			else {
-				sendChangeAccordingToPolicy();
-			}
+			sendWhenPossible(SendCond.ALWAYS);
+		}
+	}
+	
+	protected void sendWhenPossible(SendCond send) {
+		if (isOnRoundtrip()) {
+			sendAfterRoundtrip = sendAfterRoundtrip.or(send);
+		}
+		else {
+			sendChangeAccordingToMode(send);
+		}
+	}
+	
+	protected void sendWhenPossible(SendCond send, TextChangeEventMode mode) {
+		if (isOnRoundtrip()) {
+			sendAfterRoundtrip = sendAfterRoundtrip.or(send);
+		}
+		else {
+			sendChangeAccordingToMode(send, mode);
 		}
 	}
 
@@ -362,8 +394,8 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 			return;
 		}
 		onRoundtrip = on;
-		if (!onRoundtrip && docChangedWhileOnRountrip) {
-			sendToServer(true, false);
+		if (!onRoundtrip) {
+			sendToServerImmediately(sendAfterRoundtrip);
 		}
 	}
 	
