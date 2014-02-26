@@ -264,12 +264,9 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
 	public void beforeClientResponse(boolean initial) {
 		super.beforeClientResponse(initial);
-
 		if (initial) {
 			getState().initialValue = doc.asTransport();
-			if (!doc.equals(shadow)) {
-				shadow = doc;
-			}
+			shadow = doc;
 		} else if (onRoundtrip) {
 			ServerSideDocDiff diff = ServerSideDocDiff.diff(shadow, doc);
 			shadow = doc;
@@ -418,7 +415,10 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 			return;
 		}
 		this.doc = doc;
+		boolean wasReadOnly = isReadOnly();
+		setReadOnly(false);
 		setValue(doc.getText());
+		setReadOnly(wasReadOnly);
 		markAsDirty();
 	}
 
