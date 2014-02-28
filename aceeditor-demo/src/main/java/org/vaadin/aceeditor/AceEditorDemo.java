@@ -11,6 +11,10 @@ import com.vaadin.annotations.StyleSheet;
 import com.vaadin.annotations.Theme;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
+import com.vaadin.event.FieldEvents.BlurEvent;
+import com.vaadin.event.FieldEvents.BlurListener;
+import com.vaadin.event.FieldEvents.FocusEvent;
+import com.vaadin.event.FieldEvents.FocusListener;
 import com.vaadin.server.ExternalResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.Alignment;
@@ -21,6 +25,7 @@ import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.HorizontalSplitPanel;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.Link;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.Notification;
@@ -38,10 +43,7 @@ import com.vaadin.ui.Window;
 @PreserveOnRefresh
 public class AceEditorDemo extends UI {
 
-	
-	
 	private AceEditor editor = new AceEditor();
-	
 
 	private long latestMarkerId = 0L;
 	private String newMarkerId() {
@@ -60,6 +62,8 @@ public class AceEditorDemo extends UI {
 				"}\n";
 		
 		editor.setValue(s);
+		
+		editor.focus();
 		
 	}
 	
@@ -93,7 +97,10 @@ public class AceEditorDemo extends UI {
 		
 		
 		leftBar.addComponent(createValueTextArea());
+		
 		leftBar.addComponent(createCursorPanel());
+		leftBar.addComponent(createFocusPanel());
+		
 		leftBar.addComponent(createThemeModePanel());
 		leftBar.addComponent(createOptionsPanel());
 		
@@ -149,6 +156,38 @@ public class AceEditorDemo extends UI {
 		la.addComponent(bu);
 		
 		return new Panel("Cursor", la);
+	}
+	
+	private Component createFocusPanel() {
+		HorizontalLayout la = new HorizontalLayout();
+		
+		final Label label = new Label();
+		
+		editor.addFocusListener(new FocusListener() {
+			@Override
+			public void focus(FocusEvent event) {
+				label.setValue("Editor focused");
+			}
+		});
+		
+		editor.addBlurListener(new BlurListener() {
+			@Override
+			public void blur(BlurEvent event) {
+				label.setValue("Editor not focused");
+			}
+		});
+		
+		Button bu = new Button("Focus");
+		bu.addClickListener(new ClickListener() {
+			@Override
+			public void buttonClick(ClickEvent event) {
+				editor.focus();
+			}
+		});
+		
+		la.addComponent(bu);
+		la.addComponent(label);
+		return new Panel("Focus", la);
 	}
 
 	private Component createOptionsPanel() {
