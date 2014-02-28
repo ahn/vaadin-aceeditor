@@ -4,6 +4,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.vaadin.client.VConsole;
+
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
@@ -177,7 +179,7 @@ public class AceEditorWidget extends FocusWidget implements
     }
 
     protected void setText(String text) {
-		if (!isInitialized() || text.equals(this.text)) {
+		if (!isInitialized()) {
 			return;
 		}
 		AceRange oldSelection = selection;
@@ -245,7 +247,7 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setTheme(theme);
 	}
 
-	public void setMarkers(Map<String, AceMarker> markers) {
+	protected void setMarkers(Map<String, AceMarker> markers) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -275,29 +277,46 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 	
 	protected void adjustMarkerAnnotations() {
+		boolean changed = false;
 		for (AnnotationInEditor aie : markerAnnsInEditor) {
 			int row = rowOfMarker(aie.markerId);
-			if (row!=-1) {
+			if (row!=-1 && row != aie.row) {
 				aie.row = row;
+				changed = true;
 			}
 		}
-		setAnnotationsToEditor();
+		if (changed) {
+			setAnnotationsToEditor();
+		}
 	}
-	
-	public void setRowAnnotations(Set<RowAnnotation> ranns) {
+
+	protected void setAnnotations(Set<MarkerAnnotation> manns, Set<RowAnnotation> ranns) {
 		if (!isInitialized()) {
 			return;
 		}
-		if (ranns==null) {
-			return;
+		if (manns!=null) {
+			markerAnnotations = manns;
+			markerAnnsInEditor = createAIEfromMA(manns);
 		}
-		rowAnnotations = ranns;
-		rowAnnsInEditor = ranns;
+		if (ranns!=null) {
+			rowAnnotations = ranns;
+			rowAnnsInEditor = ranns;
+		}
 		setAnnotationsToEditor();
 	}
-	
+
 	protected void setAnnotationsToEditor() {
 		JsArray<GwtAceAnnotation> arr = GwtAceAnnotation.createEmptyArray();
+		
+		JsArray<GwtAceAnnotation> existing = editor.getAnnotations();
+		
+		for (int i=0; i<existing.length(); ++i) {
+			GwtAceAnnotation ann = existing.get(i);
+			if (!ann.isVaadinAceEditorAnnotation()) {
+				arr.push(ann);
+			}
+		}
+		
 		for (AnnotationInEditor maie : markerAnnsInEditor) {
 			GwtAceAnnotation jsAnn = GwtAceAnnotation.create(maie.ann.getType().toString(), maie.ann.getMessage(), maie.row);
 			arr.push(jsAnn);
@@ -309,21 +328,7 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 		editor.setAnnotations(arr);
 	}
-	
-	public void setMarkerAnnotations(Set<MarkerAnnotation> manns) {
-		if (!isInitialized()) {
-			return;
-		}
-		if (manns==null) {
-			return;
-		}
-		markerAnnotations = manns;
-		markerAnnsInEditor = createAIEfromMA(manns);
-		setAnnotationsToEditor();
-	}
-	
-	
-	
+
 	protected Set<AnnotationInEditor> createAIEfromMA(
 			Set<MarkerAnnotation> anns) {
 		Set<AnnotationInEditor> adjusted = new HashSet<AnnotationInEditor>();
@@ -355,6 +360,10 @@ public class AceEditorWidget extends FocusWidget implements
 		if (newText.equals(text)) {
 			return;
 		}
+		
+		// TODO: do we do too much work here?
+		// most of the time the editor doesn't have any markers nor annotations...
+		
 		adjustMarkers(e);
 		adjustInvisibleMarkers(e);
 		adjustMarkerAnnotations();
@@ -696,10 +705,18 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 
 	public void setDoc(AceDoc doc) {
+		if (doc.equals(this.doc)) {
+			return;
+		}
+		
 		setText(doc.getText());
+		
+		// Too much work is done in the case there
+		// are no markers or annotations, which is probably most of the time...
+		// TODO: optimize
+		
 		setMarkers(doc.getMarkers());
-		setMarkerAnnotations(doc.getMarkerAnnotations());
-		setRowAnnotations(doc.getRowAnnotations());
+		setAnnotations(doc.getMarkerAnnotations(), doc.getRowAnnotations());
 		this.doc = doc;
 	}
 

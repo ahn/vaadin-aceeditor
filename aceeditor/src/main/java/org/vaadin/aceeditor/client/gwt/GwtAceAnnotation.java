@@ -24,7 +24,8 @@ public class GwtAceAnnotation extends JavaScriptObject {
 		return {
 			text: text,
 			row: row,
-			type: type
+			type: type,
+			isVaadinAceEditorAnnotation: true
 		};
 	}-*/;
 
@@ -42,5 +43,9 @@ public class GwtAceAnnotation extends JavaScriptObject {
 	
 	public final native String getType() /*-{
 		return this.type;
+	}-*/;
+
+	public final native boolean isVaadinAceEditorAnnotation() /*-{
+		return !!this.isVaadinAceEditorAnnotation;
 	}-*/;
 }

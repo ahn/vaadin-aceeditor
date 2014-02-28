@@ -42,8 +42,9 @@ public class AceDoc {
 	public AceDoc(String text, Map<String, AceMarker> markers,
 			Set<RowAnnotation> rowAnnotations,
 			Set<MarkerAnnotation> markerAnnotations) {
-        if (text == null)
+        if (text == null) {
             text = "";
+        }
 
 		this.text = text;
 		this.markers = markers;

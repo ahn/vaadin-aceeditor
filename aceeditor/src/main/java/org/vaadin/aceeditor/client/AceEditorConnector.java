@@ -119,6 +119,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	};
 
     protected boolean listenToSelectionChanges;
+    protected boolean listenToFocusChanges;
 
 	// When setting selection or scrollToRow, we must make
 	// sure that the text value is set before that.
@@ -176,6 +177,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
         getWidget().setMode(getState().mode);
         getWidget().setTheme(getState().theme);
 		listenToSelectionChanges = getState().listenToSelectionChanges;
+		listenToFocusChanges = getState().listenToFocusChanges;
         getWidget().setUseWorker(getState().useWorker);
         getWidget().setWordwrap(getState().wordwrap);
 
@@ -242,6 +244,12 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	
 	@Override
 	public void focusChanged(boolean focused) {
+		// TODO: it'd be better if we didn't register as listener
+		// if !listenToFocusChanges in the first place...
+		if (!listenToFocusChanges) {
+			return;
+		}
+		
 		if (isOnRoundtrip()) {
 			sendAfterRoundtrip = sendAfterRoundtrip.or(SendCond.ALWAYS);
 		}
@@ -365,6 +373,8 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 	@Override
 	public void selectionChanged() {
+		// TODO: it'd be better if we didn't register as listener
+		// if !listenToSelectionChanges in the first place...
 		if (listenToSelectionChanges) {
 			sendWhenPossible(SendCond.ALWAYS);
 		}

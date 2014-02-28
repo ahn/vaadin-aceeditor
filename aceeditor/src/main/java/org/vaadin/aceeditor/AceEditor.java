@@ -169,12 +169,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		registerRpc(rpc);
 	}
 
-	@Override
-	public void addBlurListener(BlurListener listener) {
-		addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
-				BlurListener.blurMethod);
-	}
-
 	public void addDiffListener(DiffListener listener) {
 		addListener(DiffEvent.EVENT_ID, DiffEvent.class, listener,
 				DiffListener.diffMethod);
@@ -184,6 +178,14 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public void addFocusListener(FocusListener listener) {
 		addListener(FocusEvent.EVENT_ID, FocusEvent.class, listener,
 				FocusListener.focusMethod);
+		getState().listenToFocusChanges = true;
+	}
+
+	@Override
+	public void addBlurListener(BlurListener listener) {
+		addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
+				BlurListener.blurMethod);
+		getState().listenToFocusChanges = true;
 	}
 
 	@Override
@@ -330,11 +332,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		return String.class;
 	}
 
-	@Override
-	public void removeBlurListener(BlurListener listener) {
-		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
-	}
-
 	public void removeDiffListener(DiffListener listener) {
 		removeListener(DiffEvent.EVENT_ID, DiffEvent.class, listener);
 	}
@@ -342,6 +339,17 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
 	public void removeFocusListener(FocusListener listener) {
 		removeListener(FocusEvent.EVENT_ID, FocusEvent.class, listener);
+		getState().listenToFocusChanges =
+				!getListeners(FocusEvent.class).isEmpty() ||
+				!getListeners(BlurEvent.class).isEmpty();
+	}
+
+	@Override
+	public void removeBlurListener(BlurListener listener) {
+		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
+		getState().listenToFocusChanges =
+				!getListeners(FocusEvent.class).isEmpty() ||
+				!getListeners(BlurEvent.class).isEmpty();
 	}
 
 	@Override

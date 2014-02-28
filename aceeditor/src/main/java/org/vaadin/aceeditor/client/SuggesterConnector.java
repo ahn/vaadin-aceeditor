@@ -224,8 +224,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	}
 
 	protected void updatePopupPosition(SuggestPopup popup) {
-        Logger.getLogger("SuggesterConnector").info("Update suggestion popup position");
-
+       
 		int[] coords = widget.getCursorCoords();
 		int wx = Window.getClientWidth();
 		int wy = Window.getClientHeight();

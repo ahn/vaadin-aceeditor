@@ -6,7 +6,6 @@ import java.util.Map;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
 
 import com.vaadin.shared.AbstractFieldState;
-import com.vaadin.shared.annotations.DelegateToWidget;
 
 @SuppressWarnings("serial")
 public class AceEditorState extends AbstractFieldState {
@@ -21,6 +20,8 @@ public class AceEditorState extends AbstractFieldState {
 	public TransportRange selection = null;
 	
 	public boolean listenToSelectionChanges = false;
+	
+	public boolean listenToFocusChanges = false;
 	
 	public boolean useWorker = true;
 	
