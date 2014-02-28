@@ -11,7 +11,7 @@ This add-on is still in an experimental phase, interfaces etc. are subject to ch
 
 ## Demo
 
-[Online demo of Vaadin AceEditor](http://antti.virtuallypreinstalled.com/aceeditor/). The source code of the demo available [here](https://github.com/ahn/vaadin-aceeditor/tree/master/aceeditor-demo).
+[Online demo of Vaadin AceEditor](http://130.230.142.91:8080/aceeditor/). The source code of the demo available [here](https://github.com/ahn/vaadin-aceeditor/tree/master/aceeditor-demo).
 
 ## Getting started
 
@@ -55,7 +55,7 @@ By default, Vaadin AceEditor gets the mode, theme and worker files from [this lo
 
 To host the files on your own server, here's how:
 
-Example: host the Ace files within your Vaadin app. First, get the `ace` dir from the [Vaadin Directory download package](http://vaadin.com/addon/aceeditor). It contains the [src-min-noconflict](https://github.com/ajaxorg/ace-builds/tree/master/src-min-noconflict) Ace files compatible with this addon.
+First, get the `ace` dir from the [Vaadin Directory download package](http://vaadin.com/addon/aceeditor). It contains the [src-min-noconflict](https://github.com/ajaxorg/ace-builds/tree/master/src-min-noconflict) Ace files compatible with this addon.
 Copy the `ace` dir to location `webapp/static/ace` in your Vaadin application.
 The structure should look something like this:
 
