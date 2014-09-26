@@ -121,7 +121,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 	}
 
-	private static final String DEFAULT_ACE_PATH = "http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
+	private static final String DEFAULT_ACE_PATH = "//d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
 
 	private AceDoc doc = new AceDoc();
 
