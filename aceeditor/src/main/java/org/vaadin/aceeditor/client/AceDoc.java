@@ -6,10 +6,12 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarkerAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class AceDoc {
+public class AceDoc implements Serializable {
+	private static final long serialVersionUID = 1L;
 
 	private final String text;
 	
