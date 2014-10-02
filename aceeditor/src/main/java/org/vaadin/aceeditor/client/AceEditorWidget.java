@@ -247,6 +247,14 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setTheme(theme);
 	}
 
+    public void setFontSize(String fontSize)
+    {
+        if (!isInitialized()) {
+            return;
+        }
+        editor.setFontSize(fontSize);
+    }
+
 	protected void setMarkers(Map<String, AceMarker> markers) {
 		if (!isInitialized()) {
 			return;

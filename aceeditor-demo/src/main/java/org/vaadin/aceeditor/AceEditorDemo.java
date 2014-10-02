@@ -506,7 +506,25 @@ public class AceEditorDemo extends UI {
 			}
 		});
 		modeSelect.select(AceMode.javascript);
-		
+
+        final NativeSelect fontSelect = new NativeSelect("Font Size");
+        ve.addComponent(fontSelect);
+        fontSelect.addItem("10px");
+        fontSelect.addItem("12px");
+        fontSelect.addItem("14px");
+        fontSelect.addItem("16px");
+        fontSelect.addItem("18px");
+        fontSelect.addItem("24px");
+        fontSelect.setNullSelectionAllowed(false);
+        fontSelect.setImmediate(true);
+        fontSelect.addValueChangeListener(new ValueChangeListener() {
+            @Override
+            public void valueChange(ValueChangeEvent event) {
+                editor.setFontSize((String)fontSelect.getValue());
+            }
+        });
+        fontSelect.select("14px");
+
 		layout.addComponent(ve);
 		
 		final CheckBox cb = new CheckBox("useWorker");

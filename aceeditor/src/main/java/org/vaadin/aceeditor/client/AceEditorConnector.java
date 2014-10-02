@@ -188,6 +188,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
         getWidget().setPropertyReadOnly(getState().propertyReadOnly);
         getWidget().setTabIndex(getState().tabIndex);
         getWidget().setReadOnly(getState().readOnly);
+        getWidget().setFontSize(getState().fontSize);
 		
 		// TODO: How should we deal with immediateness. Since there's already textChangeEventMode...
 		//immediate = getState().immediate;

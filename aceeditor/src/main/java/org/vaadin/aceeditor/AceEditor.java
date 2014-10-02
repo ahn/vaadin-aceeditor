@@ -569,6 +569,14 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		setAceConfig("workerPath", path);
 	}
 
+    public void setFontSize(String size) {
+        getState().fontSize=size;
+    }
+
+    public String getFontSize() {
+        return getState(false).fontSize;
+    }
+
 	protected void clientChanged(TransportDiff diff, TransportRange selection,
 			boolean focused) {
 		diffFromClient(diff);
