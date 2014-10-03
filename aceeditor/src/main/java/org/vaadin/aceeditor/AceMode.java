@@ -138,6 +138,8 @@ public enum AceMode {
 		endingModeMap.put("py", python);
 		endingModeMap.put("tex", latex);
 		endingModeMap.put("css", css);
+        endingModeMap.put("xml", xml);
+        endingModeMap.put("txt", text);
 		// TODO: more
 	}
 
