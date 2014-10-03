@@ -42,4 +42,6 @@ public class AceEditorState extends AbstractFieldState {
 	public int scrollToRow = -1;
 
     public String fontSize= "14px";
+
+    public boolean highlightSelectedWord =true;
 }

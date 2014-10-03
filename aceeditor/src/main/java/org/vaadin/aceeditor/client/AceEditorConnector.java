@@ -189,6 +189,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
         getWidget().setTabIndex(getState().tabIndex);
         getWidget().setReadOnly(getState().readOnly);
         getWidget().setFontSize(getState().fontSize);
+        getWidget().setHighlightSelectedWord(getState().highlightSelectedWord);
 		
 		// TODO: How should we deal with immediateness. Since there's already textChangeEventMode...
 		//immediate = getState().immediate;
