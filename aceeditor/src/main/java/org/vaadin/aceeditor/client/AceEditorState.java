@@ -40,4 +40,8 @@ public class AceEditorState extends AbstractFieldState {
 	public TransportDoc initialValue = null;
 	
 	public int scrollToRow = -1;
+
+    public String fontSize= "14px";
+
+    public boolean highlightSelectedWord =true;
 }

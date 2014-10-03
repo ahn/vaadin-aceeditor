@@ -121,7 +121,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 	}
 
-	private static final String DEFAULT_ACE_PATH = "http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
+	private static final String DEFAULT_ACE_PATH = "//d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
 
 	private AceDoc doc = new AceDoc();
 
@@ -568,6 +568,22 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public void setWorkerPath(String path) {
 		setAceConfig("workerPath", path);
 	}
+
+    public void setFontSize(String size) {
+        getState().fontSize=size;
+    }
+
+    public String getFontSize() {
+        return getState(false).fontSize;
+    }
+
+    public void setHighlightSelectedWord(boolean highlightSelectedWord) {
+        getState().highlightSelectedWord = highlightSelectedWord;
+    }
+
+    public boolean isHighlightSelectedWord() {
+        return getState(false).highlightSelectedWord;
+    }
 
 	protected void clientChanged(TransportDiff diff, TransportRange selection,
 			boolean focused) {

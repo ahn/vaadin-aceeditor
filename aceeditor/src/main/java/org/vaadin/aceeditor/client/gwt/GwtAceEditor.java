@@ -27,8 +27,7 @@ public class GwtAceEditor extends JavaScriptObject {
 		parent.appendChild(aceDiv);
 		
 		var editor = $wnd.ace.edit(aceDiv);
-		
-		
+
 		return editor;
 	}-*/;
 	
@@ -327,5 +326,9 @@ public class GwtAceEditor extends JavaScriptObject {
 	public final native void setUseWorker(boolean use) /*-{
 		this.getSession().setUseWorker(use);
 	}-*/;
+
+    public final native void setHighlightSelectedWord(boolean highlightSelectedWord) /*-{
+        this.setHighlightSelectedWord(highlightSelectedWord);
+    }-*/;
 
 }
