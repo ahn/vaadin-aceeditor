@@ -227,3 +227,12 @@ Cons:
 
 * Requires more cpu, for computing the diffs etc. (There's a room for optimization in the current implementation.)
 
+## Links
+
+* [Ace Website](http://ace.c9.io/)
+* [Ace Kitchen Sink Demo](http://ace.c9.io/build/kitchen-sink.html)
+* [Ace API](http://ace.c9.io/#nav=api), [Wiki](https://github.com/ajaxorg/ace/wiki)
+
+## Related Projects
+* [Ace wrapper for GWT](https://github.com/daveho/AceGWT)
+* [Ace GWT Editor](https://github.com/ahome-it/ahome-ace)
