@@ -71,6 +71,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 		this.suggestOnDot = getState().suggestOnDot;
         this.showDescriptions = getState().showDescriptions;
+        this.popup.setWidth(getState().suggestPopupWidth);
 	}
 	
 	@Override
@@ -85,7 +86,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	}
 
 	protected SuggestPopup createSuggestionPopup() {
-		SuggestPopup sp = new SuggestPopup();
+		SuggestPopup sp = new SuggestPopup(getState().suggestPopupWidth);
 		sp.setOwner(widget);
 		updatePopupPosition(sp);
 		sp.setSuggestionSelectedListener(this);
@@ -232,9 +233,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		int sy = Window.getScrollTop();
 		int x = coords[0] - sx;
 		int y = coords[1] - sy + Y_OFFSET;
-		int maxx = wx - SuggestPopup.WIDTH - (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0);
+		int maxx = wx - popup.getWidth() - (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0);
 		if (x > maxx) {
-			x -= SuggestPopup.WIDTH + (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0) + 50;
+			x -= popup.getWidth() + (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0) + 50;
 		}
 		int maxy = wy - SuggestPopup.HEIGHT;
 		if (y > maxy) {
