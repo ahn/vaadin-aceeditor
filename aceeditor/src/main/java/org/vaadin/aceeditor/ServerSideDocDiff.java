@@ -116,7 +116,7 @@ public class ServerSideDocDiff {
 		return markerAnnDiff==null ? null :  SetDiff.fromTransport(markerAnnDiff);
 	}
 
-	private ServerSideDocDiff(LinkedList<Patch> patches, MarkerSetDiff markerSetDiff,
+	public ServerSideDocDiff(LinkedList<Patch> patches, MarkerSetDiff markerSetDiff,
 			SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff,
 			SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff) {
 		this.patches = patches;

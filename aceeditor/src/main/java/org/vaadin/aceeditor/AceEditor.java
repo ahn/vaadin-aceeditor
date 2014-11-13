@@ -676,8 +676,11 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	private void selectionFromClient(TransportRange sel) {
-		setInternalSelection(new TextRange(doc.getText(),
-				AceRange.fromTransport(sel)));
+		TextRange newSel = new TextRange(doc.getText(), AceRange.fromTransport(sel));
+		if (newSel.equals(selection)) {
+			return;
+		}
+		setInternalSelection(newSel);
 		fireSelectionChanged();
 	}
 

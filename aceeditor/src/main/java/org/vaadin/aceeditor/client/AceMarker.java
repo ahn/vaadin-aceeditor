@@ -29,7 +29,9 @@ public class AceMarker implements Serializable {
 	 */
 	public enum Type {
 		line,
-		text
+		text,
+		cursor,
+		cursorRow
 	}
 	
 	/**

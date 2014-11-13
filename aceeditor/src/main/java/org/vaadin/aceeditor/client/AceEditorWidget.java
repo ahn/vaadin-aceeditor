@@ -275,7 +275,9 @@ public class AceEditorWidget extends FocusWidget implements
 			if (existing!=null) {
 				editor.removeMarker(existing.clientId);
 			}
-			String clientId = editor.addMarker(convertRange(m.getRange()), m.getCssClass(), m.getType().toString(), m.isInFront());
+			String type = (m.getType()==AceMarker.Type.cursor ? "text" :
+				(m.getType()==AceMarker.Type.cursorRow ? "line" : m.getType().toString()));
+			String clientId = editor.addMarker(convertRange(m.getRange()), m.getCssClass(), type, m.isInFront());
 			existing = new MarkerInEditor(m, clientId);
 			newMarkers.put(mId, existing);
 		}
@@ -404,6 +406,7 @@ public class AceEditorWidget extends FocusWidget implements
 				if (cm.marker.getOnChange()==OnTextChange.ADJUST) {
 					AceRange newRange = moveMarkerOnInsert(cm.marker.getRange(), range);
 					if (newRange!=null) {
+						newRange = cursorMarkerSanityCheck(cm.marker, newRange);
 						cm.marker = cm.marker.withNewPosition(newRange);
 						if (markerIsValid(cm.marker)) {
 							moved.add(cm);
@@ -423,6 +426,7 @@ public class AceEditorWidget extends FocusWidget implements
 				if (cm.marker.getOnChange()==OnTextChange.ADJUST) {
 					AceRange newRange = moveMarkerOnRemove(cm.marker.getRange(), range);
 					if (newRange!=null) {
+						newRange = cursorMarkerSanityCheck(cm.marker, newRange);
 						cm.marker = cm.marker.withNewPosition(newRange);
 						if (markerIsValid(cm.marker)) {
 							moved.add(cm);
@@ -442,6 +446,17 @@ public class AceEditorWidget extends FocusWidget implements
 		updateMarkers(moved);
 	}
 	
+	private AceRange cursorMarkerSanityCheck(AceMarker m, AceRange r) {
+		if (m.getType()==AceMarker.Type.cursorRow && r.getEndRow() > r.getStartRow() + 1) {
+			return new AceRange(r.getEndRow()-1, 0, r.getEndRow(), 0);
+		}
+		if (m.getType()==AceMarker.Type.cursor &&
+				(r.getStartRow() != r.getEndRow() || r.getEndCol() > r.getStartCol() +1 )) {
+			return new AceRange(r.getEndRow(), r.getEndCol(), r.getEndRow(), r.getEndCol() + 1);
+		}
+		
+		return r;
+	}
 	protected void adjustInvisibleMarkers(GwtAceChangeEvent event) {
 		Action act = event.getData().getAction();
 		GwtAceRange range = event.getData().getRange();
@@ -460,13 +475,11 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 		invisibleMarkers = newMap;
 	}
-	
+
 	protected static boolean markerIsValid(AceMarker marker) {
 		AceRange r = marker.getRange();
 		return !r.isZeroLength() && !r.isBackwards() && r.getStartRow() >= 0 && r.getStartCol() >= 0 && r.getEndCol() >= 0; // no need to check endrow
 	}
-
-
 	
 	protected static AceRange moveMarkerOnInsert(AceRange mr, GwtAceRange range) {
 		int startRow = range.getStart().getRow();
@@ -485,7 +498,7 @@ public class AceEditorWidget extends FocusWidget implements
 		boolean aboveMarkerStart = startRow < mr.getStartRow();
 		boolean beforeMarkerStartOnRow = startRow == mr.getStartRow() && startCol < mr.getStartCol(); // < or <=
 		boolean aboveMarkerEnd = startRow < mr.getEndRow();
-		boolean beforeMarkerEndOnRow = startRow == mr.getEndRow() && startCol <= mr.getEndCol();	 // < or <=
+		boolean beforeMarkerEndOnRow = startRow == mr.getEndRow() && startCol < mr.getEndCol();	 // < or <=
 		
 		int row1 = mr.getStartRow();
 		int col1 = mr.getStartCol();

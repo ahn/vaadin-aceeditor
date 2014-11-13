@@ -18,10 +18,8 @@ public class AceDoc implements Serializable {
 	// key: markerId
 	private final Map<String, AceMarker> markers;
 
-	// key: row
 	private final Set<RowAnnotation> rowAnnotations;
 
-	// key: markerId
 	private final Set<MarkerAnnotation> markerAnnotations;
 
 	public AceDoc() {
@@ -227,6 +225,14 @@ public class AceDoc implements Serializable {
 	public AceDoc withoutMarkers() {
 		Map<String, AceMarker> noMarkers = Collections.emptyMap();
 		return new AceDoc(text, noMarkers, rowAnnotations, markerAnnotations);
+	}
+	
+	public AceDoc withoutMarkers(Set<String> without) {
+		Map<String, AceMarker> newMarkers = new HashMap<String, AceMarker>(markers);
+		for (String m : without) {
+			newMarkers.remove(m);
+		}
+		return new AceDoc(text, newMarkers, rowAnnotations, markerAnnotations);
 	}
 
 	public AceDoc withRowAnnotations(Set<RowAnnotation> ranns) {

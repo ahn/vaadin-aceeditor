@@ -14,6 +14,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.ConnectorHierarchyChangeEvent;
+import com.vaadin.client.VConsole;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.AbstractHasComponentsConnector;
@@ -87,9 +88,10 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
     protected AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
 		@Override
 		public void diff(TransportDiff ad) {
+			VConsole.log("diff!!!");
 			ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(ad);
 			shadow = diff.applyTo(shadow);
-
+			
 			AceDoc doc1 = getWidget().getDoc();
 			AceDoc doc2 = diff.applyTo(doc1);
 
@@ -104,7 +106,10 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 				getWidget().scrollToRow(scrollToRowAfterApplyingDiff);
 				scrollToRowAfterApplyingDiff = -1;
 			}
-
+			
+			if (!doc1.getText().equals(doc2.getText())) {
+				sendAfterRoundtrip = sendAfterRoundtrip.or(SendCond.ALWAYS);
+			}
 			setOnRoundtrip(false);
 		}
 
@@ -253,7 +258,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		}
 		
 		if (isOnRoundtrip()) {
-			sendAfterRoundtrip = sendAfterRoundtrip.or(SendCond.ALWAYS);
+			sendAfterRoundtrip = SendCond.ALWAYS;
 		}
 		else {
 			sendToServerImmediately(SendCond.ALWAYS);
@@ -303,6 +308,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	}
 
     protected void sendToServer(SendCond send, boolean immediately) {
+    	VConsole.log("sendToServer: send=" + send + ", immediately="+immediately);
     	if (send==SendCond.NO) {
     		return;
     	}
