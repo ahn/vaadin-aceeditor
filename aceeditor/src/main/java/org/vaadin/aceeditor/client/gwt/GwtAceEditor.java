@@ -264,6 +264,10 @@ public class GwtAceEditor extends JavaScriptObject {
 		this.setReadOnly(readOnly);
 	}-*/;
 
+	public final native void setShowInvisibles(boolean showInvisibles) /*-{
+		this.setShowInvisibles(showInvisibles);
+	}-*/;
+
 	public final native String getNewLineCharacter() /*-{
 		return this.getSession().getDocument().getNewLineCharacter();
 	}-*/;

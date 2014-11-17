@@ -43,5 +43,7 @@ public class AceEditorState extends AbstractFieldState {
 
     public String fontSize= "14px";
 
-    public boolean highlightSelectedWord =true;
+    public boolean highlightSelectedWord = true;
+
+    public boolean showInvisibles = false;
 }

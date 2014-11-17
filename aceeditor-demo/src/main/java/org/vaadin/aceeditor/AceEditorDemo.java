@@ -223,9 +223,20 @@ public class AceEditorDemo extends UI {
 			}
 		});
 		
+		final CheckBox invisibles = new CheckBox("Show Invisibles");
+		invisibles.setValue(false);
+		invisibles.setImmediate(true);
+		invisibles.addValueChangeListener(new ValueChangeListener() {
+			@Override
+			public void valueChange(ValueChangeEvent event) {
+				editor.setShowInvisibles(invisibles.getValue());
+			}
+		});
+
 		la.addComponent(enabled);
 		la.addComponent(readOnly);
 		la.addComponent(wordwrap);
+		la.addComponent(invisibles);
 		
 		return new Panel("Settings", la);
 	}

@@ -91,6 +91,7 @@ Now, Ace should read the theme/mode/worker files from your local server.
 ```java
 editor.setWordWrap(false);
 editor.setReadOnly(false);
+editor.setShowInvisibles(false);
 // TODO: more
 ```
 

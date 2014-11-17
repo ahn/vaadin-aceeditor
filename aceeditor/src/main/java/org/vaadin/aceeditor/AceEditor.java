@@ -585,6 +585,14 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
         return getState(false).highlightSelectedWord;
     }
 
+    public void setShowInvisibles(boolean showInvisibles) {
+        getState().showInvisibles = showInvisibles;
+    }
+
+    public boolean isShowInvisibles() {
+        return getState(false).showInvisibles;
+    }
+
 	protected void clientChanged(TransportDiff diff, TransportRange selection,
 			boolean focused) {
 		diffFromClient(diff);

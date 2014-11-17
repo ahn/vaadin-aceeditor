@@ -614,6 +614,10 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setReadOnly(this.readOnly || this.propertyReadOnly || !this.enabled);
 	}
 
+	public void setShowInvisibles(boolean showInvisibles) {
+		editor.setShowInvisibles(showInvisibles);
+	}
+
 	protected static AceRange convertSelection(GwtAceSelection selection) {
 		GwtAcePosition start = selection.getRange().getStart();
 		GwtAcePosition end = selection.getRange().getEnd();
