@@ -179,7 +179,7 @@ public class AceEditorWidget extends FocusWidget implements
     }
 
     protected void setText(String text) {
-		if (!isInitialized()) {
+		if (!isInitialized() || this.text.equals(text)) {
 			return;
 		}
 		AceRange oldSelection = selection;
