@@ -9,9 +9,12 @@ From version 0.7.0 onwards this add-on requires Vaadin 7. The earlier Vaadin 6 v
 
 This add-on is still in an experimental phase, interfaces etc. are subject to change.
 
+<!--
 ## Demo
 
 [Online demo of Vaadin AceEditor](http://130.230.142.91:8080/aceeditor/). The source code of the demo available [here](https://github.com/ahn/vaadin-aceeditor/tree/master/aceeditor-demo).
+-->
+
 
 ## Getting started
 
