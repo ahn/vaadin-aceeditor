@@ -190,6 +190,7 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
         getWidget().setShowPrintMargin(getState().showPrintMargin);
         getWidget().setHighlightActiveLineEnabled(getState().highlightActiveLine);
 
+        getWidget().setEnabled(getState().enabled);
         getWidget().setPropertyReadOnly(getState().propertyReadOnly);
         getWidget().setTabIndex(getState().tabIndex);
         getWidget().setReadOnly(getState().readOnly);

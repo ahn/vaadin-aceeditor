@@ -194,6 +194,17 @@ public class AceEditorDemo extends UI {
 
 	private Component createOptionsPanel() {
 		VerticalLayout la = new VerticalLayout();
+
+		final CheckBox enabled = new CheckBox("Enabled");
+		enabled.setValue(true);
+		enabled.setImmediate(true);
+		enabled.addValueChangeListener(new ValueChangeListener() {
+			@Override
+			public void valueChange(ValueChangeEvent event) {
+				editor.setEnabled(enabled.getValue());
+			}
+		});
+
 		final CheckBox readOnly = new CheckBox("Read-only");
 		readOnly.setImmediate(true);
 		readOnly.addValueChangeListener(new ValueChangeListener() {
@@ -212,6 +223,7 @@ public class AceEditorDemo extends UI {
 			}
 		});
 		
+		la.addComponent(enabled);
 		la.addComponent(readOnly);
 		la.addComponent(wordwrap);
 		

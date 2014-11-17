@@ -82,6 +82,7 @@ public class AceEditorWidget extends FocusWidget implements
     protected static int idCounter = 0;
 
     protected String text = "";
+    protected boolean enabled = true;
     protected boolean readOnly = false;
     protected boolean propertyReadOnly = false;
     protected boolean focused;
@@ -585,12 +586,20 @@ public class AceEditorWidget extends FocusWidget implements
 		return text;
 	}
 
+	public void setEnabled(boolean enabled) {
+		if (!isInitialized()) {
+			return;
+		}
+		this.enabled = enabled;
+		updateEditorReadOnlyState();
+	}
+
 	public void setPropertyReadOnly(boolean propertyReadOnly) {
 		if (!isInitialized()) {
 			return;
 		}
 		this.propertyReadOnly = propertyReadOnly;
-		editor.setReadOnly(this.readOnly || this.propertyReadOnly);
+		updateEditorReadOnlyState();
 	}
 
 	public void setReadOnly(boolean readOnly) {
@@ -598,7 +607,11 @@ public class AceEditorWidget extends FocusWidget implements
 			return;
 		}
 		this.readOnly = readOnly;
-		editor.setReadOnly(this.readOnly || this.propertyReadOnly);
+		updateEditorReadOnlyState();
+	}
+
+	private void updateEditorReadOnlyState() {
+		editor.setReadOnly(this.readOnly || this.propertyReadOnly || !this.enabled);
 	}
 
 	protected static AceRange convertSelection(GwtAceSelection selection) {
