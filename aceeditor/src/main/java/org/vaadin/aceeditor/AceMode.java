@@ -126,20 +126,19 @@ public enum AceMode {
 	
 	private static HashMap<String, AceMode> endingModeMap = new HashMap<String, AceMode>();
 	static {
+		// Only the file endings that != language name
 		endingModeMap.put("js", javascript);
-		endingModeMap.put("json", json);
 		endingModeMap.put("c", c_cpp);
 		endingModeMap.put("cpp", c_cpp);
 		endingModeMap.put("cc", c_cpp);
 		endingModeMap.put("h", c_cpp);
 		endingModeMap.put("hpp", c_cpp);
 		endingModeMap.put("hh", c_cpp);
-		endingModeMap.put("java", java);
 		endingModeMap.put("py", python);
 		endingModeMap.put("tex", latex);
-		endingModeMap.put("css", css);
-		endingModeMap.put("xml", xml);
 		endingModeMap.put("txt", text);
+		endingModeMap.put("htm", html);
+		endingModeMap.put("hs", haskell);
 		// TODO: more
 	}
 
@@ -148,8 +147,13 @@ public enum AceMode {
 	 * @param ending, example: "js"
 	 */
 	public static AceMode forFileEnding(String ending) {
-		AceMode mode = endingModeMap.get(ending);
-		return mode!=null ? mode : text;
+		try {
+			return AceMode.valueOf(ending);
+		}
+		catch(IllegalArgumentException e) {
+			AceMode mode = endingModeMap.get(ending);
+			return mode!=null ? mode : text;
+		}
 	}
 
 }
