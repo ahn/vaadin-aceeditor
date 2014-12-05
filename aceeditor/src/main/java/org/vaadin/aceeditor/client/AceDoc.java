@@ -215,6 +215,11 @@ public class AceDoc implements Serializable {
 		markers2.put(marker.getMarkerId(), marker);
 		return new AceDoc(text, markers2, rowAnnotations, markerAnnotations);
 	}
+	public AceDoc withAdditionalMarkers(Map<String, AceMarker> addMarkers) {
+		HashMap<String, AceMarker> newMarkers = new HashMap<String, AceMarker>(markers);
+		newMarkers.putAll(addMarkers);
+		return new AceDoc(text, newMarkers, rowAnnotations, markerAnnotations);
+	}
 
 	public AceDoc withoutMarker(String markerId) {
 		HashMap<String, AceMarker> markers2 = new HashMap<String, AceMarker>(markers);
