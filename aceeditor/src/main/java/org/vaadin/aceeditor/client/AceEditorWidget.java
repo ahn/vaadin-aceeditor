@@ -4,7 +4,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusWidget;
-import com.vaadin.client.VConsole;
 
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
@@ -449,7 +448,7 @@ public class AceEditorWidget extends FocusWidget implements
 	
 	private AceRange cursorMarkerSanityCheck(AceMarker m, AceRange r) {
 		if (m.getType()==AceMarker.Type.cursorRow && r.getEndRow() > r.getStartRow() + 1) {
-			return new AceRange(r.getEndRow()-1, 0, r.getEndRow(), 0);
+			return new AceRange(r.getStartRow(), 0, r.getStartRow()+1, 0);
 		}
 		if (m.getType()==AceMarker.Type.cursor &&
 				(r.getStartRow() != r.getEndRow() || r.getEndCol() > r.getStartCol() +1 )) {
