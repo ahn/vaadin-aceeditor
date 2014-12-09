@@ -498,7 +498,7 @@ public class AceEditorWidget extends FocusWidget implements
 		boolean aboveMarkerStart = startRow < mr.getStartRow();
 		boolean beforeMarkerStartOnRow = startRow == mr.getStartRow() && startCol < mr.getStartCol(); // < or <=
 		boolean aboveMarkerEnd = startRow < mr.getEndRow();
-		boolean beforeMarkerEndOnRow = startRow == mr.getEndRow() && startCol < mr.getEndCol();	 // < or <=
+		boolean beforeMarkerEndOnRow = startRow == mr.getEndRow() && startCol <= mr.getEndCol();	 // < or <=
 		
 		int row1 = mr.getStartRow();
 		int col1 = mr.getStartCol();

@@ -16,6 +16,18 @@ import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
 import com.vaadin.shared.ui.Connect;
 
+/*
+ * When a user requests suggestions an invisible marker is created at the cursor position
+ * and a SuggestPopup is shown. When the user types while suggesting,
+ * the invisible marker auto-adjusts to contain what's typed.
+ * (This takes advantage of how AceEditorWidget.moveMarkerOnInsert happens
+ * to be implemented. It's bit of a mess...)
+ * 
+ * When a suggestion is selected what's inside of the invisible marker is deleted
+ * before applying the suggestion.
+ * 
+ * 
+ */
 @SuppressWarnings("serial")
 @Connect(SuggestionExtension.class)
 public class SuggesterConnector extends AbstractExtensionConnector implements
