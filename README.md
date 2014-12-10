@@ -230,6 +230,7 @@ Pros of this diff approach:
 Cons:
 
 * Requires more cpu, for computing the diffs etc. (There's a room for optimization in the current implementation.)
+* Complicates things...
 
 ## Links
 
