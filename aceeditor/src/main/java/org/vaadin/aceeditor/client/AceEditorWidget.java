@@ -1,19 +1,35 @@
 package org.vaadin.aceeditor.client;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayInteger;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.FocusWidget;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
 import org.vaadin.aceeditor.client.ClientSideDocDiff.Adjuster;
-import org.vaadin.aceeditor.client.gwt.*;
+import org.vaadin.aceeditor.client.gwt.GwtAceAnnotation;
+import org.vaadin.aceeditor.client.gwt.GwtAceChangeCursorHandler;
+import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent;
 import org.vaadin.aceeditor.client.gwt.GwtAceChangeEvent.Data.Action;
+import org.vaadin.aceeditor.client.gwt.GwtAceChangeHandler;
+import org.vaadin.aceeditor.client.gwt.GwtAceChangeSelectionHandler;
+import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
+import org.vaadin.aceeditor.client.gwt.GwtAceEvent;
+import org.vaadin.aceeditor.client.gwt.GwtAceFocusBlurHandler;
+import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
+import org.vaadin.aceeditor.client.gwt.GwtAcePosition;
+import org.vaadin.aceeditor.client.gwt.GwtAceRange;
+import org.vaadin.aceeditor.client.gwt.GwtAceSelection;
 
-import java.util.*;
-import java.util.Map.Entry;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.FocusWidget;
 
 /**
  * A {@link com.google.gwt.user.client.ui.Widget} containing
@@ -175,6 +191,12 @@ public class AceEditorWidget extends FocusWidget implements
     public void setHighlightActiveLineEnabled(boolean highlightActiveLine) {
         if (isInitialized()) {
             editor.setHighlightActiveLineEnabled(highlightActiveLine);
+        }
+    }
+    
+    public void setDisplayIndentGuides(boolean displayIndentGuides) {
+        if (isInitialized()) {
+            editor.setDisplayIndentGuides(displayIndentGuides);
         }
     }
 

@@ -334,5 +334,9 @@ public class GwtAceEditor extends JavaScriptObject {
     public final native void setHighlightSelectedWord(boolean highlightSelectedWord) /*-{
         this.setHighlightSelectedWord(highlightSelectedWord);
     }-*/;
+    
+    public final native void setDisplayIndentGuides(boolean displayIndentGuides) /*-{
+        this.setDisplayIndentGuides(displayIndentGuides)
+    }-*/;
 
 }
