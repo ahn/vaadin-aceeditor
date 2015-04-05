@@ -1,5 +1,6 @@
 package org.vaadin.aceeditor;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Set;
@@ -65,7 +66,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 	}
 
-	public interface DiffListener {
+	public interface DiffListener extends Serializable  {
 		public static final Method diffMethod = ReflectTools.findMethod(
 				DiffListener.class, "diff", DiffEvent.class);
 
@@ -86,7 +87,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 	}
 
-	public interface SelectionChangeListener {
+	public interface SelectionChangeListener extends Serializable {
 		public static final Method selectionChangedMethod = ReflectTools
 				.findMethod(SelectionChangeListener.class, "selectionChanged",
 						SelectionChangeEvent.class);
