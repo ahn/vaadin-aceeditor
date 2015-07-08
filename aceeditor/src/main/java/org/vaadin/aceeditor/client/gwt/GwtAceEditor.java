@@ -27,8 +27,7 @@ public class GwtAceEditor extends JavaScriptObject {
 		parent.appendChild(aceDiv);
 		
 		var editor = $wnd.ace.edit(aceDiv);
-		
-		
+
 		return editor;
 	}-*/;
 	
@@ -265,6 +264,10 @@ public class GwtAceEditor extends JavaScriptObject {
 		this.setReadOnly(readOnly);
 	}-*/;
 
+	public final native void setShowInvisibles(boolean showInvisibles) /*-{
+		this.setShowInvisibles(showInvisibles);
+	}-*/;
+
 	public final native String getNewLineCharacter() /*-{
 		return this.getSession().getDocument().getNewLineCharacter();
 	}-*/;
@@ -327,5 +330,9 @@ public class GwtAceEditor extends JavaScriptObject {
 	public final native void setUseWorker(boolean use) /*-{
 		this.getSession().setUseWorker(use);
 	}-*/;
+
+    public final native void setHighlightSelectedWord(boolean highlightSelectedWord) /*-{
+        this.setHighlightSelectedWord(highlightSelectedWord);
+    }-*/;
 
 }

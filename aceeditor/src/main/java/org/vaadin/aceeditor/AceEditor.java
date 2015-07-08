@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.vaadin.shared.AbstractFieldState;
 import org.vaadin.aceeditor.client.AceAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
@@ -15,12 +14,12 @@ import org.vaadin.aceeditor.client.AceEditorClientRpc;
 import org.vaadin.aceeditor.client.AceEditorServerRpc;
 import org.vaadin.aceeditor.client.AceEditorState;
 import org.vaadin.aceeditor.client.AceMarker;
-import org.vaadin.aceeditor.client.Util;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
 import org.vaadin.aceeditor.client.AceMarker.Type;
 import org.vaadin.aceeditor.client.AceRange;
 import org.vaadin.aceeditor.client.TransportDiff;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
+import org.vaadin.aceeditor.client.Util;
 
 import com.vaadin.annotations.JavaScript;
 import com.vaadin.annotations.StyleSheet;
@@ -44,7 +43,10 @@ import com.vaadin.util.ReflectTools;
  * 
  */
 @SuppressWarnings("serial")
-@JavaScript({ "client/js/ace/ace.js", "client/js/diff_match_patch.js" })
+@JavaScript({
+	"client/js/ace/ace.js",
+	"client/js/ace/ext-searchbox.js",
+	"client/js/diff_match_patch.js" })
 @StyleSheet("client/css/ace-gwt.css")
 public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		FocusNotifier, TextChangeNotifier {
@@ -119,7 +121,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 	}
 
-	private static final String DEFAULT_ACE_PATH = "http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
+	private static final String DEFAULT_ACE_PATH = "//d1n0x3qji82z53.cloudfront.net/src-min-noconflict";
 
 	private AceDoc doc = new AceDoc();
 
@@ -167,12 +169,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		registerRpc(rpc);
 	}
 
-	@Override
-	public void addBlurListener(BlurListener listener) {
-		addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
-				BlurListener.blurMethod);
-	}
-
 	public void addDiffListener(DiffListener listener) {
 		addListener(DiffEvent.EVENT_ID, DiffEvent.class, listener,
 				DiffListener.diffMethod);
@@ -182,6 +178,14 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public void addFocusListener(FocusListener listener) {
 		addListener(FocusEvent.EVENT_ID, FocusEvent.class, listener,
 				FocusListener.focusMethod);
+		getState().listenToFocusChanges = true;
+	}
+
+	@Override
+	public void addBlurListener(BlurListener listener) {
+		addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
+				BlurListener.blurMethod);
+		getState().listenToFocusChanges = true;
 	}
 
 	@Override
@@ -262,12 +266,9 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
 	public void beforeClientResponse(boolean initial) {
 		super.beforeClientResponse(initial);
-
 		if (initial) {
 			getState().initialValue = doc.asTransport();
-			if (!doc.equals(shadow)) {
-				shadow = doc;
-			}
+			shadow = doc;
 		} else if (onRoundtrip) {
 			ServerSideDocDiff diff = ServerSideDocDiff.diff(shadow, doc);
 			shadow = doc;
@@ -331,11 +332,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		return String.class;
 	}
 
-	@Override
-	public void removeBlurListener(BlurListener listener) {
-		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
-	}
-
 	public void removeDiffListener(DiffListener listener) {
 		removeListener(DiffEvent.EVENT_ID, DiffEvent.class, listener);
 	}
@@ -343,6 +339,17 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
 	public void removeFocusListener(FocusListener listener) {
 		removeListener(FocusEvent.EVENT_ID, FocusEvent.class, listener);
+		getState().listenToFocusChanges =
+				!getListeners(FocusEvent.class).isEmpty() ||
+				!getListeners(BlurEvent.class).isEmpty();
+	}
+
+	@Override
+	public void removeBlurListener(BlurListener listener) {
+		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
+		getState().listenToFocusChanges =
+				!getListeners(FocusEvent.class).isEmpty() ||
+				!getListeners(BlurEvent.class).isEmpty();
 	}
 
 	@Override
@@ -416,7 +423,10 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 			return;
 		}
 		this.doc = doc;
+		boolean wasReadOnly = isReadOnly();
+		setReadOnly(false);
 		setValue(doc.getText());
+		setReadOnly(wasReadOnly);
 		markAsDirty();
 	}
 
@@ -559,6 +569,30 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		setAceConfig("workerPath", path);
 	}
 
+    public void setFontSize(String size) {
+        getState().fontSize=size;
+    }
+
+    public String getFontSize() {
+        return getState(false).fontSize;
+    }
+
+    public void setHighlightSelectedWord(boolean highlightSelectedWord) {
+        getState().highlightSelectedWord = highlightSelectedWord;
+    }
+
+    public boolean isHighlightSelectedWord() {
+        return getState(false).highlightSelectedWord;
+    }
+
+    public void setShowInvisibles(boolean showInvisibles) {
+        getState().showInvisibles = showInvisibles;
+    }
+
+    public boolean isShowInvisibles() {
+        return getState(false).showInvisibles;
+    }
+
 	protected void clientChanged(TransportDiff diff, TransportRange selection,
 			boolean focused) {
 		diffFromClient(diff);
@@ -650,8 +684,11 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	private void selectionFromClient(TransportRange sel) {
-		setInternalSelection(new TextRange(doc.getText(),
-				AceRange.fromTransport(sel)));
+		TextRange newSel = new TextRange(doc.getText(), AceRange.fromTransport(sel));
+		if (newSel.equals(selection)) {
+			return;
+		}
+		setInternalSelection(newSel);
 		fireSelectionChanged();
 	}
 

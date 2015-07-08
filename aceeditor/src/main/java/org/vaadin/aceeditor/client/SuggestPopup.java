@@ -130,7 +130,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		descriptionPopup = null;
 	}
 
-	/* @Override */
+	@Override
 	public void onKeyDown(KeyDownEvent event) {
 		int keyCode = event.getNativeKeyCode();
 		if (keyCode == KeyCodes.KEY_ENTER
@@ -144,7 +144,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		}
 	}
 
-	/* @Override */
+	@Override
 	public void onDoubleClick(DoubleClickEvent event) {
 		event.preventDefault();
 		event.stopPropagation();

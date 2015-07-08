@@ -1,5 +1,7 @@
 package org.vaadin.aceeditor.client;
 
+import java.io.Serializable;
+
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
 
 
@@ -17,7 +19,8 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
  *  }
  *
  */
-public class AceMarker {
+public class AceMarker implements Serializable {
+	private static final long serialVersionUID = 1L;
 	
 	/**
 	 * 
@@ -26,7 +29,9 @@ public class AceMarker {
 	 */
 	public enum Type {
 		line,
-		text
+		text,
+		cursor,
+		cursorRow
 	}
 	
 	/**

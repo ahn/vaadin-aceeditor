@@ -6,20 +6,20 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarkerAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class AceDoc {
+public class AceDoc implements Serializable {
+	private static final long serialVersionUID = 1L;
 
 	private final String text;
 	
 	// key: markerId
 	private final Map<String, AceMarker> markers;
 
-	// key: row
 	private final Set<RowAnnotation> rowAnnotations;
 
-	// key: markerId
 	private final Set<MarkerAnnotation> markerAnnotations;
 
 	public AceDoc() {
@@ -42,8 +42,9 @@ public class AceDoc {
 	public AceDoc(String text, Map<String, AceMarker> markers,
 			Set<RowAnnotation> rowAnnotations,
 			Set<MarkerAnnotation> markerAnnotations) {
-        if (text == null)
+        if (text == null) {
             text = "";
+        }
 
 		this.text = text;
 		this.markers = markers;
@@ -60,10 +61,16 @@ public class AceDoc {
 	}
 	
 	public Set<RowAnnotation> getRowAnnotations() {
+		if (rowAnnotations==null) {
+			return Collections.emptySet();
+		}
 		return Collections.unmodifiableSet(rowAnnotations);
 	}
 	
 	public Set<MarkerAnnotation> getMarkerAnnotations() {
+		if (markerAnnotations==null) {
+			return Collections.emptySet();
+		}
 		return Collections.unmodifiableSet(markerAnnotations);
 	}
 	
@@ -208,6 +215,11 @@ public class AceDoc {
 		markers2.put(marker.getMarkerId(), marker);
 		return new AceDoc(text, markers2, rowAnnotations, markerAnnotations);
 	}
+	public AceDoc withAdditionalMarkers(Map<String, AceMarker> addMarkers) {
+		HashMap<String, AceMarker> newMarkers = new HashMap<String, AceMarker>(markers);
+		newMarkers.putAll(addMarkers);
+		return new AceDoc(text, newMarkers, rowAnnotations, markerAnnotations);
+	}
 
 	public AceDoc withoutMarker(String markerId) {
 		HashMap<String, AceMarker> markers2 = new HashMap<String, AceMarker>(markers);
@@ -218,6 +230,14 @@ public class AceDoc {
 	public AceDoc withoutMarkers() {
 		Map<String, AceMarker> noMarkers = Collections.emptyMap();
 		return new AceDoc(text, noMarkers, rowAnnotations, markerAnnotations);
+	}
+	
+	public AceDoc withoutMarkers(Set<String> without) {
+		Map<String, AceMarker> newMarkers = new HashMap<String, AceMarker>(markers);
+		for (String m : without) {
+			newMarkers.remove(m);
+		}
+		return new AceDoc(text, newMarkers, rowAnnotations, markerAnnotations);
 	}
 
 	public AceDoc withRowAnnotations(Set<RowAnnotation> ranns) {

@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.8.10-SNAPSHOT</version>
+		<version>0.8.14-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>aceeditor-demo</artifactId>
@@ -14,7 +14,9 @@
 	<url>https://github.com/ahn/vaadin-aceeditor/</url>
 	
 	<properties>
-	   <gwt.persistentunitcachedir>target/tmp</gwt.persistentunitcachedir>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<vaadin.version>7.1.8</vaadin.version>
+		<vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
 	</properties>
 
 	<dependencies>
@@ -28,6 +30,21 @@
 			<artifactId>vaadin-client-compiled</artifactId>
 			<version>${vaadin.version}</version>
 		</dependency>
+		<!--
+		  Needed when using the widgetset optimizer (custom ConnectorBundleLoaderFactory).
+		  
+		  For widgetset compilation, vaadin-client-compiler is automatically added on the
+		  compilation classpath by vaadin-maven-plugin so normally there is no need for an
+		  explicit dependency.
+		-->
+		<!--
+		<dependency>
+			<groupId>com.vaadin</groupId>
+			<artifactId>vaadin-client-compiler</artifactId>
+			<version>${vaadin.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		-->
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-client</artifactId>
@@ -36,30 +53,36 @@
 		</dependency>
 		<dependency>
 			<groupId>com.vaadin</groupId>
+			<artifactId>vaadin-push</artifactId>
+			<version>${vaadin.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-themes</artifactId>
 			<version>${vaadin.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.vaadin.addons</groupId>
-			<artifactId>aceeditor</artifactId>
-			<version>${project.version}</version>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.0.1</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.vaadin.addons</groupId>
+		  <artifactId>aceeditor</artifactId>
+		  <version>${version}</version>
 		</dependency>
 	</dependencies>
+
 	<build>
 		<plugins>
-			<!-- Plugins inherited from the parent -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-			</plugin>
-
-			<plugin>
-				<groupId>org.mortbay.jetty</groupId>
-				<artifactId>maven-jetty-plugin</artifactId>
-				<version>6.1.10</version>
 				<configuration>
-					<scanIntervalSeconds>10</scanIntervalSeconds>
-					<contextPath>/</contextPath>
+					<source>1.6</source>
+					<target>1.6</target>
 				</configuration>
 			</plugin>
 			<!-- As we are doing "inplace" GWT compilation, ensure the widgetset -->
@@ -68,15 +91,19 @@
 				<artifactId>maven-clean-plugin</artifactId>
 				<version>2.4.1</version>
 				<configuration>
-					<failOnError>true</failOnError>
 					<filesets>
 						<fileset>
 							<directory>src/main/webapp/VAADIN/widgetsets</directory>
 						</fileset>
-						<fileset>
-							<directory>src/main/webapp/VAADIN/gwt-unitCache</directory>
-						</fileset>
 					</filesets>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.2</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -87,40 +114,53 @@
 					<extraJvmArgs>-Xmx512M -Xss1024k</extraJvmArgs>
 					<!-- We are doing "inplace" but into subdir VAADIN/widgetsets. This 
 						way compatible with Vaadin eclipse plugin. -->
-					<webappDirectory>${basedir}/src/main/webapp/VAADIN/widgetsets</webappDirectory>
-					<hostedWebapp>${basedir}/src/main/webapp/VAADIN/widgetsets</hostedWebapp>
+					<webappDirectory>${basedir}/src/main/webapp/VAADIN/widgetsets
+					</webappDirectory>
+					<hostedWebapp>${basedir}/src/main/webapp/VAADIN/widgetsets
+					</hostedWebapp>
 					<noServer>true</noServer>
 					<!-- Remove draftCompile when project is ready -->
 					<draftCompile>true</draftCompile>
-<!-- 					<compileReport>true</compileReport> -->
-					<style>DETAILED</style>
+					<compileReport>true</compileReport>
+					<style>PRETTY</style>
 					<strict>true</strict>
 					<runTarget>http://localhost:8080/</runTarget>
 				</configuration>
 				<executions>
 					<execution>
 						<configuration>
-							<!-- <modules> -->
-							<!-- <module>org.vaadin.aceeditor.demo.AceEditorDemoWidgetSet</module> -->
-							<!-- </modules> -->
+							<!-- if you don't specify any modules, the plugin will find them -->
+							<!-- <modules> <module>com.vaadin.demo.mobilemail.gwt.ColorPickerWidgetSet</module> 
+								</modules> -->
 						</configuration>
 						<goals>
+							<goal>clean</goal>
 							<goal>resources</goal>
+							<goal>update-theme</goal>
 							<goal>update-widgetset</goal>
+							<goal>compile-theme</goal>
 							<goal>compile</goal>
 						</goals>
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.mortbay.jetty</groupId>
+				<artifactId>jetty-maven-plugin</artifactId>
+				<configuration>
+                    <stopPort>9967</stopPort>
+                    <stopKey>editortest</stopKey>
+                    <scanIntervalSeconds>2</scanIntervalSeconds>
+                </configuration>
+			</plugin>
 		</plugins>
-		<!-- This is needed for the sources required by the GWT compiler to be 
-			included in the produced JARs -->
 		<resources>
+			<!-- Including css files in the package. -->
 			<resource>
 				<directory>src/main/java</directory>
-			</resource>
-			<resource>
-				<directory>src/main/resources</directory>
+				<includes>
+					<include>**/*.css</include>
+				</includes>
 			</resource>
 		</resources>
 		<pluginManagement>
@@ -140,12 +180,14 @@
 											vaadin-maven-plugin
 										</artifactId>
 										<versionRange>
-											[7.1.0,)
+											[7.1.8,)
 										</versionRange>
 										<goals>
-											<goal>
-												update-widgetset
-											</goal>
+											<goal>resources</goal>
+											<goal>update-widgetset</goal>
+											<goal>compile</goal>
+											<goal>update-theme</goal>
+											<goal>compile-theme</goal>
 										</goals>
 									</pluginExecutionFilter>
 									<action>
@@ -159,13 +201,5 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
 </project>
 

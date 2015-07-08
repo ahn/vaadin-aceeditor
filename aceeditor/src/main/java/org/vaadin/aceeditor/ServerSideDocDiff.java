@@ -57,6 +57,11 @@ public class ServerSideDocDiff {
 		return new ServerSideDocDiff(patches, msd, rowAnnDiff, markerAnnDiff);
 	}
 	
+	public static ServerSideDocDiff diff(String text1, String text2) {
+		LinkedList<Patch> patches = getDmp().patch_make(text1, text2);
+		return new ServerSideDocDiff(patches);
+	}
+	
 
 	// XXX Unnecessary copy-pasting
 	private static SetDiff<MarkerAnnotation, TransportMarkerAnnotation> diffMA(
@@ -111,13 +116,17 @@ public class ServerSideDocDiff {
 		return markerAnnDiff==null ? null :  SetDiff.fromTransport(markerAnnDiff);
 	}
 
-	private ServerSideDocDiff(LinkedList<Patch> patches, MarkerSetDiff markerSetDiff,
+	public ServerSideDocDiff(LinkedList<Patch> patches, MarkerSetDiff markerSetDiff,
 			SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff,
 			SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff) {
 		this.patches = patches;
 		this.markerSetDiff = markerSetDiff;
 		this.rowAnnDiff = rowAnnDiff;
 		this.markerAnnDiff = markerAnnDiff;
+	}
+
+	public ServerSideDocDiff(LinkedList<Patch> patches) {
+		this(patches, null, null, null);
 	}
 
 	public String getPatchesString() {
@@ -131,7 +140,7 @@ public class ServerSideDocDiff {
 	
 	public AceDoc applyTo(AceDoc doc) {
 		String text = (String)getDmp().patch_apply(patches, doc.getText())[0];
-		Map<String, AceMarker> markers = markerSetDiff.applyTo(doc.getMarkers(), text);
+		Map<String, AceMarker> markers = markerSetDiff==null ? doc.getMarkers() : markerSetDiff.applyTo(doc.getMarkers(), text);
 		Set<RowAnnotation> rowAnns = rowAnnDiff==null ? null : rowAnnDiff.applyTo(doc.getRowAnnotations());
 		Set<MarkerAnnotation> markerAnns = markerAnnDiff==null ? null : markerAnnDiff.applyTo(doc.getMarkerAnnotations());
 		return new AceDoc(text, markers, rowAnns, markerAnns);
@@ -144,19 +153,19 @@ public class ServerSideDocDiff {
 	public TransportDiff asTransport() {
 		TransportDiff d = new TransportDiff();
 		d.patchesAsString = getPatchesString();
-		d.markerSetDiff = markerSetDiff.asTransportDiff();
+		d.markerSetDiff = markerSetDiff==null ? null : markerSetDiff.asTransportDiff();
 		d.rowAnnDiff = rowAnnDiff==null ? null : rowAnnDiff.asTransportRowAnnotations();
 		d.markerAnnDiff = markerAnnDiff==null ? null : markerAnnDiff.asTransportMarkerAnnotations();
 		return d;
 	}
 
 	public boolean isIdentity() {
-		return patches.isEmpty() && markerSetDiff.isIdentity(); // TODO
+		return patches.isEmpty() && (markerSetDiff==null || markerSetDiff.isIdentity()); // TODO?
 	}
 	
 	@Override
 	public String toString() {
-		return "---ServerSideDocDiff---\n" + getPatchesString()+"\n"+markerSetDiff.toString()+"\nrad:"+rowAnnDiff+", mad:"+markerAnnDiff;
+		return "---ServerSideDocDiff---\n" + getPatchesString()+"\n"+markerSetDiff+"\nrad:"+rowAnnDiff+", mad:"+markerAnnDiff;
 	}
 
 

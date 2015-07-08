@@ -1,5 +1,7 @@
 package org.vaadin.aceeditor.client;
 
+import java.io.Serializable;
+
 import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
 
 
@@ -7,7 +9,8 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
  * 
  * 
  */
-public class AceRange {
+public class AceRange implements Serializable {
+	private static final long serialVersionUID = 1L;
 	
 	private final int row1;
 	private final int col1;

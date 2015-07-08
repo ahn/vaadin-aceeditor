@@ -9,9 +9,12 @@ From version 0.7.0 onwards this add-on requires Vaadin 7. The earlier Vaadin 6 v
 
 This add-on is still in an experimental phase, interfaces etc. are subject to change.
 
+<!--
 ## Demo
 
-[Online demo of Vaadin AceEditor](http://antti.virtuallypreinstalled.com/aceeditor/). The source code of the demo available [here](https://github.com/ahn/vaadin-aceeditor/tree/master/aceeditor-demo).
+[Online demo of Vaadin AceEditor](http://130.230.142.91:8080/aceeditor/). The source code of the demo available [here](https://github.com/ahn/vaadin-aceeditor/tree/master/aceeditor-demo).
+-->
+
 
 ## Getting started
 
@@ -51,9 +54,11 @@ editor.setUseWorker(true);
 
 By default, Vaadin AceEditor gets the mode, theme and worker files from [this location](http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict) [(example)](http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict/theme-eclipse.js). I guess it's sort of a semi-official location for Ace files, at least it's used in [an Ace tutorial](http://ace.ajax.org/#nav=embedding).
 
-If you want to use some other location, for example to host the files on your own server, here's how:
+**It's probably safer to host the mode&theme files yourself so that you can be sure that they're compatible with the main Ace file used by this editor.**
 
-Example: host the Ace files within your Vaadin app. First, get the `ace` dir from the [Vaadin Directory download package](http://vaadin.com/addon/aceeditor). It contains the [src-min-noconflict](https://github.com/ajaxorg/ace-builds/tree/master/src-min-noconflict) Ace files compatible with this addon.
+To host the files on your own server, here's how:
+
+First, get the `ace` dir from the [Vaadin Directory download package](http://vaadin.com/addon/aceeditor). It contains the [src-min-noconflict](https://github.com/ajaxorg/ace-builds/tree/master/src-min-noconflict) Ace files compatible with this addon.
 Copy the `ace` dir to location `webapp/static/ace` in your Vaadin application.
 The structure should look something like this:
 
@@ -89,6 +94,7 @@ Now, Ace should read the theme/mode/worker files from your local server.
 ```java
 editor.setWordWrap(false);
 editor.setReadOnly(false);
+editor.setShowInvisibles(false);
 // TODO: more
 ```
 
@@ -224,4 +230,14 @@ Pros of this diff approach:
 Cons:
 
 * Requires more cpu, for computing the diffs etc. (There's a room for optimization in the current implementation.)
+* Complicates things...
 
+## Links
+
+* [Ace Website](http://ace.c9.io/)
+* [Ace Kitchen Sink Demo](http://ace.c9.io/build/kitchen-sink.html)
+* [Ace API](http://ace.c9.io/#nav=api), [Wiki](https://github.com/ajaxorg/ace/wiki)
+
+## Related Projects
+* [Ace wrapper for GWT](https://github.com/daveho/AceGWT)
+* [Ace GWT Editor](https://github.com/ahome-it/ahome-ace)

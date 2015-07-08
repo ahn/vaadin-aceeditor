@@ -4,6 +4,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FocusWidget;
+
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
@@ -80,6 +81,7 @@ public class AceEditorWidget extends FocusWidget implements
     protected static int idCounter = 0;
 
     protected String text = "";
+    protected boolean enabled = true;
     protected boolean readOnly = false;
     protected boolean propertyReadOnly = false;
     protected boolean focused;
@@ -177,7 +179,7 @@ public class AceEditorWidget extends FocusWidget implements
     }
 
     protected void setText(String text) {
-		if (!isInitialized() || text.equals(this.text)) {
+		if (!isInitialized() || this.text.equals(text)) {
 			return;
 		}
 		AceRange oldSelection = selection;
@@ -245,7 +247,22 @@ public class AceEditorWidget extends FocusWidget implements
 		editor.setTheme(theme);
 	}
 
-	public void setMarkers(Map<String, AceMarker> markers) {
+    public void setFontSize(String fontSize)
+    {
+        if (!isInitialized()) {
+            return;
+        }
+        editor.setFontSize(fontSize);
+    }
+
+    public void setHighlightSelectedWord(boolean highlightSelectedWord) {
+        if (!isInitialized()) {
+            return;
+        }
+        editor.setHighlightSelectedWord(highlightSelectedWord);
+    }
+
+	protected void setMarkers(Map<String, AceMarker> markers) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -258,7 +275,9 @@ public class AceEditorWidget extends FocusWidget implements
 			if (existing!=null) {
 				editor.removeMarker(existing.clientId);
 			}
-			String clientId = editor.addMarker(convertRange(m.getRange()), m.getCssClass(), m.getType().toString(), m.isInFront());
+			String type = (m.getType()==AceMarker.Type.cursor ? "text" :
+				(m.getType()==AceMarker.Type.cursorRow ? "line" : m.getType().toString()));
+			String clientId = editor.addMarker(convertRange(m.getRange()), m.getCssClass(), type, m.isInFront());
 			existing = new MarkerInEditor(m, clientId);
 			newMarkers.put(mId, existing);
 		}
@@ -275,29 +294,46 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 	
 	protected void adjustMarkerAnnotations() {
+		boolean changed = false;
 		for (AnnotationInEditor aie : markerAnnsInEditor) {
 			int row = rowOfMarker(aie.markerId);
-			if (row!=-1) {
+			if (row!=-1 && row != aie.row) {
 				aie.row = row;
+				changed = true;
 			}
 		}
-		setAnnotationsToEditor();
+		if (changed) {
+			setAnnotationsToEditor();
+		}
 	}
-	
-	public void setRowAnnotations(Set<RowAnnotation> ranns) {
+
+	protected void setAnnotations(Set<MarkerAnnotation> manns, Set<RowAnnotation> ranns) {
 		if (!isInitialized()) {
 			return;
 		}
-		if (ranns==null) {
-			return;
+		if (manns!=null) {
+			markerAnnotations = manns;
+			markerAnnsInEditor = createAIEfromMA(manns);
 		}
-		rowAnnotations = ranns;
-		rowAnnsInEditor = ranns;
+		if (ranns!=null) {
+			rowAnnotations = ranns;
+			rowAnnsInEditor = ranns;
+		}
 		setAnnotationsToEditor();
 	}
-	
+
 	protected void setAnnotationsToEditor() {
 		JsArray<GwtAceAnnotation> arr = GwtAceAnnotation.createEmptyArray();
+		
+		JsArray<GwtAceAnnotation> existing = editor.getAnnotations();
+		
+		for (int i=0; i<existing.length(); ++i) {
+			GwtAceAnnotation ann = existing.get(i);
+			if (!ann.isVaadinAceEditorAnnotation()) {
+				arr.push(ann);
+			}
+		}
+		
 		for (AnnotationInEditor maie : markerAnnsInEditor) {
 			GwtAceAnnotation jsAnn = GwtAceAnnotation.create(maie.ann.getType().toString(), maie.ann.getMessage(), maie.row);
 			arr.push(jsAnn);
@@ -309,21 +345,7 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 		editor.setAnnotations(arr);
 	}
-	
-	public void setMarkerAnnotations(Set<MarkerAnnotation> manns) {
-		if (!isInitialized()) {
-			return;
-		}
-		if (manns==null) {
-			return;
-		}
-		markerAnnotations = manns;
-		markerAnnsInEditor = createAIEfromMA(manns);
-		setAnnotationsToEditor();
-	}
-	
-	
-	
+
 	protected Set<AnnotationInEditor> createAIEfromMA(
 			Set<MarkerAnnotation> anns) {
 		Set<AnnotationInEditor> adjusted = new HashSet<AnnotationInEditor>();
@@ -355,6 +377,10 @@ public class AceEditorWidget extends FocusWidget implements
 		if (newText.equals(text)) {
 			return;
 		}
+		
+		// TODO: do we do too much work here?
+		// most of the time the editor doesn't have any markers nor annotations...
+		
 		adjustMarkers(e);
 		adjustInvisibleMarkers(e);
 		adjustMarkerAnnotations();
@@ -380,6 +406,7 @@ public class AceEditorWidget extends FocusWidget implements
 				if (cm.marker.getOnChange()==OnTextChange.ADJUST) {
 					AceRange newRange = moveMarkerOnInsert(cm.marker.getRange(), range);
 					if (newRange!=null) {
+						newRange = cursorMarkerSanityCheck(cm.marker, newRange);
 						cm.marker = cm.marker.withNewPosition(newRange);
 						if (markerIsValid(cm.marker)) {
 							moved.add(cm);
@@ -399,6 +426,7 @@ public class AceEditorWidget extends FocusWidget implements
 				if (cm.marker.getOnChange()==OnTextChange.ADJUST) {
 					AceRange newRange = moveMarkerOnRemove(cm.marker.getRange(), range);
 					if (newRange!=null) {
+						newRange = cursorMarkerSanityCheck(cm.marker, newRange);
 						cm.marker = cm.marker.withNewPosition(newRange);
 						if (markerIsValid(cm.marker)) {
 							moved.add(cm);
@@ -418,6 +446,17 @@ public class AceEditorWidget extends FocusWidget implements
 		updateMarkers(moved);
 	}
 	
+	private AceRange cursorMarkerSanityCheck(AceMarker m, AceRange r) {
+		if (m.getType()==AceMarker.Type.cursorRow && r.getEndRow() > r.getStartRow() + 1) {
+			return new AceRange(r.getStartRow(), 0, r.getStartRow()+1, 0);
+		}
+		if (m.getType()==AceMarker.Type.cursor &&
+				(r.getStartRow() != r.getEndRow() || r.getEndCol() > r.getStartCol() +1 )) {
+			return new AceRange(r.getEndRow(), r.getEndCol(), r.getEndRow(), r.getEndCol() + 1);
+		}
+		
+		return r;
+	}
 	protected void adjustInvisibleMarkers(GwtAceChangeEvent event) {
 		Action act = event.getData().getAction();
 		GwtAceRange range = event.getData().getRange();
@@ -436,13 +475,11 @@ public class AceEditorWidget extends FocusWidget implements
 		}
 		invisibleMarkers = newMap;
 	}
-	
+
 	protected static boolean markerIsValid(AceMarker marker) {
 		AceRange r = marker.getRange();
 		return !r.isZeroLength() && !r.isBackwards() && r.getStartRow() >= 0 && r.getStartCol() >= 0 && r.getEndCol() >= 0; // no need to check endrow
 	}
-
-
 	
 	protected static AceRange moveMarkerOnInsert(AceRange mr, GwtAceRange range) {
 		int startRow = range.getStart().getRow();
@@ -548,12 +585,20 @@ public class AceEditorWidget extends FocusWidget implements
 		return text;
 	}
 
+	public void setEnabled(boolean enabled) {
+		if (!isInitialized()) {
+			return;
+		}
+		this.enabled = enabled;
+		updateEditorReadOnlyState();
+	}
+
 	public void setPropertyReadOnly(boolean propertyReadOnly) {
 		if (!isInitialized()) {
 			return;
 		}
 		this.propertyReadOnly = propertyReadOnly;
-		editor.setReadOnly(this.readOnly || this.propertyReadOnly);
+		updateEditorReadOnlyState();
 	}
 
 	public void setReadOnly(boolean readOnly) {
@@ -561,7 +606,15 @@ public class AceEditorWidget extends FocusWidget implements
 			return;
 		}
 		this.readOnly = readOnly;
-		editor.setReadOnly(this.readOnly || this.propertyReadOnly);
+		updateEditorReadOnlyState();
+	}
+
+	private void updateEditorReadOnlyState() {
+		editor.setReadOnly(this.readOnly || this.propertyReadOnly || !this.enabled);
+	}
+
+	public void setShowInvisibles(boolean showInvisibles) {
+		editor.setShowInvisibles(showInvisibles);
 	}
 
 	protected static AceRange convertSelection(GwtAceSelection selection) {
@@ -696,10 +749,18 @@ public class AceEditorWidget extends FocusWidget implements
 	}
 
 	public void setDoc(AceDoc doc) {
+		if (doc.equals(this.doc)) {
+			return;
+		}
+		
 		setText(doc.getText());
+		
+		// Too much work is done in the case there
+		// are no markers or annotations, which is probably most of the time...
+		// TODO: optimize
+		
 		setMarkers(doc.getMarkers());
-		setMarkerAnnotations(doc.getMarkerAnnotations());
-		setRowAnnotations(doc.getRowAnnotations());
+		setAnnotations(doc.getMarkerAnnotations(), doc.getRowAnnotations());
 		this.doc = doc;
 	}
 

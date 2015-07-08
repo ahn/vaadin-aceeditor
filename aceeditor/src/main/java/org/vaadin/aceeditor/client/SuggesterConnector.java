@@ -1,5 +1,13 @@
 package org.vaadin.aceeditor.client;
 
+import java.util.List;
+
+import org.vaadin.aceeditor.SuggestionExtension;
+import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
+import org.vaadin.aceeditor.client.SuggestPopup.SuggestionSelectedListener;
+import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardEvent;
+import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.vaadin.client.ServerConnector;
@@ -7,15 +15,19 @@ import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
 import com.vaadin.shared.ui.Connect;
-import org.vaadin.aceeditor.SuggestionExtension;
-import org.vaadin.aceeditor.client.AceEditorWidget.SelectionChangeListener;
-import org.vaadin.aceeditor.client.SuggestPopup.SuggestionSelectedListener;
-import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardEvent;
-import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
 
-import java.util.List;
-import java.util.logging.Logger;
-
+/*
+ * When a user requests suggestions an invisible marker is created at the cursor position
+ * and a SuggestPopup is shown. When the user types while suggesting,
+ * the invisible marker auto-adjusts to contain what's typed.
+ * (This takes advantage of how AceEditorWidget.moveMarkerOnInsert happens
+ * to be implemented. It's bit of a mess...)
+ * 
+ * When a suggestion is selected what's inside of the invisible marker is deleted
+ * before applying the suggestion.
+ * 
+ * 
+ */
 @SuppressWarnings("serial")
 @Connect(SuggestionExtension.class)
 public class SuggesterConnector extends AbstractExtensionConnector implements
@@ -224,15 +236,14 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	}
 
 	protected void updatePopupPosition(SuggestPopup popup) {
-        Logger.getLogger("SuggesterConnector").info("Update suggestion popup position");
-
 		int[] coords = widget.getCursorCoords();
-		int wx = Window.getClientWidth();
-		int wy = Window.getClientHeight();
 		int sx = Window.getScrollLeft();
 		int sy = Window.getScrollTop();
 		int x = coords[0] - sx;
 		int y = coords[1] - sy + Y_OFFSET;
+		/*
+		int wx = Window.getClientWidth();
+		int wy = Window.getClientHeight();
 		int maxx = wx - SuggestPopup.WIDTH - (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0);
 		if (x > maxx) {
 			x -= SuggestPopup.WIDTH + (showDescriptions ? SuggestPopup.DESCRIPTION_WIDTH : 0) + 50;
@@ -241,6 +252,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		if (y > maxy) {
 			y -= SuggestPopup.HEIGHT + 50;
 		}
+		*/
 		popup.setPopupPosition(x, y);
 	}
 }

@@ -1,5 +1,7 @@
 package org.vaadin.aceeditor.client;
 
+import java.io.Serializable;
+
 import org.vaadin.aceeditor.AceEditor;
 import org.vaadin.aceeditor.client.TransportDoc.TransportAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarkerAnnotation;
@@ -10,7 +12,8 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportableAs;
  * An annotation for {@link AceEditor}.
  *
  */
-public class AceAnnotation {
+public class AceAnnotation implements Serializable {
+	private static final long serialVersionUID = 1L;
 	
 	public enum Type {
 		error,
@@ -62,7 +65,9 @@ public class AceAnnotation {
 	}
 	
 	
-	public static class MarkerAnnotation implements TransportableAs<TransportMarkerAnnotation> {
+	public static class MarkerAnnotation implements TransportableAs<TransportMarkerAnnotation>, Serializable {
+		private static final long serialVersionUID = 1L;
+		
 		private final String markerId;
 		private final AceAnnotation ann;
 		public MarkerAnnotation(String markerId, AceAnnotation ann) {
@@ -99,7 +104,9 @@ public class AceAnnotation {
 		}
 	}
 	
-	public static class RowAnnotation implements TransportableAs<TransportRowAnnotation> {
+	public static class RowAnnotation implements TransportableAs<TransportRowAnnotation>, Serializable {
+		private static final long serialVersionUID = 1L;
+		
 		private final int row;
 		private final AceAnnotation ann;
 		public RowAnnotation(int row, AceAnnotation ann) {
