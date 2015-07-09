@@ -569,6 +569,11 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		setAceConfig("workerPath", path);
 	}
 
+    /**
+     * Use "auto" if you want to detect font size from CSS
+     *
+     * @param size auto or font size
+     */
     public void setFontSize(String size) {
         getState().fontSize=size;
     }
