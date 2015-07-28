@@ -7,6 +7,8 @@ Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
 
 From version 0.7.0 onwards this add-on requires Vaadin 7. The earlier Vaadin 6 version most likely won't be maintained any more. The new Vaadin 7 version is somewhat changed from the earlier version. Some things are still missing but hopefully will be implemented at some point.
 
+* Currently using version 1.1.9 of Ace.
+
 This add-on is still in an experimental phase, interfaces etc. are subject to change.
 
 <!--
@@ -19,7 +21,7 @@ This add-on is still in an experimental phase, interfaces etc. are subject to ch
 ## Getting started
 
 1. Start a Vaadin 7 project.
-2. Download a Vaadin 7 version of [AceEditor from Vaadin directory](http://vaadin.com/addon/aceeditor) and put the `aceeditor-x.x.x.jar` in your `WEB-INF/lib` directory. Or, use the Maven dependency.
+2. Get the [AceEditor addon from Vaadin directory](http://vaadin.com/addon/aceeditor). Maven is recommended.
 3. Compile widgetset.
 4. See [below](#how-to-use) for instructions on how to use the `AceEditor` component. 
 
@@ -52,7 +54,7 @@ editor.setUseWorker(true);
 
 ### Ace file paths
 
-By default, Vaadin AceEditor gets the mode, theme and worker files from [this location](http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict) [(example)](http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict/theme-eclipse.js). I guess it's sort of a semi-official location for Ace files, at least it's used in [an Ace tutorial](http://ace.ajax.org/#nav=embedding).
+By default, Vaadin AceEditor gets the mode, theme and worker files from the [ace-builds repository](https://github.com/ajaxorg/ace-builds) via rawgit.com. For example: [mode-javascript.js](//cdn.rawgit.com/ajaxorg/ace-builds/e3ccd2c654cf45ee41ffb09d0e7fa5b40cf91a8f/src-min-noconflict/mode-javascript.js). Currently using version 1.1.9 of Ace. The 1.2.x doesn't work (yet).
 
 **It's probably safer to host the mode&theme files yourself so that you can be sure that they're compatible with the main Ace file used by this editor.**
 
