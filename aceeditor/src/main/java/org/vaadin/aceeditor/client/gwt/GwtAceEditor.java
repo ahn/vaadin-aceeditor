@@ -60,11 +60,11 @@ public class GwtAceEditor extends JavaScriptObject {
 	}
 
 	public final native String getText() /*-{
-		return this.getSession().getValue();
+		return this.getSession().getDocument().getValue();
 	}-*/;
 
 	public final native void setText(String text) /*-{
-		this.getSession().setValue(text);
+		this.getSession().getDocument().setValue(text);
 	}-*/;
 
 	public final native void replace(GwtAceRange range, String text) /*-{
