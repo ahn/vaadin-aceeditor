@@ -86,9 +86,9 @@ public class AceEditorDemo extends UI {
 		
 		// The path depends on the server config.
 
-//		editor.setThemePath("/static/ace");
-//		editor.setModePath("/static/ace");
-//		editor.setWorkerPath("/static/ace");
+		editor.setThemePath("/static/ace");
+		editor.setModePath("/static/ace");
+		editor.setWorkerPath("/static/ace");
 		
 		// http://stackoverflow.com/a/3722122
 //		editor.setThemePath("/aceeditor/static/ace");
@@ -232,11 +232,22 @@ public class AceEditorDemo extends UI {
 				editor.setShowInvisibles(invisibles.getValue());
 			}
 		});
+		
+		final CheckBox indentGuidelines = new CheckBox("Indent guidelines");
+		indentGuidelines.setValue(true);
+		indentGuidelines.setImmediate(true);
+		indentGuidelines.addValueChangeListener(new ValueChangeListener() {
+			@Override
+			public void valueChange(ValueChangeEvent event) {
+				editor.setDisplayIndentGuides(indentGuidelines.getValue());
+			}
+		});
 
 		la.addComponent(enabled);
 		la.addComponent(readOnly);
 		la.addComponent(wordwrap);
 		la.addComponent(invisibles);
+		la.addComponent(indentGuidelines);
 		
 		return new Panel("Settings", la);
 	}
