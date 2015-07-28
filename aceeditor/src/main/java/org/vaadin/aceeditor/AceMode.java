@@ -67,6 +67,7 @@ public enum AceMode {
 	markdown,
 	matlab,
 	mel,
+	mips_assembler,
 	mushcode,
 	mushcode_high_rules,
 	mysql,
