@@ -8,6 +8,7 @@ import java.util.HashMap;
  */
 public enum AceMode {
 	abap,
+	abc,
 	actionscript,
 	ada,
 	apache_conf,
@@ -30,6 +31,8 @@ public enum AceMode {
 	django,
 	dot,
 	ejs,
+	elixir,
+	elm,
 	erlang,
 	forth,
 	ftl,
@@ -54,6 +57,7 @@ public enum AceMode {
 	jsx,
 	julia,
 	latex,
+	lean,
 	less,
 	liquid,
 	lisp,
