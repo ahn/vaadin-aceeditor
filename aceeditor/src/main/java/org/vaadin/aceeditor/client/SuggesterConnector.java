@@ -141,8 +141,10 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
         // ensure valid value of component on server before suggesting
         connector.sendToServerImmediately();
 
+		AceRange sel = widget.getSelection();
+
 		suggStartText = widget.getText();
-		suggStartCursor = widget.getSelection();
+		suggStartCursor = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
 		serverRpc.suggest(suggStartText, suggStartCursor.asTransport());
 
 		suggestionStartId = widget.addInvisibleMarker(suggStartCursor);
