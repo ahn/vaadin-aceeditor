@@ -44,10 +44,8 @@ import com.vaadin.util.ReflectTools;
  * 
  */
 @SuppressWarnings("serial")
-@JavaScript({
-	"client/js/ace/ace.js",
-	"client/js/ace/ext-searchbox.js",
-	"client/js/diff_match_patch.js" })
+@JavaScript({ "client/js/ace/ace.js", "client/js/ace/ext-searchbox.js",
+		"client/js/diff_match_patch.js" })
 @StyleSheet("client/css/ace-gwt.css")
 public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		FocusNotifier, TextChangeNotifier {
@@ -66,7 +64,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 	}
 
-	public interface DiffListener extends Serializable  {
+	public interface DiffListener extends Serializable {
 		public static final Method diffMethod = ReflectTools.findMethod(
 				DiffListener.class, "diff", DiffEvent.class);
 
@@ -133,7 +131,8 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	private boolean latestFocus = false;
 	private long latestMarkerId = 0L;
 
-	private static final Logger logger = Logger.getLogger(AceEditor.class.getName());
+	private static final Logger logger = Logger.getLogger(AceEditor.class
+			.getName());
 
 	private boolean onRoundtrip = false;
 
@@ -342,17 +341,15 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	@Override
 	public void removeFocusListener(FocusListener listener) {
 		removeListener(FocusEvent.EVENT_ID, FocusEvent.class, listener);
-		getState().listenToFocusChanges =
-				!getListeners(FocusEvent.class).isEmpty() ||
-				!getListeners(BlurEvent.class).isEmpty();
+		getState().listenToFocusChanges = !getListeners(FocusEvent.class)
+				.isEmpty() || !getListeners(BlurEvent.class).isEmpty();
 	}
 
 	@Override
 	public void removeBlurListener(BlurListener listener) {
 		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
-		getState().listenToFocusChanges =
-				!getListeners(FocusEvent.class).isEmpty() ||
-				!getListeners(BlurEvent.class).isEmpty();
+		getState().listenToFocusChanges = !getListeners(FocusEvent.class)
+				.isEmpty() || !getListeners(BlurEvent.class).isEmpty();
 	}
 
 	@Override
@@ -395,10 +392,10 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				listener);
 	}
 
-        public void setBasePath(String path) {
-            setAceConfig("basePath", path);
-        }
-        
+	public void setBasePath(String path) {
+		setAceConfig("basePath", path);
+	}
+
 	/**
 	 * Sets the cursor position to be pos characters from the beginning of the
 	 * text.
@@ -506,7 +503,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		getState().changeTimeout = timeoutMs;
 
 	}
-	
+
 	/**
 	 * Scrolls to the given row. First row is 0.
 	 * 
@@ -514,16 +511,17 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public void scrollToRow(int row) {
 		getState().scrollToRow = row;
 	}
-	
+
 	/**
-	 * Scrolls the to the given position (characters from the start of the file).
+	 * Scrolls the to the given position (characters from the start of the
+	 * file).
 	 * 
 	 */
 	public void scrollToPosition(int pos) {
 		int[] rowcol = Util.lineColFromCursorPos(getInternalValue(), pos, 0);
 		scrollToRow(rowcol[0]);
 	}
-	
+
 	public void setTheme(AceTheme theme) {
 		getState().theme = theme.toString();
 	}
@@ -544,71 +542,80 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		getState().wordwrap = ww;
 	}
 
-    public void setShowGutter(boolean showGutter) {
-        getState().showGutter = showGutter;
-    }
+	public void setShowGutter(boolean showGutter) {
+		getState().showGutter = showGutter;
+	}
 
-    public boolean isShowGutter() {
-        return getState(false).showGutter;
-    }
+	public boolean isShowGutter() {
+		return getState(false).showGutter;
+	}
 
-    public void setShowPrintMargin(boolean showPrintMargin) {
-        getState().showPrintMargin = showPrintMargin;
-    }
+	public void setShowPrintMargin(boolean showPrintMargin) {
+		getState().showPrintMargin = showPrintMargin;
+	}
 
-    public boolean isShowPrintMargin() {
-        return getState(false).showPrintMargin;
-    }
+	public boolean isShowPrintMargin() {
+		return getState(false).showPrintMargin;
+	}
 
-    public void setHighlightActiveLine(boolean highlightActiveLine) {
-        getState().highlightActiveLine = highlightActiveLine;
-    }
+	public void setHighlightActiveLine(boolean highlightActiveLine) {
+		getState().highlightActiveLine = highlightActiveLine;
+	}
 
-    public boolean isHighlightActiveLine() {
-        return getState(false).highlightActiveLine;
-    }
+	public boolean isHighlightActiveLine() {
+		return getState(false).highlightActiveLine;
+	}
 
 	public void setWorkerPath(String path) {
 		setAceConfig("workerPath", path);
 	}
 
-    /**
-     * Use "auto" if you want to detect font size from CSS
-     *
-     * @param size auto or font size
-     */
-    public void setFontSize(String size) {
-        getState().fontSize=size;
-    }
+	/**
+	 * Use "auto" if you want to detect font size from CSS
+	 *
+	 * @param size
+	 *            auto or font size
+	 */
+	public void setFontSize(String size) {
+		getState().fontSize = size;
+	}
 
-    public String getFontSize() {
-        return getState(false).fontSize;
-    }
+	public String getFontSize() {
+		return getState(false).fontSize;
+	}
 
-    public void setHighlightSelectedWord(boolean highlightSelectedWord) {
-        getState().highlightSelectedWord = highlightSelectedWord;
-    }
+	public void setHighlightSelectedWord(boolean highlightSelectedWord) {
+		getState().highlightSelectedWord = highlightSelectedWord;
+	}
 
-    public boolean isHighlightSelectedWord() {
-        return getState(false).highlightSelectedWord;
-    }
+	public boolean isHighlightSelectedWord() {
+		return getState(false).highlightSelectedWord;
+	}
 
-    public void setShowInvisibles(boolean showInvisibles) {
-        getState().showInvisibles = showInvisibles;
-    }
+	public void setShowInvisibles(boolean showInvisibles) {
+		getState().showInvisibles = showInvisibles;
+	}
 
-    public boolean isShowInvisibles() {
-        return getState(false).showInvisibles;
-    }
-    
-    public void setDisplayIndentGuides(boolean displayIndentGuides) {
-        getState().displayIndentGuides = displayIndentGuides;
-    }
+	public boolean isShowInvisibles() {
+		return getState(false).showInvisibles;
+	}
 
-    public boolean isDisplayIndentGuides() {
-        return getState(false).displayIndentGuides;
-    }
-    
+	public void setDisplayIndentGuides(boolean displayIndentGuides) {
+		getState().displayIndentGuides = displayIndentGuides;
+	}
+
+	public boolean isDisplayIndentGuides() {
+		return getState(false).displayIndentGuides;
+	}
+	
+	public void setTabSize(int size) {
+		getState().tabSize = size;
+	}
+
+	public void setUseSoftTabs(boolean softTabs) {
+		getState().softTabs = softTabs;
+	}
+
 	protected void clientChanged(TransportDiff diff, TransportRange selection,
 			boolean focused) {
 		diffFromClient(diff);
@@ -621,10 +628,10 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				fireBlur();
 			}
 		}
-		
+
 		clearStateFromServerToClient();
 	}
-	
+
 	// Here we clear the selection etc. we sent earlier.
 	// The client has already received the values,
 	// and we must clear them at some point to not keep
@@ -640,12 +647,12 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		return (AceEditorState) super.getState();
 	}
 
-    @Override
-    protected AceEditorState getState(boolean markAsDirty) {
-        return (AceEditorState) super.getState(markAsDirty);
-    }
+	@Override
+	protected AceEditorState getState(boolean markAsDirty) {
+		return (AceEditorState) super.getState(markAsDirty);
+	}
 
-    @Override
+	@Override
 	protected void setInternalValue(String newValue) {
 		super.setInternalValue(newValue);
 		doc = doc.withText(newValue);
@@ -657,7 +664,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		shadow = diff.applyTo(shadow);
 		doc = diff.applyTo(doc);
 		if (!TextUtils.equals(doc.getText(), previousText)) {
-            setValue(doc.getText(), true);
+			setValue(doc.getText(), true);
 			fireTextChangeEvent();
 		}
 		if (!diff.isIdentity()) {
@@ -700,7 +707,8 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	private void selectionFromClient(TransportRange sel) {
-		TextRange newSel = new TextRange(doc.getText(), AceRange.fromTransport(sel));
+		TextRange newSel = new TextRange(doc.getText(),
+				AceRange.fromTransport(sel));
 		if (newSel.equals(selection)) {
 			return;
 		}

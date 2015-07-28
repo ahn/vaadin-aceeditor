@@ -48,4 +48,8 @@ public class AceEditorState extends AbstractFieldState {
     public boolean showInvisibles = false;
     
     public boolean displayIndentGuides = true;
+    
+	public int tabSize = 4;
+
+	public boolean softTabs = true;
 }

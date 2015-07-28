@@ -3,6 +3,7 @@ package org.vaadin.aceeditor;
 import org.vaadin.aceeditor.AceEditor.SelectionChangeEvent;
 import org.vaadin.aceeditor.AceEditor.SelectionChangeListener;
 import org.vaadin.aceeditor.client.AceAnnotation;
+import org.vaadin.aceeditor.client.AceDoc;
 import org.vaadin.aceeditor.client.AceMarker;
 import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
 
@@ -95,7 +96,6 @@ public class AceEditorDemo extends UI {
 //		editor.setModePath("/aceeditor/static/ace");
 //		editor.setWorkerPath("/aceeditor/static/ace");
 		
-
 		
 		
 		leftBar.addComponent(createValueTextArea());
@@ -105,6 +105,8 @@ public class AceEditorDemo extends UI {
 		
 		leftBar.addComponent(createThemeModePanel());
 		leftBar.addComponent(createOptionsPanel());
+		
+		leftBar.addComponent(createTabPanel());
 		
 		leftBar.addComponent(createScrollPanel());
 		
@@ -192,6 +194,45 @@ public class AceEditorDemo extends UI {
 		return new Panel("Focus", la);
 	}
 
+	private Component createTabPanel() {
+		VerticalLayout la = new VerticalLayout();
+
+		final CheckBox softTabs = new CheckBox("Soft tabs");
+		softTabs.setValue(true);
+		softTabs.setImmediate(true);
+		softTabs.addValueChangeListener(new ValueChangeListener() {
+			@Override
+			public void valueChange(ValueChangeEvent event) {
+				editor.setUseSoftTabs(softTabs.getValue());
+			}
+		});
+		
+		HorizontalLayout ho = new HorizontalLayout();
+		final TextField tabSize = new TextField();
+		tabSize.setValue("4");
+		Button setTabSize = new Button("Set tab size");
+		setTabSize.addClickListener(new ClickListener() {
+			@Override
+			public void buttonClick(ClickEvent event) {
+				try {
+					editor.setTabSize(Integer.valueOf(tabSize.getValue()));
+				}
+				catch (NumberFormatException e) {
+					// ...
+					tabSize.setValue("4");
+					editor.setTabSize(4);
+				}
+			}
+		});
+		ho.addComponent(tabSize);
+		ho.addComponent(setTabSize);
+		
+		la.addComponent(softTabs);
+		la.addComponent(ho);
+		
+		return new Panel("Tabs", la);
+	}
+	
 	private Component createOptionsPanel() {
 		VerticalLayout la = new VerticalLayout();
 

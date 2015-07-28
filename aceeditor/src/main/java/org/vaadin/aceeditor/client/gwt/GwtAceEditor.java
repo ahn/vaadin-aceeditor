@@ -336,7 +336,14 @@ public class GwtAceEditor extends JavaScriptObject {
     }-*/;
     
     public final native void setDisplayIndentGuides(boolean displayIndentGuides) /*-{
-        this.setDisplayIndentGuides(displayIndentGuides)
+        this.setDisplayIndentGuides(displayIndentGuides);
     }-*/;
 
+    public final native void setUseSoftTabs(boolean softTabs) /*-{
+        this.getSession().setUseSoftTabs(softTabs);
+    }-*/;
+
+    public final native void setTabSize(int tabSize) /*-{
+        this.getSession().setTabSize(tabSize);
+    }-*/;
 }

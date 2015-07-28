@@ -200,6 +200,18 @@ public class AceEditorWidget extends FocusWidget implements
         }
     }
 
+    public void setUseSoftTabs(boolean softTabs) {
+        if (isInitialized()) {
+            editor.setUseSoftTabs(softTabs);
+        }
+    }
+
+    public void setTabSize(int tabSize) {
+        if (isInitialized()) {
+            editor.setTabSize(tabSize);
+        }
+    }
+
     protected void setText(String text) {
 		if (!isInitialized() || this.text.equals(text)) {
 			return;
