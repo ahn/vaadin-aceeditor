@@ -121,9 +121,9 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		}
 	}
 
-	// By default, using the version 1.1.9 of Ace, from GitHub.
+	// By default, using the version 1.1.9 of Ace from GitHub via rawgit.com.
 	// It's recommended to host the Ace files yourself as described in README.
-	private static final String DEFAULT_ACE_PATH = "//raw.githubusercontent.com/ajaxorg/ace-builds/e3ccd2c654cf45ee41ffb09d0e7fa5b40cf91a8f";
+	private static final String DEFAULT_ACE_PATH = "//cdn.rawgit.com/ajaxorg/ace-builds/e3ccd2c654cf45ee41ffb09d0e7fa5b40cf91a8f/src-min-noconflict";
 
 	private AceDoc doc = new AceDoc();
 
