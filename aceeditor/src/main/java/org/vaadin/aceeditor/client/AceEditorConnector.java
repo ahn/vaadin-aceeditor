@@ -10,10 +10,14 @@ import org.vaadin.aceeditor.client.AceEditorWidget.TextChangeListener;
 import org.vaadin.aceeditor.client.gwt.GwtAceEditor;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.ConnectorHierarchyChangeEvent;
+import com.vaadin.client.ComputedStyle;
 import com.vaadin.client.VConsole;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
@@ -140,8 +144,6 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		registerRpc(AceEditorClientRpc.class, clientRpc);
 	}
 	
-	
-
 	@Override
 	public void init() {
 		super.init();
@@ -194,7 +196,27 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
         getWidget().setPropertyReadOnly(getState().propertyReadOnly);
         getWidget().setTabIndex(getState().tabIndex);
         getWidget().setReadOnly(getState().readOnly);
-        getWidget().setFontSize(getState().fontSize);
+
+        if (stateChangeEvent.hasPropertyChanged("fontSize")) {
+            String fontSize = getState().fontSize;
+
+            if ("auto".equals(fontSize)) {
+                // detect font size from CSS
+                Element fontSizeMeasureElement = Document.get().createDivElement();
+                fontSizeMeasureElement.setClassName("ace_editor");
+                fontSizeMeasureElement.getStyle().setPosition(Style.Position.FIXED);
+                fontSizeMeasureElement.getStyle().setVisibility(Style.Visibility.HIDDEN);
+                getWidget().getElement().appendChild(fontSizeMeasureElement);
+
+                ComputedStyle cs = new ComputedStyle(fontSizeMeasureElement);
+                fontSize = cs.getProperty("fontSize");
+
+                getWidget().getElement().removeChild(fontSizeMeasureElement);
+            }
+
+            getWidget().setFontSize(fontSize);
+        }
+
         getWidget().setHighlightSelectedWord(getState().highlightSelectedWord);
         getWidget().setShowInvisibles(getState().showInvisibles);
         getWidget().setDisplayIndentGuides(getState().displayIndentGuides);
