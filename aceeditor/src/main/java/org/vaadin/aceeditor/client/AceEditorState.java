@@ -46,4 +46,6 @@ public class AceEditorState extends AbstractFieldState {
     public boolean highlightSelectedWord = true;
 
     public boolean showInvisibles = false;
+    
+    public boolean displayIndentGuides = true;
 }
