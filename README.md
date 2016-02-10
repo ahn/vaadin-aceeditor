@@ -5,6 +5,11 @@ Vaadin AceEditor
 
 Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
 
+### NOTE
+**Unfortunately I (@ahn) currently don't have time to maintain this project.
+I can accept pull requests and put a new version to Vaadin Directory once in a while but not do much beyond that.
+If you'd like to be a more active maintainer, feel free to contact me.**
+
 From version 0.7.0 onwards this add-on requires Vaadin 7. The earlier Vaadin 6 version most likely won't be maintained any more. The new Vaadin 7 version is somewhat changed from the earlier version. Some things are still missing but hopefully will be implemented at some point.
 
 * Currently using version 1.1.9 of Ace.
