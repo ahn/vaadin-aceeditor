@@ -3,15 +3,15 @@ package org.vaadin.aceeditor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.vaadin.data.HasValue;
 import org.vaadin.aceeditor.client.AceAnnotation;
+import org.vaadin.aceeditor.client.AceEditorWidget;
 import org.vaadin.aceeditor.client.AceMarker;
 import org.vaadin.aceeditor.client.AceRange;
 
-import com.vaadin.event.FieldEvents.TextChangeEvent;
-import com.vaadin.event.FieldEvents.TextChangeListener;
 
 @SuppressWarnings("serial")
-public class MyErrorChecker implements TextChangeListener {
+public class MyErrorChecker implements HasValue.ValueChangeListener<String> {
 	
 	private AceEditor editor;
 	
@@ -28,15 +28,15 @@ public class MyErrorChecker implements TextChangeListener {
 	
 	public void attachTo(AceEditor editor) {
 		this.editor = editor;
-		editor.addTextChangeListener(this);
+		editor.addValueChangeListener(this);
 		checkErrors(editor.getValue());
 	}
 
 	@Override
-	public void textChange(TextChangeEvent event) {
-		checkErrors(event.getText());
+	public void valueChange(HasValue.ValueChangeEvent<String> valueChangeEvent) {
+		checkErrors(valueChangeEvent.getValue());
 	}
-	
+
 	private void checkErrors(String text) {
 		editor.clearMarkerAnnotations();
 		editor.clearMarkers();
@@ -54,4 +54,5 @@ public class MyErrorChecker implements TextChangeListener {
 		}
 		
 	}
+
 }

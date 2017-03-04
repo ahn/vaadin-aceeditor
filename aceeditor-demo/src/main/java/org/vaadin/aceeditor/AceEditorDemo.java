@@ -1,5 +1,7 @@
 package org.vaadin.aceeditor;
 
+import com.vaadin.data.HasValue;
+import com.vaadin.ui.*;
 import org.vaadin.aceeditor.AceEditor.SelectionChangeEvent;
 import org.vaadin.aceeditor.AceEditor.SelectionChangeListener;
 import org.vaadin.aceeditor.client.AceAnnotation;
@@ -10,35 +12,20 @@ import org.vaadin.aceeditor.client.AceMarker.OnTextChange;
 import com.vaadin.annotations.PreserveOnRefresh;
 import com.vaadin.annotations.StyleSheet;
 import com.vaadin.annotations.Theme;
-import com.vaadin.data.Property.ValueChangeEvent;
-import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.event.FieldEvents.BlurEvent;
 import com.vaadin.event.FieldEvents.BlurListener;
 import com.vaadin.event.FieldEvents.FocusEvent;
 import com.vaadin.event.FieldEvents.FocusListener;
 import com.vaadin.server.ExternalResource;
 import com.vaadin.server.VaadinRequest;
-import com.vaadin.ui.Alignment;
-import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
-import com.vaadin.ui.CheckBox;
-import com.vaadin.ui.Component;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.HorizontalSplitPanel;
-import com.vaadin.ui.Label;
-import com.vaadin.ui.Link;
-import com.vaadin.ui.NativeSelect;
-import com.vaadin.ui.Notification;
-import com.vaadin.ui.Panel;
-import com.vaadin.ui.TextArea;
-import com.vaadin.ui.TextField;
-import com.vaadin.ui.UI;
-import com.vaadin.ui.VerticalLayout;
-import com.vaadin.ui.Window;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
-@Theme("reindeer")
+@Theme("valo")
 @StyleSheet("ace-markers.css")
 @SuppressWarnings("serial")
 @PreserveOnRefresh
@@ -51,10 +38,7 @@ public class AceEditorDemo extends UI {
 		return "m"+(++latestMarkerId);
 	}
 	
-	private NativeSelect markerAnnotationSelect = new NativeSelect("Marker");
-	{
-		markerAnnotationSelect.setNullSelectionAllowed(false);
-	}
+	private ComboBox markerAnnotationSelect = new ComboBox("Marker");
 
 	public AceEditorDemo() {
 		String s = "var s = \"Hello!\";\n"
@@ -199,10 +183,9 @@ public class AceEditorDemo extends UI {
 
 		final CheckBox softTabs = new CheckBox("Soft tabs");
 		softTabs.setValue(true);
-		softTabs.setImmediate(true);
-		softTabs.addValueChangeListener(new ValueChangeListener() {
+		softTabs.addValueChangeListener(new HasValue.ValueChangeListener() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent event) {
 				editor.setUseSoftTabs(softTabs.getValue());
 			}
 		});
@@ -238,48 +221,43 @@ public class AceEditorDemo extends UI {
 
 		final CheckBox enabled = new CheckBox("Enabled");
 		enabled.setValue(true);
-		enabled.setImmediate(true);
-		enabled.addValueChangeListener(new ValueChangeListener() {
+		enabled.addValueChangeListener(new HasValue.ValueChangeListener() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent event) {
 				editor.setEnabled(enabled.getValue());
 			}
 		});
 
 		final CheckBox readOnly = new CheckBox("Read-only");
-		readOnly.setImmediate(true);
-		readOnly.addValueChangeListener(new ValueChangeListener() {
+		readOnly.addValueChangeListener(new HasValue.ValueChangeListener() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent event) {
 				editor.setReadOnly(readOnly.getValue());
 			}
 		});
 		
 		final CheckBox wordwrap = new CheckBox("Word wrap");
-		wordwrap.setImmediate(true);
-		wordwrap.addValueChangeListener(new ValueChangeListener() {
+		wordwrap.addValueChangeListener(new HasValue.ValueChangeListener() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent event) {
 				editor.setWordWrap(wordwrap.getValue());
 			}
 		});
 		
 		final CheckBox invisibles = new CheckBox("Show Invisibles");
 		invisibles.setValue(false);
-		invisibles.setImmediate(true);
-		invisibles.addValueChangeListener(new ValueChangeListener() {
+		invisibles.addValueChangeListener(new HasValue.ValueChangeListener() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent event) {
 				editor.setShowInvisibles(invisibles.getValue());
 			}
 		});
 		
 		final CheckBox indentGuidelines = new CheckBox("Indent guidelines");
 		indentGuidelines.setValue(true);
-		indentGuidelines.setImmediate(true);
-		indentGuidelines.addValueChangeListener(new ValueChangeListener() {
+		indentGuidelines.addValueChangeListener(new HasValue.ValueChangeListener() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent event) {
 				editor.setDisplayIndentGuides(indentGuidelines.getValue());
 			}
 		});
@@ -381,25 +359,20 @@ public class AceEditorDemo extends UI {
 		HorizontalLayout ho = new HorizontalLayout();
 		final TextField cssField = new TextField("CSS Class", "mymarker1");
 		ho.addComponent(cssField);
-		final NativeSelect typeSelect = new NativeSelect("Type");
+		final ComboBox<AceMarker.Type> typeSelect = new ComboBox("Type");
 		ho.addComponent(typeSelect);
-		for (AceMarker.Type item : AceMarker.Type.values()) {
-			typeSelect.addItem(item);
-		}
-		typeSelect.select(AceMarker.Type.line);
-		typeSelect.setNullSelectionAllowed(false);
+		typeSelect.setItems(AceMarker.Type.values());
+		typeSelect.setSelectedItem(AceMarker.Type.line);
+
 		final CheckBox inFrontCheck = new CheckBox("InFront");
 		ho.addComponent(inFrontCheck);
 		ho.setComponentAlignment(inFrontCheck, Alignment.BOTTOM_LEFT);
-		
-		final NativeSelect changeSelect = new NativeSelect("OnTextChange");
+
+		final ComboBox<OnTextChange> changeSelect = new ComboBox<OnTextChange>("OnTextChange");
 		ho.addComponent(changeSelect);
-		for (AceMarker.OnTextChange item : AceMarker.OnTextChange.values()) {
-			changeSelect.addItem(item);
-		}
-		changeSelect.select(AceMarker.OnTextChange.DEFAULT);
-		changeSelect.setNullSelectionAllowed(false);
-		
+		changeSelect.setItems(AceMarker.OnTextChange.values());
+		changeSelect.setSelectedItem(AceMarker.OnTextChange.DEFAULT);
+
 		layout.addComponent(ho);
 		
 		Button button = new Button("Add marker to selection");
@@ -420,15 +393,16 @@ public class AceEditorDemo extends UI {
 				editor.addMarker(m);
 				final Button mb = new Button(""+markerId);
 				markerLayout.addComponent(mb);
-				markerAnnotationSelect.addItem(markerId);
-				mb.addClickListener(new ClickListener() {
-					@Override
-					public void buttonClick(ClickEvent event) {
-						editor.removeMarker(markerId);
-						markerLayout.removeComponent(mb);
-						markerAnnotationSelect.removeItem(markerId);
-					}
-				});
+				//fixme
+//				markerAnnotationSelect.addItem(markerId);
+//				mb.addClickListener(new ClickListener() {
+//					@Override
+//					public void buttonClick(ClickEvent event) {
+//						editor.removeMarker(markerId);
+//						markerLayout.removeComponent(mb);
+//						markerAnnotationSelect.removeItem(markerId);
+//					}
+//				});
 				
 			}
 		});
@@ -450,12 +424,9 @@ public class AceEditorDemo extends UI {
 		final TextField msgField = new TextField("Message","Hello");
 		ho.addComponent(msgField);
 		
-		final NativeSelect typeSelect = new NativeSelect("Type");
-		typeSelect.setNullSelectionAllowed(false);
-		for (AceAnnotation.Type type : AceAnnotation.Type.values()) {
-			typeSelect.addItem(type);
-		}
-		typeSelect.select(AceAnnotation.Type.info);
+		final ComboBox<AceAnnotation.Type> typeSelect = new ComboBox<AceAnnotation.Type>("Type");
+		typeSelect.setItems(AceAnnotation.Type.values());
+		typeSelect.setSelectedItem(AceAnnotation.Type.info);
 		
 		ho.addComponent(typeSelect);
 		
@@ -504,12 +475,9 @@ public class AceEditorDemo extends UI {
 		final TextField msgField = new TextField("Message","Hello");
 		ho.addComponent(msgField);
 		
-		final NativeSelect typeSelect = new NativeSelect("Type");
-		typeSelect.setNullSelectionAllowed(false);
-		for (AceAnnotation.Type type : AceAnnotation.Type.values()) {
-			typeSelect.addItem(type);
-		}
-		typeSelect.select(AceAnnotation.Type.info);
+		final ComboBox<AceAnnotation.Type> typeSelect = new ComboBox<AceAnnotation.Type>("Type");
+		typeSelect.setItems(AceAnnotation.Type.values());
+		typeSelect.setSelectedItem(AceAnnotation.Type.info);
 		
 		ho.addComponent(typeSelect);
 		
@@ -552,62 +520,53 @@ public class AceEditorDemo extends UI {
 		
 		HorizontalLayout ve = new HorizontalLayout();
 		
-		final NativeSelect themeSelect = new NativeSelect("Theme");
+		final ComboBox<AceTheme> themeSelect = new ComboBox<AceTheme>("Theme");
 		ve.addComponent(themeSelect);
-		for (AceTheme theme : AceTheme.values()) {
-			themeSelect.addItem(theme);
-		}
-		themeSelect.setNullSelectionAllowed(false);
-		themeSelect.setImmediate(true);
-		themeSelect.addValueChangeListener(new ValueChangeListener() {
+		themeSelect.setItems(AceTheme.values());
+		themeSelect.addValueChangeListener(new HasValue.ValueChangeListener<AceTheme>() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent<AceTheme> event) {
 				editor.setTheme((AceTheme)themeSelect.getValue());
 			}
 		});
-		themeSelect.select(AceTheme.eclipse);
+		themeSelect.setSelectedItem(AceTheme.eclipse);
 		
-		final NativeSelect modeSelect = new NativeSelect("Mode");
+		final ComboBox<AceMode> modeSelect = new ComboBox<AceMode>("Mode");
 		ve.addComponent(modeSelect);
-		for (AceMode mode : AceMode.values()) {
-			modeSelect.addItem(mode);
-		}
-		modeSelect.setNullSelectionAllowed(false);
-		modeSelect.setImmediate(true);
-		modeSelect.addValueChangeListener(new ValueChangeListener() {
+		modeSelect.setItems(AceMode.values());
+		modeSelect.addValueChangeListener(new HasValue.ValueChangeListener<AceMode>() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
-				editor.setMode((AceMode)modeSelect.getValue());
+			public void valueChange(HasValue.ValueChangeEvent<AceMode> event) {
+				editor.setMode(modeSelect.getValue());
 			}
 		});
-		modeSelect.select(AceMode.javascript);
+		modeSelect.setSelectedItem(AceMode.javascript);
 
-        final NativeSelect fontSelect = new NativeSelect("Font Size");
+        final ComboBox<String> fontSelect = new ComboBox<String>("Font Size");
         ve.addComponent(fontSelect);
-        fontSelect.addItem("10px");
-        fontSelect.addItem("12px");
-        fontSelect.addItem("14px");
-        fontSelect.addItem("16px");
-        fontSelect.addItem("18px");
-        fontSelect.addItem("24px");
-        fontSelect.setNullSelectionAllowed(false);
-        fontSelect.setImmediate(true);
-        fontSelect.addValueChangeListener(new ValueChangeListener() {
+		List<String> fontSelectItems = new ArrayList<String>();
+        fontSelectItems.add("10px");
+        fontSelectItems.add("12px");
+        fontSelectItems.add("14px");
+        fontSelectItems.add("16px");
+        fontSelectItems.add("18px");
+        fontSelectItems.add("24px");
+        fontSelect.setItems(fontSelectItems);
+        fontSelect.addValueChangeListener(new HasValue.ValueChangeListener<String>() {
             @Override
-            public void valueChange(ValueChangeEvent event) {
-                editor.setFontSize((String)fontSelect.getValue());
+            public void valueChange(HasValue.ValueChangeEvent<String> event) {
+                editor.setFontSize(fontSelect.getValue());
             }
         });
-        fontSelect.select("14px");
+		fontSelect.setSelectedItem("14px");
 
 		layout.addComponent(ve);
 		
 		final CheckBox cb = new CheckBox("useWorker");
-		cb.setImmediate(true);
 		cb.setValue(true);
-		cb.addValueChangeListener(new ValueChangeListener() {
+		cb.addValueChangeListener(new HasValue.ValueChangeListener<Boolean>() {
 			@Override
-			public void valueChange(ValueChangeEvent event) {
+			public void valueChange(HasValue.ValueChangeEvent<Boolean> event) {
 				editor.setUseWorker(cb.getValue());
 			}
 		});
@@ -678,7 +637,8 @@ public class AceEditorDemo extends UI {
 				w.setHeight("50%");
 				w.center();
 				AceEditor ee = new AceEditor();
-				ee.setTextChangeTimeout(200);
+				//fixme
+//				ee.setTextChangeTimeout(200);
 				ee.setWordWrap(true);
 				ee.setValue("The text you type is auto-corrected to leet-speak on the server-side.\n\n" +
 						"What's nice is that none of the stuff you type gets lost, " +

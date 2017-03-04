@@ -2,3 +2,6 @@
 .settings
 .classpath
 *.swp
+*.iml
+/aceeditor-demo/target/
+/aceeditor-demo/src/main/webapp/VAADIN/

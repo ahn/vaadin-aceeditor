@@ -3,10 +3,12 @@ package org.vaadin.aceeditor;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.EventObject;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.vaadin.shared.Registration;
 import org.vaadin.aceeditor.client.AceAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
@@ -30,12 +32,7 @@ import com.vaadin.event.FieldEvents.BlurNotifier;
 import com.vaadin.event.FieldEvents.FocusEvent;
 import com.vaadin.event.FieldEvents.FocusListener;
 import com.vaadin.event.FieldEvents.FocusNotifier;
-import com.vaadin.event.FieldEvents.TextChangeEvent;
-import com.vaadin.event.FieldEvents.TextChangeListener;
-import com.vaadin.event.FieldEvents.TextChangeNotifier;
 import com.vaadin.ui.AbstractField;
-import com.vaadin.ui.AbstractTextField;
-import com.vaadin.ui.AbstractTextField.TextChangeEventMode;
 import com.vaadin.util.ReflectTools;
 
 /**
@@ -48,9 +45,11 @@ import com.vaadin.util.ReflectTools;
 		"client/js/diff_match_patch.js" })
 @StyleSheet("client/css/ace-gwt.css")
 public class AceEditor extends AbstractField<String> implements BlurNotifier,
-		FocusNotifier, TextChangeNotifier {
+		FocusNotifier {
 
-	public static class DiffEvent extends Event {
+    private String value;
+
+    public static class DiffEvent extends Event {
 		public static String EVENT_ID = "aceeditor-diff";
 		private final ServerSideDocDiff diff;
 
@@ -65,10 +64,10 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	public interface DiffListener extends Serializable {
-		public static final Method diffMethod = ReflectTools.findMethod(
+		Method diffMethod = ReflectTools.findMethod(
 				DiffListener.class, "diff", DiffEvent.class);
 
-		public void diff(DiffEvent e);
+		void diff(DiffEvent e);
 	}
 
 	public static class SelectionChangeEvent extends Event {
@@ -86,14 +85,14 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	public interface SelectionChangeListener extends Serializable {
-		public static final Method selectionChangedMethod = ReflectTools
+		Method selectionChangedMethod = ReflectTools
 				.findMethod(SelectionChangeListener.class, "selectionChanged",
 						SelectionChangeEvent.class);
 
-		public void selectionChanged(SelectionChangeEvent e);
+		void selectionChanged(SelectionChangeEvent e);
 	}
 
-	public static class TextChangeEventImpl extends TextChangeEvent {
+	public static class TextChangeEventImpl extends EventObject {
 		private final TextRange selection;
 		private final String text;
 
@@ -104,17 +103,17 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 			this.selection = ace.getSelection();
 		}
 
-		@Override
-		public AbstractTextField getComponent() {
-			return (AbstractTextField) super.getComponent();
-		}
+//		@Override
+//		public AbstractTextField getComponent() {
+//			return (AbstractTextField) super.getComponent();
+//		}
 
-		@Override
+//		@Override
 		public int getCursorPosition() {
 			return selection.getEnd();
 		}
 
-		@Override
+//		@Override
 		public String getText() {
 			return text;
 		}
@@ -171,42 +170,31 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		registerRpc(rpc);
 	}
 
-	public void addDiffListener(DiffListener listener) {
+    @Override
+    protected void doSetValue(String s) {
+	    this.value = s;
+    }
+
+    public void addDiffListener(DiffListener listener) {
 		addListener(DiffEvent.EVENT_ID, DiffEvent.class, listener,
 				DiffListener.diffMethod);
 	}
 
 	@Override
-	public void addFocusListener(FocusListener listener) {
-		addListener(FocusEvent.EVENT_ID, FocusEvent.class, listener,
-				FocusListener.focusMethod);
-		getState().listenToFocusChanges = true;
-	}
+	public Registration addFocusListener(FocusListener listener) {
+        Registration registration = addListener(FocusEvent.EVENT_ID, FocusEvent.class, listener,
+                FocusListener.focusMethod);
+        getState().listenToFocusChanges = true;
+        return registration;
+    }
 
 	@Override
-	public void addBlurListener(BlurListener listener) {
-		addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
-				BlurListener.blurMethod);
-		getState().listenToFocusChanges = true;
-	}
-
-	@Override
-	@Deprecated
-	public void addListener(BlurListener listener) {
-		addBlurListener(listener);
-	}
-
-	@Override
-	@Deprecated
-	public void addListener(FocusListener listener) {
-		addFocusListener(listener);
-	}
-
-	@Override
-	@Deprecated
-	public void addListener(TextChangeListener listener) {
-		addTextChangeListener(listener);
-	}
+	public Registration addBlurListener(BlurListener listener) {
+        Registration registration = addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
+                BlurListener.blurMethod);
+        getState().listenToFocusChanges = true;
+        return registration;
+    }
 
 	/**
 	 * Adds an ace marker. The id of the marker must be unique within this
@@ -257,12 +245,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		addListener(SelectionChangeEvent.EVENT_ID, SelectionChangeEvent.class,
 				listener, SelectionChangeListener.selectionChangedMethod);
 		getState().listenToSelectionChanges = true;
-	}
-
-	@Override
-	public void addTextChangeListener(TextChangeListener listener) {
-		addListener(TextChangeListener.EVENT_ID, TextChangeEvent.class,
-				listener, TextChangeListener.EVENT_METHOD);
 	}
 
 	@Override
@@ -329,7 +311,6 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		return selection;
 	}
 
-	@Override
 	public Class<? extends String> getType() {
 		return String.class;
 	}
@@ -338,37 +319,18 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		removeListener(DiffEvent.EVENT_ID, DiffEvent.class, listener);
 	}
 
-	@Override
 	public void removeFocusListener(FocusListener listener) {
 		removeListener(FocusEvent.EVENT_ID, FocusEvent.class, listener);
 		getState().listenToFocusChanges = !getListeners(FocusEvent.class)
 				.isEmpty() || !getListeners(BlurEvent.class).isEmpty();
 	}
 
-	@Override
 	public void removeBlurListener(BlurListener listener) {
 		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
 		getState().listenToFocusChanges = !getListeners(FocusEvent.class)
 				.isEmpty() || !getListeners(BlurEvent.class).isEmpty();
 	}
 
-	@Override
-	@Deprecated
-	public void removeListener(BlurListener listener) {
-		removeBlurListener(listener);
-	}
-
-	@Override
-	@Deprecated
-	public void removeListener(FocusListener listener) {
-		removeFocusListener(listener);
-	}
-
-	@Override
-	@Deprecated
-	public void removeListener(TextChangeListener listener) {
-		removeTextChangeListener(listener);
-	}
 
 	public void removeMarker(AceMarker marker) {
 		removeMarker(marker.getMarkerId());
@@ -386,11 +348,10 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				SelectionChangeEvent.class).isEmpty();
 	}
 
-	@Override
-	public void removeTextChangeListener(TextChangeListener listener) {
-		removeListener(TextChangeListener.EVENT_ID, TextChangeEvent.class,
-				listener);
-	}
+//	@Override
+//	public void removeTextChangeListener(ValueChangeListener<String> listener) {
+//		removeListener(listener);
+//	}
 
 	public void setBasePath(String path) {
 		setAceConfig("basePath", path);
@@ -453,7 +414,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	// TODO
 	public void setSelection(int start, int end) {
 		setSelectionToClient(new Integer[] { start, end });
-		setInternalSelection(new TextRange(getInternalValue(), start, end));
+		setInternalSelection(new TextRange(getValue(), start, end));
 	}
 
 	/**
@@ -478,31 +439,31 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 				endRow, endCol));
 	}
 
-	/**
-	 * Sets the mode how the TextField triggers {@link TextChangeEvent}s.
-	 * 
-	 * @param inputEventMode
-	 *            the new mode
-	 * 
-	 * @see TextChangeEventMode
-	 */
-	public void setTextChangeEventMode(TextChangeEventMode inputEventMode) {
-		getState().changeMode = inputEventMode.toString();
-	}
-
-	/**
-	 * The text change timeout modifies how often text change events are
-	 * communicated to the application when {@link #setTextChangeEventMode} is
-	 * {@link TextChangeEventMode#LAZY} or {@link TextChangeEventMode#TIMEOUT}.
-	 * 
-	 * 
-	 * @param timeoutMs
-	 *            the timeout in milliseconds
-	 */
-	public void setTextChangeTimeout(int timeoutMs) {
-		getState().changeTimeout = timeoutMs;
-
-	}
+//	/**
+//	 * Sets the mode how the TextField triggers {@link TextChangeEvent}s.
+//	 *
+//	 * @param inputEventMode
+//	 *            the new mode
+//	 *
+//	 * @see TextChangeEventMode
+//	 */
+//	public void setTextChangeEventMode(TextChangeEventMode inputEventMode) {
+//		getState().changeMode = inputEventMode.toString();
+//	}
+//
+//	/**
+//	 * The text change timeout modifies how often text change events are
+//	 * communicated to the application when {@link #setTextChangeEventMode} is
+//	 * {@link TextChangeEventMode#LAZY} or {@link TextChangeEventMode#TIMEOUT}.
+//	 *
+//	 *
+//	 * @param timeoutMs
+//	 *            the timeout in milliseconds
+//	 */
+//	public void setTextChangeTimeout(int timeoutMs) {
+//		getState().changeTimeout = timeoutMs;
+//
+//	}
 
 	/**
 	 * Scrolls to the given row. First row is 0.
@@ -518,7 +479,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	 * 
 	 */
 	public void scrollToPosition(int pos) {
-		int[] rowcol = Util.lineColFromCursorPos(getInternalValue(), pos, 0);
+		int[] rowcol = Util.lineColFromCursorPos(getValue(), pos, 0);
 		scrollToRow(rowcol[0]);
 	}
 
@@ -653,12 +614,17 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	@Override
-	protected void setInternalValue(String newValue) {
-		super.setInternalValue(newValue);
+    public void setValue(String newValue) {
+		super.setValue(newValue);
 		doc = doc.withText(newValue);
 	}
 
-	private void diffFromClient(TransportDiff d) {
+    @Override
+    public String getValue() {
+        return value;
+    }
+
+    private void diffFromClient(TransportDiff d) {
 		String previousText = doc.getText();
 		ServerSideDocDiff diff = ServerSideDocDiff.fromTransportDiff(d);
 		shadow = diff.applyTo(shadow);
@@ -694,8 +660,7 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		if (!isFiringTextChangeEvent) {
 			isFiringTextChangeEvent = true;
 			try {
-				fireEvent(new TextChangeEventImpl(this, getInternalValue(),
-						selection));
+				fireEvent(new TextChangeEventImpl(this, getValue(), selection));
 			} finally {
 				isFiringTextChangeEvent = false;
 			}
