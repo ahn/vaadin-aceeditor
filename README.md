@@ -10,7 +10,7 @@ Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
 I can accept pull requests and put a new version to Vaadin Directory once in a while but not do much beyond that.
 If you'd like to be a more active maintainer, feel free to contact me.**
 
-From version 0.7.0 onwards this add-on requires Vaadin 7. The earlier Vaadin 6 version most likely won't be maintained any more. The new Vaadin 7 version is somewhat changed from the earlier version. Some things are still missing but hopefully will be implemented at some point.
+From version 0.8.0 onwards this add-on requires Vaadin 8. Versions 0.7.x are for Vaadin 7, and versions before that are for Vaadin 6. The "quick and brutal" port to Vaadin 8 by @willtemperley (#56).
 
 * Currently using version 1.1.9 of Ace.
 
@@ -25,7 +25,7 @@ This add-on is still in an experimental phase, interfaces etc. are subject to ch
 
 ## Getting started
 
-1. Start a Vaadin 7 project.
+1. Start a Vaadin 8 project.
 2. Get the [AceEditor addon from Vaadin directory](http://vaadin.com/addon/aceeditor). Maven is recommended.
 3. Compile widgetset.
 4. See [below](#how-to-use) for instructions on how to use the `AceEditor` component. 

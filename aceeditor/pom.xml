@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.8.15-SNAPSHOT</version>
+		<version>0.8.15</version>
 		<relativePath>..</relativePath>
 	</parent>
 

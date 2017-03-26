@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.8.15-SNAPSHOT</version>
+		<version>0.8.15</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>aceeditor-demo</artifactId>
@@ -15,7 +15,6 @@
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
 		<jetty.plugin.version>9.4.2.v20170220</jetty.plugin.version>
 	</properties>
 
@@ -178,7 +177,7 @@
 											vaadin-maven-plugin
 										</artifactId>
 										<versionRange>
-											[7.1.8,)
+                      ${vaadin.version}
 										</versionRange>
 										<goals>
 											<goal>resources</goal>
