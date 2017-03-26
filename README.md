@@ -10,7 +10,7 @@ Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
 I can accept pull requests and put a new version to Vaadin Directory once in a while but not do much beyond that.
 If you'd like to be a more active maintainer, feel free to contact me.**
 
-From version 0.8.0 onwards this add-on requires Vaadin 8. Versions 0.7.x are for Vaadin 7, and versions before that are for Vaadin 6. [The "quick and brutal" port to Vaadin 8 by willtemperley](https://github.com/ahn/vaadin-aceeditor/pull/56). 
+From version 0.8.15 onwards this add-on requires Vaadin 8. Versions 0.7.x are for Vaadin 7, and versions before that are for Vaadin 6. [The "quick and brutal" port to Vaadin 8 by willtemperley](https://github.com/ahn/vaadin-aceeditor/pull/56). 
 
 * Currently using version 1.1.9 of Ace.
 
