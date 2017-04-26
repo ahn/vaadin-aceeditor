@@ -130,8 +130,6 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	public Command handleKeyboard(JavaScriptObject data, int hashId,
 			String keyString, int keyCode, GwtAceKeyboardEvent e) {
 		
-		System.out.println("I am going in!");
-		
 		if (suggesting) {
 			return keyPressWhileSuggesting(keyCode);
 		}
@@ -168,7 +166,21 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		widget.addSelectionChangeListener(this);
 		popup = createSuggestionPopup();
         popup.showDescriptions = this.showDescriptions;
+        popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
 		suggesting = true;
+	}
+	
+	private String parseLastWord(String text, int rowPosition, int colPosition){
+		
+		String[] rows = text.split("\n");
+		String row = rows.length < rowPosition ? "" : rows[rowPosition];
+		
+		row = row.substring(0, colPosition);
+		
+		int startSpace = row.lastIndexOf(" ") + 1;
+		String result = row.substring(startSpace, colPosition);
+		
+		return result;
 	}
 
 	@Override
@@ -204,21 +216,16 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	protected Command keyPressWhileSuggesting(int keyCode) {
 		if (keyCode == 38 /* UP */) {
-			System.out.println("do UP");
 			popup.up();
 		} else if (keyCode == 40 /* DOWN */) {
-			System.out.println("do DOWN");
 			popup.down();
 		} else if (keyCode == 13 /* ENTER */) {
-			System.out.println("do ENTER");
 			popup.select();
 		} else if (keyCode == 27 /* ESC */) {
-			System.out.println("do ESC");
 			popup.close();
 		} else {
-			System.out.println("do NULL");
 			
-			return Command.NULL;
+			return Command.DEFAULT;
 		}
 		return Command.NULL;
 	}
@@ -245,19 +252,12 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		AceRange sel = widget.getSelection();
 		
 		AceRange sug = widget.getInvisibleMarker(suggestionStartId);
-		if (sug.getStartRow()!=sug.getEndRow()) {
-			popup.close();
-		}
-		else if (sel.getEndRow() != sug.getStartRow() || sel.getEndRow() != sug.getEndRow()) {
-			popup.close();
-		} else if (sel.getEndCol()<sug.getStartCol() || sel.getEndCol()>sug.getEndCol()) {
-			popup.close();
-		} else {
-			updatePopupPosition(popup);
-			String s = getWord(widget.getText(), sug.getEndRow(),
-					sug.getStartCol(), sug.getEndCol());
-			popup.setStartOfValue(s);
-		}
+		
+		suggStartCursor = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
+
+		updatePopupPosition(popup);
+			
+		popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
 	}
 
 	protected void updatePopupPosition(SuggestPopup popup) {

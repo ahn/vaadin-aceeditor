@@ -51,7 +51,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
 	public SuggestPopup() {
 		super(true);
-		setWidth(150 + "px");
+		setWidth(WIDTH + "px");
 		SuggestionResources resources = GWT.create(SuggestionResources.class);
 		loadingImage = new Image(resources.loading());
 		setWidget(loadingImage);
@@ -135,10 +135,12 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		int keyCode = event.getNativeKeyCode();
 		if (keyCode == KeyCodes.KEY_ENTER
 				&& choiceList.getSelectedIndex() != -1) {
+			
 			event.preventDefault();
 			event.stopPropagation();
 			select();
 		} else if (keyCode == KeyCodes.KEY_ESCAPE) {
+			
 			event.preventDefault();
 			close();
 		}
