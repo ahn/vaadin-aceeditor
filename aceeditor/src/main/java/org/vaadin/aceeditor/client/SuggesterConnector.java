@@ -72,6 +72,12 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	protected boolean suggestOnDot = true;
 
     protected boolean showDescriptions = true;
+    
+    protected int popupWidth = 150;
+    
+    protected int popupHeight = 200;
+    
+    protected int popupDescriptionWidth = 225;
 
 	public SuggesterConnector() {
 		registerRpc(SuggesterClientRpc.class, clientRpc);
@@ -83,6 +89,10 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 		this.suggestOnDot = getState().suggestOnDot;
         this.showDescriptions = getState().showDescriptions;
+        
+        this.popupWidth = getState().popupWidth;
+        this.popupHeight = getState().popupHeight;
+        this.popupDescriptionWidth = getState().popupDescriptionWidth;
 	}
 	
 	@Override
@@ -101,6 +111,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		sp.setOwner(widget);
 		updatePopupPosition(sp);
 		sp.setSuggestionSelectedListener(this);
+		sp.setWidth(popupWidth);
+		sp.setHeight(popupHeight);
+		sp.setDescriptionWidth(popupDescriptionWidth);
 		sp.show();
 		return sp;
 	}
@@ -115,6 +128,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	@Override
 	public Command handleKeyboard(JavaScriptObject data, int hashId,
 			String keyString, int keyCode, GwtAceKeyboardEvent e) {
+		
+		System.out.println("I am going in!");
+		
 		if (suggesting) {
 			return keyPressWhileSuggesting(keyCode);
 		}
@@ -187,15 +203,21 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	protected Command keyPressWhileSuggesting(int keyCode) {
 		if (keyCode == 38 /* UP */) {
+			System.out.println("do UP");
 			popup.up();
 		} else if (keyCode == 40 /* DOWN */) {
+			System.out.println("do DOWN");
 			popup.down();
 		} else if (keyCode == 13 /* ENTER */) {
+			System.out.println("do ENTER");
 			popup.select();
 		} else if (keyCode == 27 /* ESC */) {
+			System.out.println("do ESC");
 			popup.close();
 		} else {
-			return Command.DEFAULT;
+			System.out.println("do NULL");
+			
+			return Command.NULL;
 		}
 		return Command.NULL;
 	}

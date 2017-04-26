@@ -39,10 +39,10 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
     protected Image loadingImage;
 
-	public static final int WIDTH = 150;
-	public static final int HEIGHT = 200;
+	public static int WIDTH = 150;
+	public static int HEIGHT = 200;
 
-	public static final int DESCRIPTION_WIDTH = 225;
+	public static int DESCRIPTION_WIDTH = 225;
 
 	// TODO addSuggestionSelectedListener?
 	public void setSuggestionSelectedListener(SuggestionSelectedListener ssl) {
@@ -51,7 +51,7 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
 	public SuggestPopup() {
 		super(true);
-		setWidth(WIDTH + "px");
+		setWidth(150 + "px");
 		SuggestionResources resources = GWT.create(SuggestionResources.class);
 		loadingImage = new Image(resources.loading());
 		setWidget(loadingImage);
@@ -264,4 +264,17 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		}
 	}
 
+	public void setWidth(int width){
+		WIDTH = width;
+		setWidth(width + "px");
+	}
+	
+	public void setHeight(int height){
+		HEIGHT = height;
+		setHeight(height + "px");
+	}
+	
+	public void setDescriptionWidth(int width){
+		DESCRIPTION_WIDTH = width;
+	}
 }
