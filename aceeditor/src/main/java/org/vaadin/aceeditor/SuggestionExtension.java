@@ -99,4 +99,16 @@ public class SuggestionExtension extends AbstractExtension {
     public boolean isShowDescriptions() {
         return getState(false).showDescriptions;
     }
+    
+    public void setPopupWidth(int width){
+    	getState().popupWidth = width;
+    }
+    
+    public void setPopupHeight(int height){
+    	getState().popupHeight = height;
+    }
+    
+    public void setpopupDescriptionWidth(int width){
+    	getState().popupDescriptionWidth = width;
+    }
 }
