@@ -39,8 +39,8 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 
     protected Image loadingImage;
 
-	public static int WIDTH = 150;
-	public static int HEIGHT = 200;
+	public static int WIDTH = 1500;
+	public static int HEIGHT = 2000;
 
 	public static int DESCRIPTION_WIDTH = 225;
 
@@ -135,10 +135,16 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 		int keyCode = event.getNativeKeyCode();
 		if (keyCode == KeyCodes.KEY_ENTER
 				&& choiceList.getSelectedIndex() != -1) {
+			
+			System.out.println("ENTÖÖÖR!");
+			
 			event.preventDefault();
 			event.stopPropagation();
 			select();
 		} else if (keyCode == KeyCodes.KEY_ESCAPE) {
+			
+			System.out.println("ESCÄÄÄP!");
+			
 			event.preventDefault();
 			close();
 		}
