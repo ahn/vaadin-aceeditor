@@ -674,7 +674,7 @@ public class AceEditorDemo extends UI {
 				
 				ext = new SuggestionExtension(new MySuggester());
 				ext.extend(ee);
-				ext.setPopupWidth(width);
+				//ext.setPopupWidth(width);
 			}
 			
 			class IncreaseClickListener implements ClickListener{
