@@ -647,19 +647,46 @@ public class AceEditorDemo extends UI {
 		Button b = new Button("Open suggestion demo");
 		b.addClickListener(new ClickListener() {
 
+			int width = 10;
+			SuggestionExtension ext;
+			
 			@Override
 			public void buttonClick(ClickEvent event) {
 				Window w = new Window("Press Ctrl+Space for suggestions.");
 				w.setWidth("50%");
 				w.setHeight("50%");
 				w.center();
+				
+				VerticalLayout wrapper = new VerticalLayout();
+				wrapper.setSizeFull();
+				wrapper.setSpacing(true);
+				
+				Button increase = new Button("increase", new IncreaseClickListener());
+				
 				AceEditor ee = new AceEditor();
 				ee.setValue("Press Ctrl+Space for suggestions.\nOr type a dot.");
 				ee.setSizeFull();
-				w.setContent(ee);
+				
+				wrapper.addComponents(increase, ee);
+				
+				w.setContent(wrapper);
 				UI.getCurrent().addWindow(w);
 				
-				new SuggestionExtension(new MySuggester()).extend(ee);
+				ext = new SuggestionExtension(new MySuggester());
+				ext.extend(ee);
+				//ext.setPopupWidth(width);
+			}
+			
+			class IncreaseClickListener implements ClickListener{
+
+				@Override
+				public void buttonClick(ClickEvent event) {
+					width += 100;
+					ext.setPopupWidth(width);
+					ext.setPopupHeight(width);
+					ext.setpopupDescriptionWidth(width);
+				}
+				
 			}
 			
 		});

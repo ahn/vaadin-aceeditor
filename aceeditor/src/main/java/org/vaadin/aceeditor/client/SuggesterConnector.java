@@ -72,6 +72,12 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	protected boolean suggestOnDot = true;
 
     protected boolean showDescriptions = true;
+    
+    protected int popupWidth = 150;
+    
+    protected int popupHeight = 200;
+    
+    protected int popupDescriptionWidth = 225;
 
 	public SuggesterConnector() {
 		registerRpc(SuggesterClientRpc.class, clientRpc);
@@ -83,6 +89,10 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 		this.suggestOnDot = getState().suggestOnDot;
         this.showDescriptions = getState().showDescriptions;
+        
+        this.popupWidth = getState().popupWidth;
+        this.popupHeight = getState().popupHeight;
+        this.popupDescriptionWidth = getState().popupDescriptionWidth;
 	}
 	
 	@Override
@@ -101,6 +111,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		sp.setOwner(widget);
 		updatePopupPosition(sp);
 		sp.setSuggestionSelectedListener(this);
+		sp.setWidth(popupWidth);
+		sp.setHeight(popupHeight);
+		sp.setDescriptionWidth(popupDescriptionWidth);
 		sp.show();
 		return sp;
 	}
@@ -115,6 +128,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	@Override
 	public Command handleKeyboard(JavaScriptObject data, int hashId,
 			String keyString, int keyCode, GwtAceKeyboardEvent e) {
+		
 		if (suggesting) {
 			return keyPressWhileSuggesting(keyCode);
 		}
@@ -151,7 +165,21 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		widget.addSelectionChangeListener(this);
 		popup = createSuggestionPopup();
         popup.showDescriptions = this.showDescriptions;
+        popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
 		suggesting = true;
+	}
+	
+	private String parseLastWord(String text, int rowPosition, int colPosition){
+		
+		String[] rows = text.split("\n");
+		String row = rows.length < rowPosition ? "" : rows[rowPosition];
+		
+		row = row.substring(0, colPosition);
+		
+		int startSpace = row.lastIndexOf(" ") + 1;
+		String result = row.substring(startSpace, colPosition);
+		
+		return result;
 	}
 
 	@Override
@@ -195,6 +223,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		} else if (keyCode == 27 /* ESC */) {
 			popup.close();
 		} else {
+			
 			return Command.DEFAULT;
 		}
 		return Command.NULL;
@@ -222,19 +251,12 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		AceRange sel = widget.getSelection();
 		
 		AceRange sug = widget.getInvisibleMarker(suggestionStartId);
-		if (sug.getStartRow()!=sug.getEndRow()) {
-			popup.close();
-		}
-		else if (sel.getEndRow() != sug.getStartRow() || sel.getEndRow() != sug.getEndRow()) {
-			popup.close();
-		} else if (sel.getEndCol()<sug.getStartCol() || sel.getEndCol()>sug.getEndCol()) {
-			popup.close();
-		} else {
-			updatePopupPosition(popup);
-			String s = getWord(widget.getText(), sug.getEndRow(),
-					sug.getStartCol(), sug.getEndCol());
-			popup.setStartOfValue(s);
-		}
+		
+		suggStartCursor = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
+
+		updatePopupPosition(popup);
+			
+		popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
 	}
 
 	protected void updatePopupPosition(SuggestPopup popup) {
