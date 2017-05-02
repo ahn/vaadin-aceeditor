@@ -382,8 +382,8 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	public void removeSelectionChangeListener(SelectionChangeListener listener) {
 		removeListener(SelectionChangeEvent.EVENT_ID,
 				SelectionChangeEvent.class, listener);
-		getState().listenToSelectionChanges = !getListeners(
-				SelectionChangeEvent.class).isEmpty();
+		getState().listenToSelectionChanges = true;/*!getListeners(
+				SelectionChangeEvent.class).isEmpty();*/
 	}
 
 	@Override
