@@ -254,22 +254,9 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		
 		suggStartCursor = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
 
-//		if (sug.getStartRow()!=sug.getEndRow()) {
-//			popup.close();
-//		}
-//		else if (sel.getEndRow() != sug.getStartRow() || sel.getEndRow() != sug.getEndRow()) {
-//			popup.close();
-//		} else if (sel.getEndCol()<sug.getStartCol() || sel.getEndCol()>sug.getEndCol()) {
-//			popup.close();
-//		} else {
-			updatePopupPosition(popup);
-//			String s = getWord(widget.getText(), sug.getEndRow(),
-//					sug.getStartCol(), sug.getEndCol());
+		updatePopupPosition(popup);
 			
-			//popup.setStartOfValue(s);
-			
-			popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
-//		}
+		popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
 	}
 
 	protected void updatePopupPosition(SuggestPopup popup) {
