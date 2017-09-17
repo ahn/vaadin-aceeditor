@@ -39,6 +39,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
     protected AceEditorConnector connector;
     protected AceEditorWidget widget;
+    private String suggestText = ".";
 
     protected SuggesterServerRpc serverRpc = RpcProxy.create(
 			SuggesterServerRpc.class, this);
@@ -128,7 +129,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		if (keyCode == 32 && e.isCtrlKey()) {
 			startSuggesting();
 			return Command.NULL;
-		} else if (suggestOnDot && ".".equals(keyString)) {
+		} else if (suggestOnDot && suggestText.equals(keyString)) {
 			startSuggestingOnNextSelectionChange = true;
 			widget.addSelectionChangeListener(this);
 			return Command.DEFAULT;
@@ -257,4 +258,13 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		*/
 		popup.setPopupPosition(x, y);
 	}
+
+	public String getSuggestText() {
+		return suggestText;
+	}
+
+	public void setSuggestText(String suggestText) {
+		this.suggestText = suggestText;
+	}
+	
 }
