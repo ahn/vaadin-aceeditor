@@ -90,6 +90,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 		this.suggestOnDot = getState().suggestOnDot;
         this.showDescriptions = getState().showDescriptions;
+        this.suggestText = getState().suggestText;
         
         this.popupWidth = getState().popupWidth;
         this.popupHeight = getState().popupHeight;
@@ -129,7 +130,6 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	@Override
 	public Command handleKeyboard(JavaScriptObject data, int hashId,
 			String keyString, int keyCode, GwtAceKeyboardEvent e) {
-		
 		if (suggesting) {
 			return keyPressWhileSuggesting(keyCode);
 		}
@@ -166,21 +166,7 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		widget.addSelectionChangeListener(this);
 		popup = createSuggestionPopup();
         popup.showDescriptions = this.showDescriptions;
-        popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
 		suggesting = true;
-	}
-	
-	private String parseLastWord(String text, int rowPosition, int colPosition){
-		
-		String[] rows = text.split("\n");
-		String row = rows.length < rowPosition ? "" : rows[rowPosition];
-		
-		row = row.substring(0, colPosition);
-		
-		int startSpace = row.lastIndexOf(" ") + 1;
-		String result = row.substring(startSpace, colPosition);
-		
-		return result;
 	}
 
 	@Override
@@ -224,7 +210,6 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		} else if (keyCode == 27 /* ESC */) {
 			popup.close();
 		} else {
-			
 			return Command.DEFAULT;
 		}
 		return Command.NULL;
@@ -252,12 +237,19 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		AceRange sel = widget.getSelection();
 		
 		AceRange sug = widget.getInvisibleMarker(suggestionStartId);
-		
-		suggStartCursor = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
-
-		updatePopupPosition(popup);
-			
-		popup.setStartOfValue(parseLastWord(widget.getText(), suggStartCursor.getEndRow(), suggStartCursor.getEndCol()));
+		if (sug.getStartRow()!=sug.getEndRow()) {
+			popup.close();
+		}
+		else if (sel.getEndRow() != sug.getStartRow() || sel.getEndRow() != sug.getEndRow()) {
+			popup.close();
+		} else if (sel.getEndCol()<sug.getStartCol() || sel.getEndCol()>sug.getEndCol()) {
+			popup.close();
+		} else {
+			updatePopupPosition(popup);
+			String s = getWord(widget.getText(), sug.getEndRow(),
+					sug.getStartCol(), sug.getEndCol());
+			popup.setStartOfValue(s);
+		}
 	}
 
 	protected void updatePopupPosition(SuggestPopup popup) {

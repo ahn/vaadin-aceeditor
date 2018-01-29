@@ -5,8 +5,10 @@ import com.vaadin.shared.communication.SharedState;
 @SuppressWarnings("serial")
 public class SuggesterState extends SharedState {
 	public boolean suggestOnDot = true;
-	// TODO?
+
     public boolean showDescriptions = true;
+    
+    public String suggestText = ".";
     
     public int popupWidth = 150;
     
