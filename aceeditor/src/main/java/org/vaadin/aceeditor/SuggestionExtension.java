@@ -16,11 +16,11 @@ import com.vaadin.server.AbstractExtension;
 
 /**
  * Extends {@link AceEditor} with suggestion possibility.
- * 
+ *
  * By default Ctrl+Space and dot (".") triggers a suggester.
- * 
+ *
  * A {@link Suggester} is queried for {@link Suggestion}s.
- * 
+ *
  */
 @StyleSheet("suggestionpopup.css")
 @SuppressWarnings("serial")
@@ -28,38 +28,38 @@ public class SuggestionExtension extends AbstractExtension {
 
 	protected Suggester suggester;
 
-    protected String suggStartText;
-    protected int suggStartCursor;
-    protected List<Suggestion> suggestions;
-    protected AceRange suggRange;
+	protected String suggStartText;
+	protected int suggStartCursor;
+	protected List<Suggestion> suggestions;
+	protected AceRange suggRange;
 
-	public SuggestionExtension(Suggester suggester) {
+	public SuggestionExtension(final Suggester suggester) {
 		this.suggester = suggester;
 	}
 
 	protected SuggesterServerRpc serverRpc = new SuggesterServerRpc() {
 
 		@Override
-		public void suggest(String text, TransportRange sel) {
-			suggStartText = text;
-			suggRange = AceRange.fromTransport(sel);
-			suggStartCursor = new TextRange(text, suggRange).getEnd();
-			suggestions = suggester.getSuggestions(text, suggStartCursor);
-			getRpcProxy(SuggesterClientRpc.class).showSuggestions(
-					asTransport(suggestions));
+		public void suggest(final String text, final TransportRange sel) {
+			SuggestionExtension.this.suggStartText = text;
+			SuggestionExtension.this.suggRange = AceRange.fromTransport(sel);
+			SuggestionExtension.this.suggStartCursor = new TextRange(text, SuggestionExtension.this.suggRange).getEnd();
+			SuggestionExtension.this.suggestions = SuggestionExtension.this.suggester.getSuggestions(text, SuggestionExtension.this.suggStartCursor);
+			SuggestionExtension.this.getRpcProxy(SuggesterClientRpc.class).showSuggestions(
+					SuggestionExtension.this.asTransport(SuggestionExtension.this.suggestions));
 		}
 
 		@Override
-		public void suggestionSelected(int index) {
+		public void suggestionSelected(final int index) {
 
-			Suggestion sugg = suggestions.get(index);
-			String text2 = suggester.applySuggestion(sugg, suggStartText,
-					suggStartCursor);
+			final Suggestion sugg = SuggestionExtension.this.suggestions.get(index);
+			final String text2 = SuggestionExtension.this.suggester.applySuggestion(sugg, SuggestionExtension.this.suggStartText,
+					SuggestionExtension.this.suggStartCursor);
 			// XXX too much work
-			AceDoc doc1 = new AceDoc(suggStartText);
-			AceDoc doc2 = new AceDoc(text2);
-			ServerSideDocDiff diff = ServerSideDocDiff.diff(doc1, doc2);
-			getRpcProxy(SuggesterClientRpc.class).applySuggestionDiff(
+			final AceDoc doc1 = new AceDoc(SuggestionExtension.this.suggStartText);
+			final AceDoc doc2 = new AceDoc(text2);
+			final ServerSideDocDiff diff = ServerSideDocDiff.diff(doc1, doc2);
+			SuggestionExtension.this.getRpcProxy(SuggesterClientRpc.class).applySuggestionDiff(
 					diff.asTransport());
 		}
 	};
@@ -69,46 +69,50 @@ public class SuggestionExtension extends AbstractExtension {
 		return (SuggesterState) super.getState();
 	}
 
-    @Override
-    protected SuggesterState getState(boolean markAsDirty) {
-        return (SuggesterState) super.getState(markAsDirty);
-    }
+	@Override
+	protected SuggesterState getState(final boolean markAsDirty) {
+		return (SuggesterState) super.getState(markAsDirty);
+	}
 
-    protected List<TransportSuggestion> asTransport(List<Suggestion> suggs) {
-		LinkedList<TransportSuggestion> tl = new LinkedList<TransportSuggestion>();
+	protected List<TransportSuggestion> asTransport(final List<Suggestion> suggs) {
+		final LinkedList<TransportSuggestion> tl = new LinkedList<>();
 		int i = 0;
-		for (Suggestion s : suggs) {
+		for (final Suggestion s : suggs) {
 			tl.add(s.asTransport(i++));
 		}
 		return tl;
 	}
 
-	public void setSuggestOnDot(boolean on) {
-		getState().suggestOnDot = on;
+	public Suggester getSuggester() {
+		return this.suggester;
 	}
 
-	public void extend(AceEditor editor) {
+	public void setSuggestOnDot(final boolean on) {
+		this.getState().suggestOnDot = on;
+	}
+
+	public void extend(final AceEditor editor) {
 		super.extend(editor);
-		registerRpc(serverRpc);
+		this.registerRpc(this.serverRpc);
 	}
 
-    public void setShowDescriptions(boolean showDescriptions) {
-        getState().showDescriptions = showDescriptions;
-    }
+	public void setShowDescriptions(final boolean showDescriptions) {
+		this.getState().showDescriptions = showDescriptions;
+	}
 
-    public boolean isShowDescriptions() {
-        return getState(false).showDescriptions;
-    }
-    
-    public void setPopupWidth(int width){
-    	getState().popupWidth = width;
-    }
-    
-    public void setPopupHeight(int height){
-    	getState().popupHeight = height;
-    }
-    
-    public void setpopupDescriptionWidth(int width){
-    	getState().popupDescriptionWidth = width;
-    }
+	public boolean isShowDescriptions() {
+		return this.getState(false).showDescriptions;
+	}
+
+	public void setPopupWidth(final int width){
+		this.getState().popupWidth = width;
+	}
+
+	public void setPopupHeight(final int height){
+		this.getState().popupHeight = height;
+	}
+
+	public void setpopupDescriptionWidth(final int width){
+		this.getState().popupDescriptionWidth = width;
+	}
 }
