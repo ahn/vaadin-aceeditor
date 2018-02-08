@@ -863,4 +863,10 @@ GwtAceChangeSelectionHandler, GwtAceChangeCursorHandler {
 		final String newText = Util.replaceContents(r, this.text, "");
 		this.setTextAndAdjust(newText);
 	}
+
+	public String getEditorId() {
+		return this.editorId;
+	}
+
+
 }

@@ -8,6 +8,7 @@ import org.vaadin.aceeditor.client.AceRange;
 import org.vaadin.aceeditor.client.SuggesterClientRpc;
 import org.vaadin.aceeditor.client.SuggesterServerRpc;
 import org.vaadin.aceeditor.client.SuggesterState;
+import org.vaadin.aceeditor.client.TransportDiff;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRange;
 import org.vaadin.aceeditor.client.TransportSuggestion;
 
@@ -59,8 +60,13 @@ public class SuggestionExtension extends AbstractExtension {
 			final AceDoc doc1 = new AceDoc(SuggestionExtension.this.suggStartText);
 			final AceDoc doc2 = new AceDoc(text2);
 			final ServerSideDocDiff diff = ServerSideDocDiff.diff(doc1, doc2);
+			final TransportDiff asTransport = diff.asTransport();
+			if (sugg.getSelectionStart() != null) {
+				asTransport.selectionStart = SuggestionExtension.this.suggStartCursor + sugg.getSelectionStart();
+				asTransport.selectionEnd = SuggestionExtension.this.suggStartCursor + sugg.getSelectionEnd();
+			}
 			SuggestionExtension.this.getRpcProxy(SuggesterClientRpc.class).applySuggestionDiff(
-					diff.asTransport());
+					asTransport);
 		}
 	};
 

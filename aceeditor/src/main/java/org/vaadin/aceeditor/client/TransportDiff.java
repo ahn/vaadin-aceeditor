@@ -121,6 +121,8 @@ public class TransportDiff implements Serializable {
 	public TransportMarkerSetDiff markerSetDiff;
 	public TransportSetDiffForRowAnnotations rowAnnDiff;
 	public TransportSetDiffForMarkerAnnotations markerAnnDiff;
+	public Integer selectionStart;
+	public Integer selectionEnd;
 
 	@Override
 	public String toString() {

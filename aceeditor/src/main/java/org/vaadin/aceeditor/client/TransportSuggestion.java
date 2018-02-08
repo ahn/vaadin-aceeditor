@@ -8,5 +8,7 @@ public class TransportSuggestion implements Serializable {
 	public String displayText;
 	public String descriptionText;
 	public String suggestionText;
+	public Integer selectionStart;
+	public Integer selectionEnd;
 	public int index;
 }

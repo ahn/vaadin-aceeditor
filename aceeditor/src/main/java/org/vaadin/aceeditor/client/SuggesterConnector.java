@@ -56,8 +56,10 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 		public void applySuggestionDiff(final TransportDiff td) {
 			SuggesterConnector.this.stopSuggesting();
 			final ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(td);
-			SuggesterConnector.this.widget.setTextAndAdjust(diff.applyTo(SuggesterConnector.this.widget.getDoc()).getText());
+			final String text = diff.applyTo(SuggesterConnector.this.widget.getDoc()).getText();
+			SuggesterConnector.this.widget.setTextAndAdjust(text);
 			SuggesterConnector.this.widget.fireTextChanged(); // XXX we need to do this here to alert AceEditorConnector...
+			SuggesterConnector.this.widget.setSelection(AceRange.fromPositions(td.selectionStart, td.selectionEnd, text));
 		}
 	};
 
