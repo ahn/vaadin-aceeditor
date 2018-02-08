@@ -5,43 +5,45 @@ import org.vaadin.aceeditor.client.Util;
 
 public class TextRange extends AceRange {
 
+	private static final long serialVersionUID = 1L;
+
 	private final String text;
 	int start = -1;
 	int end = -1;
-	
-	public TextRange(String text, int row1, int col1, int row2, int col2) {
+
+	public TextRange(final String text, final int row1, final int col1, final int row2, final int col2) {
 		super(row1, col1, row2, col2);
 		this.text = text;
 	}
-	
-	public TextRange(String text, AceRange range) {
+
+	public TextRange(final String text, final AceRange range) {
 		this(text, range.getStartRow(), range.getStartCol(), range.getEndRow(), range.getEndCol());
 	}
-	
-	public TextRange(String text, int start, int end) {
+
+	public TextRange(final String text, final int start, final int end) {
 		this(text, AceRange.fromPositions(start, end, text));
 	}
 
 	public int getStart() {
-		if (start==-1) {
-			start = Util.cursorPosFromLineCol(text, getStartRow(), getStartCol(), 0);
+		if (this.start==-1) {
+			this.start = Util.cursorPosFromLineCol(this.text, this.getStartRow(), this.getStartCol(), 0);
 		}
-		return start;
+		return this.start;
 	}
 
 	public int getEnd() {
-		if (end==-1) {
-			end = Util.cursorPosFromLineCol(text, getEndRow(), getEndCol(), 0);
+		if (this.end==-1) {
+			this.end = Util.cursorPosFromLineCol(this.text, this.getEndRow(), this.getEndCol(), 0);
 		}
-		return end;
+		return this.end;
 	}
-	
+
 	public int getCursorPosition() {
-		return getEnd();
+		return this.getEnd();
 	}
-	
-	public TextRange withNewText(String newText) {
-		return new TextRange(newText, getStart(), getEnd());
+
+	public TextRange withNewText(final String newText) {
+		return new TextRange(newText, this.getStart(), this.getEnd());
 	}
-	
+
 }

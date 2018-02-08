@@ -16,9 +16,8 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ComponentConnector;
-import com.vaadin.client.ConnectorHierarchyChangeEvent;
 import com.vaadin.client.ComputedStyle;
-import com.vaadin.client.VConsole;
+import com.vaadin.client.ConnectorHierarchyChangeEvent;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.AbstractHasComponentsConnector;
@@ -29,106 +28,103 @@ import com.vaadin.shared.ui.Connect;
 @SuppressWarnings("serial")
 @Connect(AceEditor.class)
 public class AceEditorConnector extends AbstractHasComponentsConnector
-		implements TextChangeListener, SelectionChangeListener, FocusChangeListener {
+implements TextChangeListener, SelectionChangeListener, FocusChangeListener {
 
-//	private static Logger logger = Logger.getLogger(AceEditorConnector.class.getName());
-
-    protected AceEditorServerRpc serverRpc =
-            RpcProxy.create(AceEditorServerRpc.class, this);
+	protected AceEditorServerRpc serverRpc =
+			RpcProxy.create(AceEditorServerRpc.class, this);
 
 
-    protected enum TextChangeEventMode {
+	protected enum TextChangeEventMode {
 		EAGER, TIMEOUT, LAZY
 	}
 
-    protected TextChangeEventMode changeMode = null;
-    protected int changeTimeout = 400;
+	protected TextChangeEventMode changeMode = null;
+	protected int changeTimeout = 400;
 
-    protected class SendTimer extends Timer {
+	protected class SendTimer extends Timer {
 		private boolean scheduled;
 		private SendCond send = SendCond.NO;
-		
-		public void schedule(int ms, SendCond send) {
+
+		public void schedule(final int ms, final SendCond sendCond) {
 			super.schedule(ms);
-			this.send = this.send.or(send);
-			scheduled = true;
+			this.send = this.send.or(sendCond);
+			this.scheduled = true;
 		}
 
-		public void scheduleIfNotAlready(int ms, SendCond send) {
-			if (!scheduled) {
-				schedule(ms,send);
+		public void scheduleIfNotAlready(final int ms, final SendCond sendCond) {
+			if (!this.scheduled) {
+				this.schedule(ms, sendCond);
 			}
 		}
 
 		@Override
 		public void run() {
-			scheduled = false;
-			sendToServerImmediately(send);
-			send = SendCond.NO;
+			this.scheduled = false;
+			AceEditorConnector.this.sendToServerImmediately(this.send);
+			this.send = SendCond.NO;
 		}
-		
+
 		@Override
 		public void cancel() {
 			super.cancel();
-			send = SendCond.NO;
+			this.send = SendCond.NO;
 		}
 	}
 
 	protected SendTimer sendTimer = null;
 
-    protected AceDoc shadow;
+	protected AceDoc shadow;
 
-    protected boolean onRoundtrip = false;
-    
-    protected enum SendCond {
-    	NO, IF_CHANGED, ALWAYS;
-		public SendCond or(SendCond sw2) {
+	protected boolean onRoundtrip = false;
+
+	protected enum SendCond {
+		NO, IF_CHANGED, ALWAYS;
+		public SendCond or(final SendCond sw2) {
 			return this.ordinal() > sw2.ordinal() ? this : sw2;
 		}
-    }
-    
-    protected SendCond sendAfterRoundtrip = SendCond.NO;
+	}
 
-    protected AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
+	protected SendCond sendAfterRoundtrip = SendCond.NO;
+
+	protected AceEditorClientRpc clientRpc = new AceEditorClientRpc() {
 		@Override
-		public void diff(TransportDiff ad) {
-			VConsole.log("diff!!!");
-			ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(ad);
-			shadow = diff.applyTo(shadow);
-			
-			AceDoc doc1 = getWidget().getDoc();
-			AceDoc doc2 = diff.applyTo(doc1);
+		public void diff(final TransportDiff ad) {
+			final ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(ad);
+			AceEditorConnector.this.shadow = diff.applyTo(AceEditorConnector.this.shadow);
 
-			getWidget().setDoc(doc2);
+			final AceDoc doc1 = AceEditorConnector.this.getWidget().getDoc();
+			final AceDoc doc2 = diff.applyTo(doc1);
 
-			if (selectionAfterApplyingDiff!=null) {
-				getWidget().setSelection(selectionAfterApplyingDiff);
-				selectionAfterApplyingDiff = null;
+			AceEditorConnector.this.getWidget().setDoc(doc2);
+
+			if (AceEditorConnector.this.selectionAfterApplyingDiff!=null) {
+				AceEditorConnector.this.getWidget().setSelection(AceEditorConnector.this.selectionAfterApplyingDiff);
+				AceEditorConnector.this.selectionAfterApplyingDiff = null;
 			}
 
-			if (scrollToRowAfterApplyingDiff != -1) {
-				getWidget().scrollToRow(scrollToRowAfterApplyingDiff);
-				scrollToRowAfterApplyingDiff = -1;
+			if (AceEditorConnector.this.scrollToRowAfterApplyingDiff != -1) {
+				AceEditorConnector.this.getWidget().scrollToRow(AceEditorConnector.this.scrollToRowAfterApplyingDiff);
+				AceEditorConnector.this.scrollToRowAfterApplyingDiff = -1;
 			}
-			
+
 			if (!doc1.getText().equals(doc2.getText())) {
-				sendAfterRoundtrip = sendAfterRoundtrip.or(SendCond.ALWAYS);
+				AceEditorConnector.this.sendAfterRoundtrip = AceEditorConnector.this.sendAfterRoundtrip.or(SendCond.ALWAYS);
 			}
-			setOnRoundtrip(false);
+			AceEditorConnector.this.setOnRoundtrip(false);
 		}
 
 		@Override
 		public void changedOnServer() {
-			if (!isOnRoundtrip()) {
-				sendToServer(SendCond.ALWAYS, true);
+			if (!AceEditorConnector.this.isOnRoundtrip()) {
+				AceEditorConnector.this.sendToServer(SendCond.ALWAYS, true);
 			}
 			// else ? should we send after roundtrip or not?
 		}
 
 	};
 
-    protected boolean listenToSelectionChanges;
-    protected boolean listenToFocusChanges;
+	protected boolean listenToSelectionChanges;
+	protected boolean listenToFocusChanges;
 
 	// When setting selection or scrollToRow, we must make
 	// sure that the text value is set before that.
@@ -141,126 +137,126 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 
 	public AceEditorConnector() {
 		super();
-		registerRpc(AceEditorClientRpc.class, clientRpc);
+		this.registerRpc(AceEditorClientRpc.class, this.clientRpc);
 	}
-	
+
 	@Override
 	public void init() {
 		super.init();
-		
+
 		// Needed if inside a resizable subwindow.
 		// Should we check that and only listen if yes?
-		getLayoutManager().addElementResizeListener(getWidget().getElement(), new ElementResizeListener() {
+		this.getLayoutManager().addElementResizeListener(this.getWidget().getElement(), new ElementResizeListener() {
 			@Override
-			public void onElementResize(ElementResizeEvent e) {
-                getWidget().resize();
+			public void onElementResize(final ElementResizeEvent e) {
+				AceEditorConnector.this.getWidget().resize();
 			}
 		});
 	}
-	
+
 	@Override
-	public void onStateChanged(StateChangeEvent stateChangeEvent) {
+	public void onStateChanged(final StateChangeEvent stateChangeEvent) {
 		super.onStateChanged(stateChangeEvent);
 
-		setTextChangeEventMode(getState().changeMode);
-		setTextChangeTimeout(getState().changeTimeout);
-		
-		ClientSideDocDiff.dmp.setDiff_EditCost(getState().diff_editCost);
+		this.setTextChangeEventMode(this.getState().changeMode);
+		this.setTextChangeTimeout(this.getState().changeTimeout);
+
+		ClientSideDocDiff.dmp.setDiff_EditCost(this.getState().diff_editCost);
 
 		// TODO: are these needed?
-//		widget.setHideErrors(getState().hideErrors);
-//		widget.setRequired(getState().required);
-//		widget.setModified(getState().modified);
-		
-		boolean firstTime = !getWidget().isInitialized();
+		//		widget.setHideErrors(getState().hideErrors);
+		//		widget.setRequired(getState().required);
+		//		widget.setModified(getState().modified);
+
+		final boolean firstTime = !this.getWidget().isInitialized();
 		if (firstTime) {
 			// To make sure Ace config is applied before the editor is created,
 			// we delay the initialization till then first call to onStateChanged,
 			// not initializing in createWidget() right away.
-			applyConfig(getState().config);
-            getWidget().initialize();
+			AceEditorConnector.applyConfig(this.getState().config);
+			this.getWidget().initialize();
 		}
 
-        getWidget().setMode(getState().mode);
-        getWidget().setTheme(getState().theme);
-		listenToSelectionChanges = getState().listenToSelectionChanges;
-		listenToFocusChanges = getState().listenToFocusChanges;
-        getWidget().setUseWorker(getState().useWorker);
-        getWidget().setWordwrap(getState().wordwrap);
+		this.getWidget().setMode(this.getState().mode);
+		this.getWidget().setTheme(this.getState().theme);
+		this.listenToSelectionChanges = this.getState().listenToSelectionChanges;
+		this.listenToFocusChanges = this.getState().listenToFocusChanges;
+		this.getWidget().setUseWorker(this.getState().useWorker);
+		this.getWidget().setWordwrap(this.getState().wordwrap);
 
-        getWidget().setShowGutter(getState().showGutter);
-        getWidget().setShowPrintMargin(getState().showPrintMargin);
-        getWidget().setHighlightActiveLineEnabled(getState().highlightActiveLine);
+		this.getWidget().setShowGutter(this.getState().showGutter);
+		this.getWidget().setShowPrintMargin(this.getState().showPrintMargin);
+		this.getWidget().setHighlightActiveLineEnabled(this.getState().highlightActiveLine);
 
-        getWidget().setEnabled(getState().enabled);
-//        getWidget().setPropertyReadOnly(getState().propertyReadOnly);
-        getWidget().setTabIndex(getState().tabIndex);
-        getWidget().setReadOnly(getState().readOnly);
+		this.getWidget().setEnabled(this.getState().enabled);
+		//        getWidget().setPropertyReadOnly(getState().propertyReadOnly);
+		this.getWidget().setTabIndex(this.getState().tabIndex);
+		this.getWidget().setReadOnly(this.getState().readOnly);
 
-        if (stateChangeEvent.hasPropertyChanged("fontSize")) {
-            String fontSize = getState().fontSize;
+		if (stateChangeEvent.hasPropertyChanged("fontSize")) {
+			String fontSize = this.getState().fontSize;
 
-            if ("auto".equals(fontSize)) {
-                // detect font size from CSS
-                Element fontSizeMeasureElement = Document.get().createDivElement();
-                fontSizeMeasureElement.setClassName("ace_editor");
-                fontSizeMeasureElement.getStyle().setPosition(Style.Position.FIXED);
-                fontSizeMeasureElement.getStyle().setVisibility(Style.Visibility.HIDDEN);
-                getWidget().getElement().appendChild(fontSizeMeasureElement);
+			if ("auto".equals(fontSize)) {
+				// detect font size from CSS
+				final Element fontSizeMeasureElement = Document.get().createDivElement();
+				fontSizeMeasureElement.setClassName("ace_editor");
+				fontSizeMeasureElement.getStyle().setPosition(Style.Position.FIXED);
+				fontSizeMeasureElement.getStyle().setVisibility(Style.Visibility.HIDDEN);
+				this.getWidget().getElement().appendChild(fontSizeMeasureElement);
 
-                ComputedStyle cs = new ComputedStyle(fontSizeMeasureElement);
-                fontSize = cs.getProperty("fontSize");
+				final ComputedStyle cs = new ComputedStyle(fontSizeMeasureElement);
+				fontSize = cs.getProperty("fontSize");
 
-                getWidget().getElement().removeChild(fontSizeMeasureElement);
-            }
+				this.getWidget().getElement().removeChild(fontSizeMeasureElement);
+			}
 
-            getWidget().setFontSize(fontSize);
-        }
+			this.getWidget().setFontSize(fontSize);
+		}
 
-        getWidget().setHighlightSelectedWord(getState().highlightSelectedWord);
-        getWidget().setShowInvisibles(getState().showInvisibles);
-        getWidget().setDisplayIndentGuides(getState().displayIndentGuides);
+		this.getWidget().setHighlightSelectedWord(this.getState().highlightSelectedWord);
+		this.getWidget().setShowInvisibles(this.getState().showInvisibles);
+		this.getWidget().setDisplayIndentGuides(this.getState().displayIndentGuides);
 
-        getWidget().setUseSoftTabs(getState().softTabs);
-        getWidget().setTabSize(getState().tabSize);
-		
+		this.getWidget().setUseSoftTabs(this.getState().softTabs);
+		this.getWidget().setTabSize(this.getState().tabSize);
+
 		// TODO: How should we deal with immediateness. Since there's already textChangeEventMode...
 		//immediate = getState().immediate;
-		
+
 		if (firstTime) {
-			shadow = AceDoc.fromTransport(getState().initialValue);
-            getWidget().setDoc(shadow);
+			this.shadow = AceDoc.fromTransport(this.getState().initialValue);
+			this.getWidget().setDoc(this.shadow);
 		}
-		
-		if (getState().selection != null) {
-			AceRange sel = AceRange.fromTransport(getState().selection);
+
+		if (this.getState().selection != null) {
+			final AceRange sel = AceRange.fromTransport(this.getState().selection);
 			if (firstTime) {
-				getWidget().setSelection(sel);
+				this.getWidget().setSelection(sel);
 			}
 			else {
-				selectionAfterApplyingDiff = sel;
+				this.selectionAfterApplyingDiff = sel;
 			}
 		}
-		
-		if (getState().scrollToRow != -1) {
+
+		if (this.getState().scrollToRow != -1) {
 			if (firstTime) {
-				getWidget().scrollToRow(getState().scrollToRow);
+				this.getWidget().scrollToRow(this.getState().scrollToRow);
 			}
 			else {
-				scrollToRowAfterApplyingDiff = getState().scrollToRow;
+				this.scrollToRowAfterApplyingDiff = this.getState().scrollToRow;
 			}
 		}
 	}
-	
-	protected static void applyConfig(Map<String, String> config) {
-		for (Entry<String, String> e : config.entrySet()) {
+
+	protected static void applyConfig(final Map<String, String> config) {
+		for (final Entry<String, String> e : config.entrySet()) {
 			GwtAceEditor.setAceConfig(e.getKey(), e.getValue());
 		}
 	}
 
 	@Override
 	protected Widget createWidget() {
-        AceEditorWidget widget = GWT.create(AceEditorWidget.class);
+		final AceEditorWidget widget = GWT.create(AceEditorWidget.class);
 		widget.addTextChangeListener(this);
 		widget.addSelectionChangeListener(this);
 		widget.setFocusChangeListener(this);
@@ -276,73 +272,72 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 	public AceEditorState getState() {
 		return (AceEditorState) super.getState();
 	}
-	
+
 	@Override
-	public void focusChanged(boolean focused) {
+	public void focusChanged(final boolean focused) {
 		// TODO: it'd be better if we didn't register as listener
 		// if !listenToFocusChanges in the first place...
-		if (!listenToFocusChanges) {
+		if (!this.listenToFocusChanges) {
 			return;
 		}
-		
-		if (isOnRoundtrip()) {
-			sendAfterRoundtrip = SendCond.ALWAYS;
+
+		if (this.isOnRoundtrip()) {
+			this.sendAfterRoundtrip = SendCond.ALWAYS;
 		}
 		else {
-			sendToServerImmediately(SendCond.ALWAYS);
-		}
-	}
-	
-	public void setTextChangeEventMode(String mode) {
-		TextChangeEventMode newMode = TextChangeEventMode.valueOf(mode);
-		if (newMode!=changeMode) {
-			changeTextChangeEventMode(newMode);
+			this.sendToServerImmediately(SendCond.ALWAYS);
 		}
 	}
 
-    protected void setTextChangeTimeout(int timeout) {
-		changeTimeout = timeout;
+	public void setTextChangeEventMode(final String mode) {
+		final TextChangeEventMode newMode = TextChangeEventMode.valueOf(mode);
+		if (newMode!=this.changeMode) {
+			this.changeTextChangeEventMode(newMode);
+		}
 	}
 
-    protected void changeTextChangeEventMode(TextChangeEventMode newMode) {
-		if (sendTimer != null) {
-			sendTimer.cancel();
-			sendTimer = null;
+	protected void setTextChangeTimeout(final int timeout) {
+		this.changeTimeout = timeout;
+	}
+
+	protected void changeTextChangeEventMode(final TextChangeEventMode newMode) {
+		if (this.sendTimer != null) {
+			this.sendTimer.cancel();
+			this.sendTimer = null;
 		}
 		this.changeMode = newMode;
 	}
-    
-    protected void sendChangeAccordingToMode(SendCond send) {
-    	sendChangeAccordingToMode(send, changeMode);
-    }
-	
-	protected void sendChangeAccordingToMode(SendCond send, TextChangeEventMode mode) {
+
+	protected void sendChangeAccordingToMode(final SendCond send) {
+		this.sendChangeAccordingToMode(send, this.changeMode);
+	}
+
+	protected void sendChangeAccordingToMode(final SendCond send, final TextChangeEventMode mode) {
 		if (mode == TextChangeEventMode.EAGER) {
-			if (sendTimer != null) {
-				sendTimer.cancel();
+			if (this.sendTimer != null) {
+				this.sendTimer.cancel();
 			}
-			sendToServerImmediately(send);
+			this.sendToServerImmediately(send);
 		} else if (mode == TextChangeEventMode.LAZY) {
-			if (sendTimer == null) {
-				sendTimer = new SendTimer();
+			if (this.sendTimer == null) {
+				this.sendTimer = new SendTimer();
 			}
-			sendTimer.schedule(changeTimeout, send);
+			this.sendTimer.schedule(this.changeTimeout, send);
 		} else if (mode == TextChangeEventMode.TIMEOUT) {
-			if (sendTimer == null) {
-				sendTimer = new SendTimer();
+			if (this.sendTimer == null) {
+				this.sendTimer = new SendTimer();
 			}
-			sendTimer.scheduleIfNotAlready(changeTimeout, send);
+			this.sendTimer.scheduleIfNotAlready(this.changeTimeout, send);
 		}
 	}
 
-    protected void sendToServer(SendCond send, boolean immediately) {
-    	VConsole.log("sendToServer: send=" + send + ", immediately="+immediately);
-    	if (send==SendCond.NO) {
-    		return;
-    	}
-    	
-		AceDoc doc = getWidget().getDoc();
-		ClientSideDocDiff diff = ClientSideDocDiff.diff(shadow, doc);
+	protected void sendToServer(final SendCond send, final boolean immediately) {
+		if (send==SendCond.NO) {
+			return;
+		}
+
+		final AceDoc doc = this.getWidget().getDoc();
+		final ClientSideDocDiff diff = ClientSideDocDiff.diff(this.shadow, doc);
 		if (send==SendCond.ALWAYS) {
 			// Go on...
 		}
@@ -352,100 +347,97 @@ public class AceEditorConnector extends AbstractHasComponentsConnector
 		else {
 			return;
 		}
-		
-		TransportDiff td = diff.asTransport();
-		
+
+		final TransportDiff td = diff.asTransport();
+
 		if (immediately) {
-			serverRpc.changed(td, getWidget().getSelection().asTransport(), getWidget().isFocused());
+			this.serverRpc.changed(td, this.getWidget().getSelection().asTransport(), this.getWidget().isFocused());
 		} else {
-			serverRpc.changedDelayed(td, getWidget().getSelection().asTransport(), getWidget().isFocused());
+			this.serverRpc.changedDelayed(td, this.getWidget().getSelection().asTransport(), this.getWidget().isFocused());
 		}
-		
-		shadow = doc;
-		setOnRoundtrip(true); // What if delayed???
-		sendAfterRoundtrip = SendCond.NO;
+
+		this.shadow = doc;
+		this.setOnRoundtrip(true); // What if delayed???
+		this.sendAfterRoundtrip = SendCond.NO;
 	}
 
-    protected void sendToServerDelayed(SendCond send) {
-		sendToServer(send, false);
+	protected void sendToServerDelayed(final SendCond send) {
+		this.sendToServer(send, false);
 	}
-    
-    public void sendToServerImmediately() {
-    	sendToServerImmediately(SendCond.ALWAYS);
-    }
 
-    protected void sendToServerImmediately(SendCond send) {
-		sendToServer(send, true);
+	public void sendToServerImmediately() {
+		this.sendToServerImmediately(SendCond.ALWAYS);
 	}
-	
+
+	protected void sendToServerImmediately(final SendCond send) {
+		this.sendToServer(send, true);
+	}
+
 	@Override
 	public void flush() {
 		super.flush();
-		sendWhenPossible(SendCond.ALWAYS, TextChangeEventMode.EAGER); // ???
+		this.sendWhenPossible(SendCond.ALWAYS, TextChangeEventMode.EAGER); // ???
 	}
 
 	@Override
 	public void changed() {
-		if (isOnRoundtrip()) {
-			sendAfterRoundtrip = sendAfterRoundtrip.or(SendCond.IF_CHANGED);
+		if (this.isOnRoundtrip()) {
+			this.sendAfterRoundtrip = this.sendAfterRoundtrip.or(SendCond.IF_CHANGED);
 		}
 		else {
-			sendChangeAccordingToMode(SendCond.IF_CHANGED);
+			this.sendChangeAccordingToMode(SendCond.IF_CHANGED);
 		}
 	}
 
 	@Override
-	public void updateCaption(ComponentConnector connector) {
-		// TODO Auto-generated method stub
-		
+	public void updateCaption(final ComponentConnector connector) {
+
 	}
 
 	@Override
 	public void onConnectorHierarchyChange(
-			ConnectorHierarchyChangeEvent connectorHierarchyChangeEvent) {
-		// TODO Auto-generated method stub
-		
+			final ConnectorHierarchyChangeEvent connectorHierarchyChangeEvent) {
 	}
 
 	@Override
 	public void selectionChanged() {
 		// TODO: it'd be better if we didn't register as listener
 		// if !listenToSelectionChanges in the first place...
-		if (listenToSelectionChanges) {
-			sendWhenPossible(SendCond.ALWAYS);
+		if (this.listenToSelectionChanges) {
+			this.sendWhenPossible(SendCond.ALWAYS);
 		}
 	}
-	
-	protected void sendWhenPossible(SendCond send) {
-		if (isOnRoundtrip()) {
-			sendAfterRoundtrip = sendAfterRoundtrip.or(send);
+
+	protected void sendWhenPossible(final SendCond send) {
+		if (this.isOnRoundtrip()) {
+			this.sendAfterRoundtrip = this.sendAfterRoundtrip.or(send);
 		}
 		else {
-			sendChangeAccordingToMode(send);
+			this.sendChangeAccordingToMode(send);
 		}
 	}
-	
-	protected void sendWhenPossible(SendCond send, TextChangeEventMode mode) {
-		if (isOnRoundtrip()) {
-			sendAfterRoundtrip = sendAfterRoundtrip.or(send);
+
+	protected void sendWhenPossible(final SendCond send, final TextChangeEventMode mode) {
+		if (this.isOnRoundtrip()) {
+			this.sendAfterRoundtrip = this.sendAfterRoundtrip.or(send);
 		}
 		else {
-			sendChangeAccordingToMode(send, mode);
+			this.sendChangeAccordingToMode(send, mode);
 		}
 	}
 
 	// TODO XXX not sure if this roundtrip thing is correct, seems to work ok...
-	private void setOnRoundtrip(boolean on) {
-		if (on==onRoundtrip) {
+	private void setOnRoundtrip(final boolean on) {
+		if (on==this.onRoundtrip) {
 			return;
 		}
-		onRoundtrip = on;
-		if (!onRoundtrip) {
-			sendToServerImmediately(sendAfterRoundtrip);
+		this.onRoundtrip = on;
+		if (!this.onRoundtrip) {
+			this.sendToServerImmediately(this.sendAfterRoundtrip);
 		}
 	}
-	
+
 	public boolean isOnRoundtrip() {
-		return onRoundtrip;
+		return this.onRoundtrip;
 	}
 }

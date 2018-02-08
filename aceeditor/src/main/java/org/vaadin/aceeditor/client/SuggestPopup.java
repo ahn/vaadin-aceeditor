@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.vaadin.client.ui.VOverlay;
+import com.vaadin.client.widgets.Overlay;
 
 public class SuggestPopup extends VOverlay implements KeyDownHandler, KeyPressHandler,
 DoubleClickHandler, ChangeHandler {
@@ -54,7 +55,7 @@ DoubleClickHandler, ChangeHandler {
 
 	protected SuggestionSelectedListener listener;
 
-	protected VOverlay descriptionPopup;
+	protected Overlay descriptionPopup;
 
 	protected List<TransportSuggestion> suggs;
 	protected List<VisibleSugg> visibleSuggs = new LinkedList<>();
@@ -383,7 +384,7 @@ DoubleClickHandler, ChangeHandler {
 	}
 
 	protected void createDescriptionPopup() {
-		this.descriptionPopup = new VOverlay();
+		this.descriptionPopup = GWT.create(Overlay.class);
 		this.descriptionPopup.setOwner(this.getOwner());
 		this.descriptionPopup.setStylePrimaryName("aceeditor-suggestpopup-description");
 		final HTML lbl = new HTML();
@@ -391,7 +392,6 @@ DoubleClickHandler, ChangeHandler {
 		this.descriptionPopup.setWidget(lbl);
 		this.updateDescriptionPopupPosition();
 		this.descriptionPopup.setWidth(SuggestPopup.DESCRIPTION_WIDTH+"px");
-		//		descriptionPopup.setSize(DESCRIPTION_WIDTH+"px", HEIGHT+"px");
 	}
 
 	public void setStartOfValue(final String startOfValue) {

@@ -11,26 +11,26 @@ import org.vaadin.aceeditor.client.TransportDiff.TransportMarkerDiff;
 
 public class MarkerDiff {
 	private final RangeDiff rangeDiff;
-	public MarkerDiff(RangeDiff rangeDiff) {
+	public MarkerDiff(final RangeDiff rangeDiff) {
 		this.rangeDiff = rangeDiff;
 	}
-	public AceMarker applyTo(AceMarker m) {
-		return m.withNewPosition(rangeDiff.applyTo(m.getRange()));
+	public AceMarker applyTo(final AceMarker m) {
+		return m.withNewPosition(this.rangeDiff.applyTo(m.getRange()));
 	}
-	public static MarkerDiff diff(AceMarker m1, AceMarker m2) {
+	public static MarkerDiff diff(final AceMarker m1, final AceMarker m2) {
 		return new MarkerDiff(RangeDiff.diff(m1.getRange(), m2.getRange()));
 	}
 	public boolean isIdentity() {
-		return rangeDiff.isIdentity();
+		return this.rangeDiff.isIdentity();
 	}
 	@Override
 	public String toString() {
-		return rangeDiff.toString();
+		return this.rangeDiff.toString();
 	}
 	public TransportMarkerDiff asTransport() {
-		return new TransportMarkerDiff(rangeDiff.asTransport());
+		return new TransportMarkerDiff(this.rangeDiff.asTransport());
 	}
-	public static MarkerDiff fromTransport(TransportMarkerDiff tmd) {
+	public static MarkerDiff fromTransport(final TransportMarkerDiff tmd) {
 		return new MarkerDiff(RangeDiff.fromTransport(tmd.rangeDiff));
 	}
 }

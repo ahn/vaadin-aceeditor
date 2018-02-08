@@ -36,8 +36,6 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 
 	protected static final int Y_OFFSET = 20;
 
-	//	private final Logger logger = Logger.getLogger(SuggesterConnector.class.getName());
-
 	protected AceEditorConnector connector;
 	protected AceEditorWidget widget;
 	private String suggestText = ".";
@@ -137,9 +135,6 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 		if (e == null) {
 			return Command.DEFAULT;
 		}
-		//		logger.info("handleKeyboard(" + data + ", " + hashId + ", " + keyString
-		//				+ ", " + keyCode + ", " + e.getKeyCode() + "---"
-		//				+ e.isCtrlKey() + ")");
 
 		if (keyCode == 32 && e.isCtrlKey()) {
 			this.startSuggesting();
@@ -257,7 +252,7 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 		}
 	}
 
-	protected void updatePopupPosition(final SuggestPopup popup) {
+	protected void updatePopupPosition(final SuggestPopup popupToUpdate) {
 		final int[] coords = this.widget.getCursorCoords();
 		final int sx = Window.getScrollLeft();
 		final int sy = Window.getScrollTop();
@@ -275,7 +270,7 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 			y -= SuggestPopup.HEIGHT + 50;
 		}
 		 */
-		popup.setPopupPosition(x, y);
+		popupToUpdate.setPopupPosition(x, y);
 	}
 
 	public String getSuggestText() {

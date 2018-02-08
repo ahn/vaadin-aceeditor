@@ -1,20 +1,24 @@
 package org.vaadin.aceeditor.client;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarkerAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
 
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-
 public class AceDoc implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final String text;
-	
+
 	// key: markerId
 	private final Map<String, AceMarker> markers;
 
@@ -26,72 +30,68 @@ public class AceDoc implements Serializable {
 		this("");
 	}
 
-	public AceDoc(String text) {
-        this(text,
-                Collections.<String, AceMarker> emptyMap(),
-                Collections.<RowAnnotation>emptySet(),
-                Collections.<MarkerAnnotation>emptySet());
-	}
-	
-	public AceDoc(String text, Map<String, AceMarker> markers) {
-        this(text, markers,
-                Collections.<RowAnnotation>emptySet(),
-                Collections.<MarkerAnnotation>emptySet());
+	public AceDoc(final String text) {
+		this(text,
+				Collections.<String, AceMarker> emptyMap(),
+				Collections.<RowAnnotation>emptySet(),
+				Collections.<MarkerAnnotation>emptySet());
 	}
 
-	public AceDoc(String text, Map<String, AceMarker> markers,
-			Set<RowAnnotation> rowAnnotations,
-			Set<MarkerAnnotation> markerAnnotations) {
-        if (text == null) {
-            text = "";
-        }
+	public AceDoc(final String text, final Map<String, AceMarker> markers) {
+		this(text, markers,
+				Collections.<RowAnnotation>emptySet(),
+				Collections.<MarkerAnnotation>emptySet());
+	}
 
-		this.text = text;
+	public AceDoc(final String text, final Map<String, AceMarker> markers,
+			final Set<RowAnnotation> rowAnnotations,
+			final Set<MarkerAnnotation> markerAnnotations) {
+		this.text = text == null ? "" : text;
 		this.markers = markers;
 		this.rowAnnotations = rowAnnotations;
 		this.markerAnnotations = markerAnnotations;
 	}
-	
+
 	public String getText() {
-		return text;
+		return this.text;
 	}
-	
+
 	public Map<String, AceMarker> getMarkers() {
-		return Collections.unmodifiableMap(markers);
+		return Collections.unmodifiableMap(this.markers);
 	}
-	
+
 	public Set<RowAnnotation> getRowAnnotations() {
-		if (rowAnnotations==null) {
+		if (this.rowAnnotations==null) {
 			return Collections.emptySet();
 		}
-		return Collections.unmodifiableSet(rowAnnotations);
+		return Collections.unmodifiableSet(this.rowAnnotations);
 	}
-	
+
 	public Set<MarkerAnnotation> getMarkerAnnotations() {
-		if (markerAnnotations==null) {
+		if (this.markerAnnotations==null) {
 			return Collections.emptySet();
 		}
-		return Collections.unmodifiableSet(markerAnnotations);
+		return Collections.unmodifiableSet(this.markerAnnotations);
 	}
-	
+
 	public boolean hasRowAnnotations() {
-		return rowAnnotations != null;
+		return this.rowAnnotations != null;
 	}
-	
+
 	public boolean hasMarkerAnnotations() {
-		return markerAnnotations != null;
+		return this.markerAnnotations != null;
 	}
 
 	@Override
 	public String toString() {
-		return text + "\n/MARKERS: "+markers+"\nra:"+rowAnnotations+", ma:"+markerAnnotations;
+		return this.text + "\n/MARKERS: "+this.markers+"\nra:"+this.rowAnnotations+", ma:"+this.markerAnnotations;
 	}
 
 	@Override
-	public boolean equals(Object other) {
+	public boolean equals(final Object other) {
 		if (other instanceof AceDoc) {
-			AceDoc od = (AceDoc) other;
-			return textEquals(text, od.text) &&
+			final AceDoc od = (AceDoc) other;
+			return this.textEquals(this.text, od.text) &&
 					Util.sameMaps(this.markers, od.markers) &&
 					Util.sameSets(this.markerAnnotations, od.markerAnnotations) &&
 					Util.sameSets(this.rowAnnotations, od.rowAnnotations);
@@ -101,162 +101,162 @@ public class AceDoc implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return getText().hashCode();
+		return this.getText().hashCode();
 	}
 
-    public boolean textEquals(String a, String b) {
-        return a == null ? b == null : a.equals(b);
-    }
+	public boolean textEquals(final String a, final String b) {
+		return a == null ? b == null : a.equals(b);
+	}
 
-	public AceDoc withText(String newText) {
-		return new AceDoc(newText, markers, rowAnnotations, markerAnnotations);
+	public AceDoc withText(final String newText) {
+		return new AceDoc(newText, this.markers, this.rowAnnotations, this.markerAnnotations);
 	}
 
 	public TransportDoc asTransport() {
-		TransportDoc td = new TransportDoc();
-		td.text = text;
+		final TransportDoc td = new TransportDoc();
+		td.text = this.text;
 
-		td.markers = getTransportMarkers();
-		td.markerAnnotations = getTransportMarkerAnnotations();
-		td.rowAnnotations = getTransportRowAnnotations();
+		td.markers = this.getTransportMarkers();
+		td.markerAnnotations = this.getTransportMarkerAnnotations();
+		td.rowAnnotations = this.getTransportRowAnnotations();
 
 		return td;
 	}
 
 	/* TODO private */ Map<String, TransportMarker> getTransportMarkers() {
-		HashMap<String, TransportMarker> ms = new HashMap<String, TransportMarker>(
-				markers.size());
-		for (Entry<String, AceMarker> e : markers.entrySet()) {
+		final HashMap<String, TransportMarker> ms = new HashMap<>(
+				this.markers.size());
+		for (final Entry<String, AceMarker> e : this.markers.entrySet()) {
 			ms.put(e.getKey(), e.getValue().asTransport());
 		}
 		return ms;
 	}
-	
+
 
 	private Set<TransportRowAnnotation> getTransportRowAnnotations() {
-		if (rowAnnotations==null) {
+		if (this.rowAnnotations==null) {
 			return null;
 		}
-		HashSet<TransportRowAnnotation> anns = new HashSet<TransportRowAnnotation>(
-				rowAnnotations.size());
-		for (RowAnnotation ra : rowAnnotations) {
+		final HashSet<TransportRowAnnotation> anns = new HashSet<>(
+				this.rowAnnotations.size());
+		for (final RowAnnotation ra : this.rowAnnotations) {
 			anns.add(ra.asTransport());
 		}
 		return anns;
 	}
 
 	private Set<TransportMarkerAnnotation> getTransportMarkerAnnotations() {
-		if (markerAnnotations==null) {
+		if (this.markerAnnotations==null) {
 			return null;
 		}
-		HashSet<TransportMarkerAnnotation> anns = new HashSet<TransportMarkerAnnotation>(
-				markerAnnotations.size());
-		for (MarkerAnnotation ma : markerAnnotations) {
+		final HashSet<TransportMarkerAnnotation> anns = new HashSet<>(
+				this.markerAnnotations.size());
+		for (final MarkerAnnotation ma : this.markerAnnotations) {
 			anns.add(ma.asTransport());
 		}
 		return anns;
 	}
 
-	public static AceDoc fromTransport(TransportDoc doc) {
-		String text = doc.text;
-		Map<String, AceMarker> markers = markersFromTransport(doc.markers, doc.text);
-		Set<RowAnnotation> rowAnnotations = rowAnnotationsFromTransport(doc.rowAnnotations);
-		Set<MarkerAnnotation> markerAnnotations = markerAnnotationsFromTransport(doc.markerAnnotations);
+	public static AceDoc fromTransport(final TransportDoc doc) {
+		final String text = doc.text;
+		final Map<String, AceMarker> markers = AceDoc.markersFromTransport(doc.markers, doc.text);
+		final Set<RowAnnotation> rowAnnotations = AceDoc.rowAnnotationsFromTransport(doc.rowAnnotations);
+		final Set<MarkerAnnotation> markerAnnotations = AceDoc.markerAnnotationsFromTransport(doc.markerAnnotations);
 		return new AceDoc(text, markers, rowAnnotations, markerAnnotations);
 	}
 
 	private static Map<String, AceMarker> markersFromTransport(
-			Map<String, TransportMarker> markers, String text) {
-		HashMap<String, AceMarker> ms = new HashMap<String, AceMarker>();
-		for (Entry<String, TransportMarker> e : markers.entrySet()) {
+			final Map<String, TransportMarker> markers, final String text) {
+		final HashMap<String, AceMarker> ms = new HashMap<>();
+		for (final Entry<String, TransportMarker> e : markers.entrySet()) {
 			ms.put(e.getKey(), AceMarker.fromTransport(e.getValue()));
 		}
 		return ms;
 	}
 
 	private static Set<MarkerAnnotation> markerAnnotationsFromTransport(
-			Set<TransportMarkerAnnotation> markerAnnotations) {
+			final Set<TransportMarkerAnnotation> markerAnnotations) {
 		if (markerAnnotations==null) {
 			return null;
 		}
-		HashSet<MarkerAnnotation> anns = new HashSet<MarkerAnnotation>(markerAnnotations.size());
-		for (TransportMarkerAnnotation ta : markerAnnotations) {
+		final HashSet<MarkerAnnotation> anns = new HashSet<>(markerAnnotations.size());
+		for (final TransportMarkerAnnotation ta : markerAnnotations) {
 			anns.add(ta.fromTransport());
 		}
 		return anns;
 	}
 
 	private static Set<RowAnnotation> rowAnnotationsFromTransport(
-			Set<TransportRowAnnotation> rowAnnotations) {
+			final Set<TransportRowAnnotation> rowAnnotations) {
 		if (rowAnnotations==null) {
 			return null;
 		}
-		HashSet<RowAnnotation> anns = new HashSet<RowAnnotation>(rowAnnotations.size());
-		for (TransportRowAnnotation ta : rowAnnotations) {
+		final HashSet<RowAnnotation> anns = new HashSet<>(rowAnnotations.size());
+		for (final TransportRowAnnotation ta : rowAnnotations) {
 			anns.add(ta.fromTransport());
 		}
 		return anns;
 	}
-	
+
 	// TODO?
-	public AceDoc withMarkers(Set<AceMarker> newMarkers) {
-		HashMap<String, AceMarker> markers2 = new HashMap<String, AceMarker>(newMarkers.size());
-		for (AceMarker m : newMarkers) {
+	public AceDoc withMarkers(final Set<AceMarker> newMarkers) {
+		final HashMap<String, AceMarker> markers2 = new HashMap<>(newMarkers.size());
+		for (final AceMarker m : newMarkers) {
 			markers2.put(m.getMarkerId(), m);
 		}
-		return new AceDoc(text, markers2, rowAnnotations, markerAnnotations);
-	}
-	
-	public AceDoc withMarkers(Map<String, AceMarker> newMarkers) {
-		return new AceDoc(text, newMarkers, rowAnnotations, markerAnnotations);
-	}
-	public AceDoc withAdditionalMarker(AceMarker marker) {
-		HashMap<String, AceMarker> markers2 = new HashMap<String, AceMarker>(markers);
-		markers2.put(marker.getMarkerId(), marker);
-		return new AceDoc(text, markers2, rowAnnotations, markerAnnotations);
-	}
-	public AceDoc withAdditionalMarkers(Map<String, AceMarker> addMarkers) {
-		HashMap<String, AceMarker> newMarkers = new HashMap<String, AceMarker>(markers);
-		newMarkers.putAll(addMarkers);
-		return new AceDoc(text, newMarkers, rowAnnotations, markerAnnotations);
+		return new AceDoc(this.text, markers2, this.rowAnnotations, this.markerAnnotations);
 	}
 
-	public AceDoc withoutMarker(String markerId) {
-		HashMap<String, AceMarker> markers2 = new HashMap<String, AceMarker>(markers);
+	public AceDoc withMarkers(final Map<String, AceMarker> newMarkers) {
+		return new AceDoc(this.text, newMarkers, this.rowAnnotations, this.markerAnnotations);
+	}
+	public AceDoc withAdditionalMarker(final AceMarker marker) {
+		final HashMap<String, AceMarker> markers2 = new HashMap<>(this.markers);
+		markers2.put(marker.getMarkerId(), marker);
+		return new AceDoc(this.text, markers2, this.rowAnnotations, this.markerAnnotations);
+	}
+	public AceDoc withAdditionalMarkers(final Map<String, AceMarker> addMarkers) {
+		final HashMap<String, AceMarker> newMarkers = new HashMap<>(this.markers);
+		newMarkers.putAll(addMarkers);
+		return new AceDoc(this.text, newMarkers, this.rowAnnotations, this.markerAnnotations);
+	}
+
+	public AceDoc withoutMarker(final String markerId) {
+		final HashMap<String, AceMarker> markers2 = new HashMap<>(this.markers);
 		markers2.remove(markerId);
-		return new AceDoc(text, markers2, rowAnnotations, markerAnnotations);
+		return new AceDoc(this.text, markers2, this.rowAnnotations, this.markerAnnotations);
 	}
 
 	public AceDoc withoutMarkers() {
-		Map<String, AceMarker> noMarkers = Collections.emptyMap();
-		return new AceDoc(text, noMarkers, rowAnnotations, markerAnnotations);
+		final Map<String, AceMarker> noMarkers = Collections.emptyMap();
+		return new AceDoc(this.text, noMarkers, this.rowAnnotations, this.markerAnnotations);
 	}
-	
-	public AceDoc withoutMarkers(Set<String> without) {
-		Map<String, AceMarker> newMarkers = new HashMap<String, AceMarker>(markers);
-		for (String m : without) {
+
+	public AceDoc withoutMarkers(final Set<String> without) {
+		final Map<String, AceMarker> newMarkers = new HashMap<>(this.markers);
+		for (final String m : without) {
 			newMarkers.remove(m);
 		}
-		return new AceDoc(text, newMarkers, rowAnnotations, markerAnnotations);
+		return new AceDoc(this.text, newMarkers, this.rowAnnotations, this.markerAnnotations);
 	}
 
-	public AceDoc withRowAnnotations(Set<RowAnnotation> ranns) {
-		return new AceDoc(text, markers, ranns, markerAnnotations);
-	}
-	
-	public AceDoc withMarkerAnnotations(Set<MarkerAnnotation> manns) {
-		return new AceDoc(text, markers, rowAnnotations, manns);
+	public AceDoc withRowAnnotations(final Set<RowAnnotation> ranns) {
+		return new AceDoc(this.text, this.markers, ranns, this.markerAnnotations);
 	}
 
-	public AceDoc withAdditionalMarkerAnnotation(MarkerAnnotation mann) {
-		HashSet<MarkerAnnotation> manns = markerAnnotations==null?new HashSet<MarkerAnnotation>():new HashSet<MarkerAnnotation>(markerAnnotations);
+	public AceDoc withMarkerAnnotations(final Set<MarkerAnnotation> manns) {
+		return new AceDoc(this.text, this.markers, this.rowAnnotations, manns);
+	}
+
+	public AceDoc withAdditionalMarkerAnnotation(final MarkerAnnotation mann) {
+		final HashSet<MarkerAnnotation> manns = this.markerAnnotations==null?new HashSet<>():new HashSet<>(this.markerAnnotations);
 		manns.add(mann);
-		return new AceDoc(text, markers, rowAnnotations, manns);
+		return new AceDoc(this.text, this.markers, this.rowAnnotations, manns);
 	}
-	
-	public AceDoc withAdditionalRowAnnotation(RowAnnotation rann) {
-		HashSet<RowAnnotation> ranns = rowAnnotations==null?new HashSet<RowAnnotation>():new HashSet<RowAnnotation>(rowAnnotations);
+
+	public AceDoc withAdditionalRowAnnotation(final RowAnnotation rann) {
+		final HashSet<RowAnnotation> ranns = this.rowAnnotations==null?new HashSet<>():new HashSet<>(this.rowAnnotations);
 		ranns.add(rann);
-		return new AceDoc(text, markers, ranns, markerAnnotations);
+		return new AceDoc(this.text, this.markers, ranns, this.markerAnnotations);
 	}
 }
