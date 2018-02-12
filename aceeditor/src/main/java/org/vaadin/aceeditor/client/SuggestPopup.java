@@ -134,6 +134,15 @@ DoubleClickHandler, ChangeHandler {
 	}
 
 	protected void populateList() {
+		this.populateList(null);
+	}
+
+	/**
+	 * @param group
+	 * @return Number of elements in this group or -1 if null.
+	 */
+	protected int populateList(final String group) {
+		int nb = group == null ? -1 : 0;
 		this.choiceList.clear();
 		this.visibleSuggs.clear();
 		final List<Integer> styles = new ArrayList<>();
@@ -147,6 +156,7 @@ DoubleClickHandler, ChangeHandler {
 					boolean same = true;
 					String fullGroup = "";
 					for (int igrp = 0 ; igrp < groupTree.length && ("".equals(fullGroup) || this.visibleGroups.contains(fullGroup)) ; ++igrp) {
+						final String parentGroup = fullGroup;
 						fullGroup += (igrp == 0 ? "" : "/") + groupTree[igrp];
 						if (same && (currentGroupTree.length <= igrp || !currentGroupTree[igrp].equals(groupTree[igrp]))) {
 							same = false;
@@ -155,6 +165,9 @@ DoubleClickHandler, ChangeHandler {
 							this.visibleSuggs.add(new VisibleSugg(null, fullGroup));
 							this.choiceList.addItem((this.visibleGroups.contains(fullGroup) ? '-' : '+') + groupTree[igrp], Integer.toString(i++));
 							styles.add(SuggestPopup.PLUSES[igrp]);
+							if (group != null && group.equals(parentGroup)) {
+								++nb;
+							}
 						}
 					}
 					currentFullGroup = s.group;
@@ -164,6 +177,9 @@ DoubleClickHandler, ChangeHandler {
 					this.visibleSuggs.add(new VisibleSugg(s, currentFullGroup));
 					this.choiceList.addItem(s.displayText, Integer.toString(i++));
 					styles.add(SuggestPopup.SPACES[currentGroupTree.length]);
+					if (group != null && group.equals(currentFullGroup)) {
+						++nb;
+					}
 				}
 			}
 		}
@@ -180,6 +196,7 @@ DoubleClickHandler, ChangeHandler {
 		for (i = 0; i < options.getLength(); i++) {
 			options.getItem(i).getStyle().setPaddingLeft(styles.get(i), Unit.PX);
 		}
+		return nb;
 	}
 
 	public void close() {
@@ -300,13 +317,7 @@ DoubleClickHandler, ChangeHandler {
 				final VisibleSugg selectedSugg = this.visibleSuggs.get(selected);
 				if (selectedSugg.ts == null) {
 					//Group
-					if (this.visibleGroups.contains(selectedSugg.fullGroup)) {
-						this.visibleGroups.remove(selectedSugg.fullGroup);
-					} else {
-						this.visibleGroups.add(selectedSugg.fullGroup);
-					}
-					this.populateList();
-					this.choiceList.setSelectedIndex(selected);
+					this.openOrCloseGroup(! this.visibleGroups.contains(selectedSugg.fullGroup));
 				} else {
 					//Not a group
 					this.startLoading();
@@ -327,8 +338,10 @@ DoubleClickHandler, ChangeHandler {
 			if (selectedSugg.ts == null) {
 				//Group
 				boolean go = false;
+				boolean close = false;
 				if (!open && this.visibleGroups.contains(selectedSugg.fullGroup)) {
 					this.visibleGroups.remove(selectedSugg.fullGroup);
+					close = true;
 					go = true;
 				}
 				if (open && !this.visibleGroups.contains(selectedSugg.fullGroup)) {
@@ -337,9 +350,24 @@ DoubleClickHandler, ChangeHandler {
 				}
 				if (go) {
 					final int scroll = this.choiceList.getElement().getScrollTop();
-					this.populateList();
-					this.choiceList.getElement().setScrollTop(scroll + 50);
-					this.choiceList.setSelectedIndex(selected);
+					final int nb = this.populateList(selectedSugg.fullGroup);
+
+					//Set content of group visible at best.
+
+					//Re scroll to last position or to 1 of no scroll: Trick so that it works in any case.
+					if (scroll != 0) {
+						this.choiceList.getElement().setScrollTop(scroll);
+					} else {
+						this.choiceList.getElement().setScrollTop(1);
+					}
+					if (this.choiceList.getElement().getScrollTop() != 0) {
+						if (!close) {
+							//Set last element of the group selected and scroll down if necessary
+							this.choiceList.setSelectedIndex(selected+nb);
+						}
+						//Set select and scroll up if necessary
+						this.choiceList.setSelectedIndex(selected);
+					}
 					this.onChange(null);
 				}
 			}
