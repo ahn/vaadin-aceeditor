@@ -59,7 +59,24 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 			final String text = diff.applyTo(SuggesterConnector.this.widget.getDoc()).getText();
 			SuggesterConnector.this.widget.setTextAndAdjust(text);
 			SuggesterConnector.this.widget.fireTextChanged(); // XXX we need to do this here to alert AceEditorConnector...
-			SuggesterConnector.this.widget.setSelection(AceRange.fromPositions(td.selectionStart, td.selectionEnd, text));
+			if (td.selectionStart != null && td.selectionEnd != null) {
+				SuggesterConnector.this.widget.setSelection(AceRange.fromPositions(td.selectionStart, td.selectionEnd, text));
+			} else {
+				final AceRange sel = SuggesterConnector.this.widget.getSelection();
+				AceRange newSel;
+				if (sel.getStartRow() < sel.getEndRow()) {
+					newSel = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
+				} else if (sel.getStartRow() == sel.getEndRow()) {
+					if (sel.getStartCol() < sel.getEndCol()) {
+						newSel = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
+					} else {
+						newSel = new AceRange(sel.getStartRow(), sel.getStartCol(), sel.getStartRow(), sel.getStartCol());
+					}
+				} else {
+					newSel = new AceRange(sel.getStartRow(), sel.getStartCol(), sel.getStartRow(), sel.getStartCol());
+				}
+				SuggesterConnector.this.widget.setSelection(newSel);
+			}
 		}
 	};
 

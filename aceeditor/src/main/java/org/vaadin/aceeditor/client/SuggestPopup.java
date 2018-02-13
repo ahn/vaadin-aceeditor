@@ -3,6 +3,7 @@ package org.vaadin.aceeditor.client;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -341,6 +342,12 @@ DoubleClickHandler, ChangeHandler {
 				boolean close = false;
 				if (!open && this.visibleGroups.contains(selectedSugg.fullGroup)) {
 					this.visibleGroups.remove(selectedSugg.fullGroup);
+					final Iterator<String> it = this.visibleGroups.iterator();
+					while (it.hasNext()) {
+						if (it.next().startsWith(selectedSugg.fullGroup)) {
+							it.remove();
+						}
+					}
 					close = true;
 					go = true;
 				}
