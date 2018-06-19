@@ -4,6 +4,7 @@ Vaadin AceEditor
 **[Ace code editor](http://ace.ajax.org) wrapped inside a TextArea-like [Vaadin](http://vaadin.com) component.**
 
 Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
+
 **This fork has been made by the [MRules](https://mrules.xyz) dev team in order to create a rich web editor to configure its rule engine.**
 
 ### NOTE
