@@ -14,6 +14,7 @@ import org.vaadin.aceeditor.client.TransportSuggestion;
 
 import com.vaadin.annotations.StyleSheet;
 import com.vaadin.server.AbstractExtension;
+import com.vaadin.server.Sizeable.Unit;
 
 /**
  * Extends {@link AceEditor} with suggestion possibility.
@@ -110,15 +111,39 @@ public class SuggestionExtension extends AbstractExtension {
 		return this.getState(false).showDescriptions;
 	}
 
-	public void setPopupWidth(final int width){
+	/**
+	 * Default unit : PIXEL.
+	 */
+	public void setPopupWidth(final int width) {
+		this.setPopupWidth(width, Unit.PIXELS);
+	}
+
+	public void setPopupWidth(final int width, final Unit unit) {
 		this.getState().popupWidth = width;
+		this.getState().popupWidthUnit = unit.getSymbol();
 	}
 
+	/**
+	 * Default unit : PIXEL.
+	 */
 	public void setPopupHeight(final int height){
-		this.getState().popupHeight = height;
+		this.setPopupHeight(height, Unit.PIXELS);
 	}
 
+	public void setPopupHeight(final int height, final Unit unit) {
+		this.getState().popupHeight = height;
+		this.getState().popupHeightUnit = unit.getSymbol();
+	}
+
+	/**
+	 * Default unit : PIXEL.
+	 */
 	public void setpopupDescriptionWidth(final int width){
+		this.setpopupDescriptionWidth(width, Unit.PIXELS);
+	}
+
+	public void setpopupDescriptionWidth(final int width, final Unit unit) {
 		this.getState().popupDescriptionWidth = width;
+		this.getState().popupDescriptionWidthUnit = unit.getSymbol();
 	}
 }

@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.vaadin.addons</groupId>
 		<artifactId>aceeditor-parent</artifactId>
-		<version>0.8.20-mrules</version>
+		<version>0.8.21-mrules</version>
 	</parent>
 	<artifactId>aceeditor-demo</artifactId>
 	<packaging>war</packaging>

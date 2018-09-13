@@ -22,11 +22,13 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.UIObject;
 import com.vaadin.client.ui.VOverlay;
 import com.vaadin.client.widgets.Overlay;
 
@@ -67,10 +69,14 @@ DoubleClickHandler, ChangeHandler {
 	protected SimplePanel loadingImagePanel;
 	protected Image loadingImage;
 
-	public static int WIDTH = 150;
-	public static int HEIGHT = 200;
+	protected int width = 150;
+	protected Unit widthUnit = Unit.PX;
 
-	public static int DESCRIPTION_WIDTH = 225;
+	protected int height = 200;
+	protected Unit heightUnit = Unit.PX;
+
+	protected int descriptionWidth = 225;
+	protected Unit descriptionWidthUnit = Unit.PX;
 
 	public static class VisibleSugg {
 		TransportSuggestion ts;
@@ -89,12 +95,15 @@ DoubleClickHandler, ChangeHandler {
 
 	public SuggestPopup() {
 		super(true);
-		this.setWidth(SuggestPopup.WIDTH + "px");
+		this.setWidth(this.width + this.widthUnit.getType());
+		this.setHeight(this.height + this.heightUnit.getType());
 		final SuggestionResources resources = GWT.create(SuggestionResources.class);
 		this.loadingImage = new Image(resources.loading());
 		this.loadingImage.setSize("20px", "20px");
 		this.loadingImagePanel = new SimplePanel(this.loadingImage);
 		this.setWidget(this.loadingImagePanel);
+		this.setStyleName("aceeditor-autocomplete-popup-panel");
+		UIObject.setStyleName(this.getContainerElement(), "aceeditor-autocomplete-popup-content");
 	}
 
 	protected void createChoiceList() {
@@ -410,12 +419,15 @@ DoubleClickHandler, ChangeHandler {
 	}
 
 	protected void updateDescriptionPopupPosition() {
-		final int x = this.getAbsoluteLeft() + SuggestPopup.WIDTH;
-		final int y = this.getAbsoluteTop();
-		this.descriptionPopup.setPopupPosition(x, y);
 		if (this.descriptionPopup!=null) {
+			final int x = this.getAbsoluteLeft() + this.choiceList.getOffsetWidth();
+			final int y = this.getAbsoluteTop();
 			this.descriptionPopup.setPopupPosition(x, y);
 		}
+	}
+
+	public void windowResized(final ResizeEvent event) {
+		this.updateDescriptionPopupPosition();
 	}
 
 	protected void createDescriptionPopup() {
@@ -426,7 +438,7 @@ DoubleClickHandler, ChangeHandler {
 		lbl.setWordWrap(true);
 		this.descriptionPopup.setWidget(lbl);
 		this.updateDescriptionPopupPosition();
-		this.descriptionPopup.setWidth(SuggestPopup.DESCRIPTION_WIDTH+"px");
+		this.descriptionPopup.setWidth(this.descriptionWidth + this.descriptionWidthUnit.getType());
 	}
 
 	public void setStartOfValue(final String startOfValue) {
@@ -440,17 +452,38 @@ DoubleClickHandler, ChangeHandler {
 		}
 	}
 
+	/**
+	 * Default unit : PIXEL.
+	 */
 	public void setWidth(final int width){
-		SuggestPopup.WIDTH = width;
-		this.setWidth(width + "px");
+		this.setWidth(width, Unit.PX);
+	}
+	public void setWidth(final int width, final Unit unit){
+		this.width = width;
+		this.widthUnit = unit;
+		this.setWidth(width + unit.getType());
 	}
 
+	/**
+	 * Default unit : PIXEL.
+	 */
 	public void setHeight(final int height){
-		SuggestPopup.HEIGHT = height;
-		this.setHeight(height + "px");
+		this.setHeight(height, Unit.PX);
+	}
+	public void setHeight(final int height, final Unit unit){
+		this.height = height;
+		this.heightUnit = unit;
+		this.setHeight(height + unit.getType());
 	}
 
+	/**
+	 * Default unit : PIXEL.
+	 */
 	public void setDescriptionWidth(final int width){
-		SuggestPopup.DESCRIPTION_WIDTH = width;
+		this.setDescriptionWidth(width, Unit.PX);
+	}
+	public void setDescriptionWidth(final int width, final Unit unit){
+		this.descriptionWidth = width;
+		this.descriptionWidthUnit = unit;
 	}
 }

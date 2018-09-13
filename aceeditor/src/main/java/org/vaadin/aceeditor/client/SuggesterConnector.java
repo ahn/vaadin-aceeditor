@@ -9,7 +9,10 @@ import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardEvent;
 import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.vaadin.client.ServerConnector;
 import com.vaadin.client.communication.RpcProxy;
@@ -32,7 +35,7 @@ import com.vaadin.shared.ui.Connect;
 @SuppressWarnings("serial")
 @Connect(SuggestionExtension.class)
 public class SuggesterConnector extends AbstractExtensionConnector implements
-GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
+GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener, ResizeHandler {
 
 	protected static final int Y_OFFSET = 20;
 
@@ -93,13 +96,17 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 	protected boolean showDescriptions = true;
 
 	protected int popupWidth = 150;
+	protected Unit popupWidthUnit = Unit.PX;
 
 	protected int popupHeight = 200;
+	protected Unit popupHeightUnit = Unit.PX;
 
 	protected int popupDescriptionWidth = 225;
+	protected Unit popupDescriptionWidthUnit = Unit.PX;
 
 	public SuggesterConnector() {
 		this.registerRpc(SuggesterClientRpc.class, this.clientRpc);
+		Window.addResizeHandler(this);
 	}
 
 	@Override
@@ -111,8 +118,20 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 		this.suggestText = this.getState().suggestText;
 
 		this.popupWidth = this.getState().popupWidth;
+		this.popupWidthUnit = this.fromType(this.getState().popupWidthUnit);
 		this.popupHeight = this.getState().popupHeight;
+		this.popupHeightUnit = this.fromType(this.getState().popupHeightUnit);
 		this.popupDescriptionWidth = this.getState().popupDescriptionWidth;
+		this.popupDescriptionWidthUnit = this.fromType(this.getState().popupDescriptionWidthUnit);
+	}
+
+	private Unit fromType(final String s) {
+		for (final Unit u: Unit.values()) {
+			if (u.getType().equals(s)) {
+				return u;
+			}
+		}
+		return Unit.PX;
 	}
 
 	@Override
@@ -131,9 +150,9 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 		sp.setOwner(this.widget);
 		this.updatePopupPosition(sp);
 		sp.setSuggestionSelectedListener(this);
-		sp.setWidth(this.popupWidth);
-		sp.setHeight(this.popupHeight);
-		sp.setDescriptionWidth(this.popupDescriptionWidth);
+		sp.setWidth(this.popupWidth, this.popupWidthUnit);
+		sp.setHeight(this.popupHeight, this.popupHeightUnit);
+		sp.setDescriptionWidth(this.popupDescriptionWidth, this.popupDescriptionWidthUnit);
 		sp.show();
 		return sp;
 	}
@@ -298,6 +317,13 @@ GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
 
 	public void setSuggestText(final String suggestText) {
 		this.suggestText = suggestText;
+	}
+
+	@Override
+	public void onResize(final ResizeEvent event) {
+		if (this.popup != null) {
+			this.popup.windowResized(event);
+		}
 	}
 
 }

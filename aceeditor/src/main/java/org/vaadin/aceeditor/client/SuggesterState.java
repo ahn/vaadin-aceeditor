@@ -11,8 +11,11 @@ public class SuggesterState extends SharedState {
 	public String suggestText = ".";
 
 	public int popupWidth = 150;
+	public String popupWidthUnit = "px";
 
 	public int popupHeight = 200;
+	public String popupHeightUnit = "px";
 
 	public int popupDescriptionWidth = 225;
+	public String popupDescriptionWidthUnit = "px";
 }
