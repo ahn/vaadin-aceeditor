@@ -10,6 +10,7 @@ import org.vaadin.aceeditor.client.TransportSuggestion;
 public class Suggestion {
 
 	private final String group;
+	private final Boolean disabled;
 	private final String displayText;
 	private final String descriptionText;
 	private final String suggestionText;
@@ -23,9 +24,8 @@ public class Suggestion {
 	 * @param descriptionText
 	 *            a longer description
 	 */
-	public Suggestion(final String displayText,
-			final String descriptionText) {
-		this("", displayText, descriptionText, "", null, null);
+	public Suggestion(final String displayText, final String descriptionText) {
+		this("", Boolean.FALSE, displayText, descriptionText, "", null, null);
 	}
 	/**
 	 *
@@ -38,9 +38,9 @@ public class Suggestion {
 	 *            a longer description
 	 * @param suggestionText
 	 */
-	public Suggestion(final String group, final String displayText,
+	public Suggestion(final String group, final Boolean disabled, final String displayText,
 			final String descriptionText, final String suggestionText) {
-		this(group, displayText, descriptionText, suggestionText, null, null);
+		this(group, disabled, displayText, descriptionText, suggestionText, null, null);
 	}
 
 	/**
@@ -54,9 +54,10 @@ public class Suggestion {
 	 *            a longer description
 	 * @param suggestionText
 	 */
-	public Suggestion(final String group, final String displayText,
+	public Suggestion(final String group, final Boolean disabled, final String displayText,
 			final String descriptionText, final String suggestionText, final Integer selectionStart, final Integer selectionEnd) {
 		this.group = group == null || group.trim().equals("") ? "" : group;
+		this.disabled = disabled == null ? Boolean.FALSE : disabled;
 		this.displayText = displayText;
 		this.descriptionText = descriptionText;
 		this.suggestionText = suggestionText;
@@ -67,6 +68,7 @@ public class Suggestion {
 	public TransportSuggestion asTransport(final int index) {
 		final TransportSuggestion ts = new TransportSuggestion();
 		ts.displayText = this.displayText;
+		ts.disabled = this.disabled;
 		ts.descriptionText = this.descriptionText;
 		ts.suggestionText = this.suggestionText;
 		ts.group = this.group;
@@ -92,6 +94,9 @@ public class Suggestion {
 		return this.group;
 	}
 
+	public Boolean getDisabled() {
+		return disabled;
+	}
 	public Integer getSelectionStart() {
 		return this.selectionStart;
 	}

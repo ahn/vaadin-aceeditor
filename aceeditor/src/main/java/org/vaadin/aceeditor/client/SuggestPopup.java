@@ -12,6 +12,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -155,7 +157,8 @@ DoubleClickHandler, ChangeHandler {
 		int nb = group == null ? -1 : 0;
 		this.choiceList.clear();
 		this.visibleSuggs.clear();
-		final List<Integer> styles = new ArrayList<>();
+		final List<Integer> paddings = new ArrayList<>();
+		final List<Boolean> disableds = new ArrayList<>();
 		int i = 0;
 		String currentFullGroup = "";
 		String[] currentGroupTree = {};
@@ -174,7 +177,8 @@ DoubleClickHandler, ChangeHandler {
 						if (!same) {
 							this.visibleSuggs.add(new VisibleSugg(null, fullGroup));
 							this.choiceList.addItem((this.visibleGroups.contains(fullGroup) ? '-' : '+') + groupTree[igrp], Integer.toString(i++));
-							styles.add(SuggestPopup.PLUSES[igrp]);
+							paddings.add(SuggestPopup.PLUSES[igrp]);
+							disableds.add(Boolean.FALSE);
 							if (group != null && group.equals(parentGroup)) {
 								++nb;
 							}
@@ -186,7 +190,8 @@ DoubleClickHandler, ChangeHandler {
 				if ("".equals(currentFullGroup) || this.visibleGroups.contains(currentFullGroup)) {
 					this.visibleSuggs.add(new VisibleSugg(s, currentFullGroup));
 					this.choiceList.addItem(s.displayText, Integer.toString(i++));
-					styles.add(SuggestPopup.SPACES[currentGroupTree.length]);
+					paddings.add(SuggestPopup.SPACES[currentGroupTree.length]);
+					disableds.add(s.disabled);
 					if (group != null && group.equals(currentFullGroup)) {
 						++nb;
 					}
@@ -204,7 +209,12 @@ DoubleClickHandler, ChangeHandler {
 		final NodeList<OptionElement> options = selectElement.getOptions();
 
 		for (i = 0; i < options.getLength(); i++) {
-			options.getItem(i).getStyle().setPaddingLeft(styles.get(i), Unit.PX);
+			Style style = options.getItem(i).getStyle();
+			style.setPaddingLeft(paddings.get(i), Unit.PX);
+			if (disableds.get(i) != null && disableds.get(i)) {
+				style.setFontStyle(FontStyle.ITALIC);
+				style.setColor("#555555");
+			}
 		}
 		return nb;
 	}
@@ -328,7 +338,7 @@ DoubleClickHandler, ChangeHandler {
 				if (selectedSugg.ts == null) {
 					//Group
 					this.openOrCloseGroup(! this.visibleGroups.contains(selectedSugg.fullGroup));
-				} else {
+				} else if (selectedSugg.ts.disabled == null || ! selectedSugg.ts.disabled) {
 					//Not a group
 					this.startLoading();
 					this.listener.suggestionSelected(selectedSugg.ts);

@@ -12,7 +12,7 @@ public class MySuggester implements Suggester {
 	private static class MySuggestion extends Suggestion {
 		private final String insertThis;
 		MySuggestion(final String displayText, final String descriptionText, final String suggestionText) {
-			super("", displayText, descriptionText, suggestionText);
+			super("", false, displayText, descriptionText, suggestionText);
 			this.insertThis = suggestionText;
 		}
 	}
