@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import name.fraser.neil.plaintext.diff_match_patch;
-import name.fraser.neil.plaintext.diff_match_patch.Patch;
-
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
 import org.vaadin.aceeditor.client.AceDoc;
@@ -21,47 +18,50 @@ import org.vaadin.aceeditor.client.TransportDiff.TransportSetDiffForRowAnnotatio
 import org.vaadin.aceeditor.client.TransportDoc.TransportMarkerAnnotation;
 import org.vaadin.aceeditor.client.TransportDoc.TransportRowAnnotation;
 
+import name.fraser.neil.plaintext.diff_match_patch;
+import name.fraser.neil.plaintext.diff_match_patch.Patch;
+
 
 
 
 public class ServerSideDocDiff {
-	
+
 	// We could use ThreadLocal but that causes a (valid) complaint
 	// of memory leak by Tomcat. Creating a new diff_match_patch every
 	// time (in getDmp()) fixes that. The creation is not a heavy operation so this it's ok.
 	/*
-	private static final ThreadLocal <diff_match_patch> dmp = 
+	private static final ThreadLocal <diff_match_patch> dmp =
 	         new ThreadLocal <diff_match_patch> () {
 	             @Override protected diff_match_patch initialValue() {
 	                 return new diff_match_patch();
 	         }
 	     };
-	*/
-	
+	 */
+
 	private static diff_match_patch getDmp() {
 		return new diff_match_patch();
 	}
-	
+
 	private final LinkedList<Patch> patches;
 	private final MarkerSetDiff markerSetDiff;
 	private final SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff;
 	private final SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff;
-	
-	public static ServerSideDocDiff diff(AceDoc doc1, AceDoc doc2) {
-		LinkedList<Patch> patches = getDmp().patch_make(doc1.getText(), doc2.getText());
-		MarkerSetDiff msd = MarkerSetDiff.diff(doc1.getMarkers(), doc2.getMarkers(), doc2.getText());
-		SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff =
-				diffRA(doc1.getRowAnnotations(), doc2.getRowAnnotations());		
-		SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff =
-				diffMA(doc1.getMarkerAnnotations(), doc2.getMarkerAnnotations());
+
+	public static ServerSideDocDiff diff(final AceDoc doc1, final AceDoc doc2) {
+		final LinkedList<Patch> patches = ServerSideDocDiff.getDmp().patch_make(doc1.getText(), doc2.getText());
+		final MarkerSetDiff msd = MarkerSetDiff.diff(doc1.getMarkers(), doc2.getMarkers(), doc2.getText());
+		final SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff =
+				ServerSideDocDiff.diffRA(doc1.getRowAnnotations(), doc2.getRowAnnotations());
+		final SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff =
+				ServerSideDocDiff.diffMA(doc1.getMarkerAnnotations(), doc2.getMarkerAnnotations());
 		return new ServerSideDocDiff(patches, msd, rowAnnDiff, markerAnnDiff);
 	}
-	
-	public static ServerSideDocDiff diff(String text1, String text2) {
-		LinkedList<Patch> patches = getDmp().patch_make(text1, text2);
+
+	public static ServerSideDocDiff diff(final String text1, final String text2) {
+		final LinkedList<Patch> patches = ServerSideDocDiff.getDmp().patch_make(text1, text2);
 		return new ServerSideDocDiff(patches);
 	}
-	
+
 
 	// XXX Unnecessary copy-pasting
 	private static SetDiff<MarkerAnnotation, TransportMarkerAnnotation> diffMA(
@@ -95,86 +95,86 @@ public class ServerSideDocDiff {
 		return new SetDiff.Differ<RowAnnotation,TransportRowAnnotation>().diff(anns1, anns2);
 	}
 
-	
-	public static ServerSideDocDiff fromTransportDiff(TransportDiff diff) {
+
+	public static ServerSideDocDiff fromTransportDiff(final TransportDiff diff) {
 		return new ServerSideDocDiff(
-				(LinkedList<Patch>) getDmp().patch_fromText(diff.patchesAsString),
+				(LinkedList<Patch>) ServerSideDocDiff.getDmp().patch_fromText(diff.patchesAsString),
 				MarkerSetDiff.fromTransportDiff(diff.markerSetDiff),
-				rowAnnsFromTransport(diff.rowAnnDiff),
-				markerAnnsFromTransport(diff.markerAnnDiff));
+				ServerSideDocDiff.rowAnnsFromTransport(diff.rowAnnDiff),
+				ServerSideDocDiff.markerAnnsFromTransport(diff.markerAnnDiff));
 	}
-	
+
 	// XXX Unnecessary copy-pasting
 	private static SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnsFromTransport(
-			TransportSetDiffForRowAnnotations rowAnnDiff) {
+			final TransportSetDiffForRowAnnotations rowAnnDiff) {
 		return rowAnnDiff==null ? null : SetDiff.fromTransport(rowAnnDiff);
 	}
-	
+
 	// XXX Unnecessary copy-pasting
 	private static SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnsFromTransport(
-			TransportSetDiffForMarkerAnnotations markerAnnDiff) {
+			final TransportSetDiffForMarkerAnnotations markerAnnDiff) {
 		return markerAnnDiff==null ? null :  SetDiff.fromTransport(markerAnnDiff);
 	}
 
-	public ServerSideDocDiff(LinkedList<Patch> patches, MarkerSetDiff markerSetDiff,
-			SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff,
-			SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff) {
+	public ServerSideDocDiff(final LinkedList<Patch> patches, final MarkerSetDiff markerSetDiff,
+			final SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff,
+			final SetDiff<MarkerAnnotation,TransportMarkerAnnotation> markerAnnDiff) {
 		this.patches = patches;
 		this.markerSetDiff = markerSetDiff;
 		this.rowAnnDiff = rowAnnDiff;
 		this.markerAnnDiff = markerAnnDiff;
 	}
 
-	public ServerSideDocDiff(LinkedList<Patch> patches) {
+	public ServerSideDocDiff(final LinkedList<Patch> patches) {
 		this(patches, null, null, null);
 	}
 
 	public String getPatchesString() {
-		return getDmp().patch_toText(patches);
-	}
-	
-	public List<Patch> getPatches() {
-		return Collections.unmodifiableList(patches);
+		return ServerSideDocDiff.getDmp().patch_toText(this.patches);
 	}
 
-	
-	public AceDoc applyTo(AceDoc doc) {
-		String text = (String)getDmp().patch_apply(patches, doc.getText())[0];
-		Map<String, AceMarker> markers = markerSetDiff==null ? doc.getMarkers() : markerSetDiff.applyTo(doc.getMarkers(), text);
-		Set<RowAnnotation> rowAnns = rowAnnDiff==null ? null : rowAnnDiff.applyTo(doc.getRowAnnotations());
-		Set<MarkerAnnotation> markerAnns = markerAnnDiff==null ? null : markerAnnDiff.applyTo(doc.getMarkerAnnotations());
+	public List<Patch> getPatches() {
+		return Collections.unmodifiableList(this.patches);
+	}
+
+
+	public AceDoc applyTo(final AceDoc doc) {
+		final String text = (String)ServerSideDocDiff.getDmp().patch_apply(this.patches, doc.getText())[0];
+		final Map<String, AceMarker> markers = this.markerSetDiff==null ? doc.getMarkers() : this.markerSetDiff.applyTo(doc.getMarkers(), text);
+		final Set<RowAnnotation> rowAnns = this.rowAnnDiff==null ? null : this.rowAnnDiff.applyTo(doc.getRowAnnotations());
+		final Set<MarkerAnnotation> markerAnns = this.markerAnnDiff==null ? null : this.markerAnnDiff.applyTo(doc.getMarkerAnnotations());
 		return new AceDoc(text, markers, rowAnns, markerAnns);
 	}
-	
-	public String applyTo(String text) {
-		return (String)getDmp().patch_apply(patches, text)[0];
+
+	public String applyTo(final String text) {
+		return (String)ServerSideDocDiff.getDmp().patch_apply(this.patches, text)[0];
 	}
 
 	public TransportDiff asTransport() {
-		TransportDiff d = new TransportDiff();
-		d.patchesAsString = getPatchesString();
-		d.markerSetDiff = markerSetDiff==null ? null : markerSetDiff.asTransportDiff();
-		d.rowAnnDiff = rowAnnDiff==null ? null : rowAnnDiff.asTransportRowAnnotations();
-		d.markerAnnDiff = markerAnnDiff==null ? null : markerAnnDiff.asTransportMarkerAnnotations();
+		final TransportDiff d = new TransportDiff();
+		d.patchesAsString = this.getPatchesString();
+		d.markerSetDiff = this.markerSetDiff==null ? null : this.markerSetDiff.asTransportDiff();
+		d.rowAnnDiff = this.rowAnnDiff==null ? null : this.rowAnnDiff.asTransportRowAnnotations();
+		d.markerAnnDiff = this.markerAnnDiff==null ? null : this.markerAnnDiff.asTransportMarkerAnnotations();
 		return d;
 	}
 
 	public boolean isIdentity() {
-		return patches.isEmpty() && (markerSetDiff==null || markerSetDiff.isIdentity()); // TODO?
+		return this.patches.isEmpty() && (this.markerSetDiff==null || this.markerSetDiff.isIdentity()); // TODO?
 	}
-	
+
 	@Override
 	public String toString() {
-		return "---ServerSideDocDiff---\n" + getPatchesString()+"\n"+markerSetDiff+"\nrad:"+rowAnnDiff+", mad:"+markerAnnDiff;
+		return "---ServerSideDocDiff---\n" + this.getPatchesString()+"\n"+this.markerSetDiff+"\nrad:"+this.rowAnnDiff+", mad:"+this.markerAnnDiff;
 	}
 
 
 	public static ServerSideDocDiff newMarkersAndAnnotations(
-			MarkerSetDiff msd, SetDiff<MarkerAnnotation,TransportMarkerAnnotation> mad) {
-		LinkedList<Patch> patches = new LinkedList<Patch>();
-		SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff =
-				new SetDiff<RowAnnotation, TransportRowAnnotation>();
+			final MarkerSetDiff msd, final SetDiff<MarkerAnnotation,TransportMarkerAnnotation> mad) {
+		final LinkedList<Patch> patches = new LinkedList<>();
+		final SetDiff<RowAnnotation,TransportRowAnnotation> rowAnnDiff =
+				new SetDiff<>();
 		return new ServerSideDocDiff(patches, msd, rowAnnDiff, mad);
 	}
-	
+
 }

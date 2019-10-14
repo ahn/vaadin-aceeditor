@@ -1,9 +1,20 @@
 package org.vaadin.aceeditor.client;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.OptionElement;
+import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.FontStyle;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
@@ -11,148 +22,272 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.UIObject;
 import com.vaadin.client.ui.VOverlay;
+import com.vaadin.client.widgets.Overlay;
 
-public class SuggestPopup extends VOverlay implements KeyDownHandler,
-		DoubleClickHandler, ChangeHandler {
+public class SuggestPopup extends VOverlay implements KeyDownHandler, KeyPressHandler,
+DoubleClickHandler, ChangeHandler {
+
+	private static final Integer[] SPACES;
+	private static final Integer[] PLUSES;
+
+	static {
+		SPACES = new Integer[10];
+		PLUSES = new Integer[10];
+		for (int i = 0 ; i < SuggestPopup.SPACES.length ; i++) {
+			SuggestPopup.SPACES[i] = (10*i + 10);
+			SuggestPopup.PLUSES[i] = 10*i;
+		}
+	}
+
 	protected ListBox choiceList;
 
-    protected String startOfValue = "";
+	protected String startOfValue = "";
 
 	public interface SuggestionSelectedListener {
 		void suggestionSelected(TransportSuggestion s);
 		void noSuggestionSelected();
 	}
 
-    protected SuggestionSelectedListener listener;
+	protected SuggestionSelectedListener listener;
 
-    protected VOverlay descriptionPopup;
+	protected Overlay descriptionPopup;
 
-    protected List<TransportSuggestion> suggs;
-    protected List<TransportSuggestion> visibleSuggs = new LinkedList<TransportSuggestion>();
+	protected List<TransportSuggestion> suggs;
+	protected List<VisibleSugg> visibleSuggs = new LinkedList<>();
+	protected Set<String> visibleGroups = new HashSet<>();
 
-    protected boolean showDescriptions = true;
+	protected boolean showDescriptions = true;
 
-    protected Image loadingImage;
+	protected SimplePanel loadingImagePanel;
+	protected Image loadingImage;
 
-	public static final int WIDTH = 150;
-	public static final int HEIGHT = 200;
+	protected int width = 150;
+	protected Unit widthUnit = Unit.PX;
 
-	public static final int DESCRIPTION_WIDTH = 225;
+	protected int height = 200;
+	protected Unit heightUnit = Unit.PX;
+
+	protected int descriptionWidth = 225;
+	protected Unit descriptionWidthUnit = Unit.PX;
+
+	public static class VisibleSugg {
+		TransportSuggestion ts;
+		String fullGroup;
+		public VisibleSugg(final TransportSuggestion ts, final String fullGroup) {
+			super();
+			this.ts = ts;
+			this.fullGroup = fullGroup;
+		}
+	}
 
 	// TODO addSuggestionSelectedListener?
-	public void setSuggestionSelectedListener(SuggestionSelectedListener ssl) {
-		listener = ssl;
+	public void setSuggestionSelectedListener(final SuggestionSelectedListener ssl) {
+		this.listener = ssl;
 	}
 
 	public SuggestPopup() {
 		super(true);
-		setWidth(WIDTH + "px");
-		SuggestionResources resources = GWT.create(SuggestionResources.class);
-		loadingImage = new Image(resources.loading());
-		setWidget(loadingImage);
+		this.setWidth(this.width + this.widthUnit.getType());
+		this.setHeight(this.height + this.heightUnit.getType());
+		final SuggestionResources resources = GWT.create(SuggestionResources.class);
+		this.loadingImage = new Image(resources.loading());
+		this.loadingImage.setSize("20px", "20px");
+		this.loadingImagePanel = new SimplePanel(this.loadingImage);
+		this.setWidget(this.loadingImagePanel);
+		this.setStyleName("aceeditor-autocomplete-popup-panel");
+		UIObject.setStyleName(this.getContainerElement(), "aceeditor-autocomplete-popup-content");
 	}
-	
+
 	protected void createChoiceList() {
-		choiceList = new ListBox();
-		choiceList.setStyleName("list");
-		choiceList.addKeyDownHandler(this);
-		choiceList.addDoubleClickHandler(this);
-		choiceList.addChangeHandler(this);
-		choiceList.setStylePrimaryName("aceeditor-suggestpopup-list");
-		setWidget(choiceList);
+		this.choiceList = new ListBox();
+		this.choiceList.setStyleName("list");
+		this.choiceList.addKeyDownHandler(this);
+		this.choiceList.addKeyPressHandler(this);
+		this.choiceList.addDoubleClickHandler(this);
+		this.choiceList.addChangeHandler(this);
+		this.choiceList.setStylePrimaryName("aceeditor-suggestpopup-list");
+		this.setWidget(this.choiceList);
 	}
-	
+
 	protected void startLoading() {
-		if (descriptionPopup!=null) {
-			descriptionPopup.hide();
+		if (this.descriptionPopup!=null) {
+			this.descriptionPopup.hide();
 		}
-		setWidget(loadingImage);
+		this.setWidget(this.loadingImagePanel);
 	}
-	
-	public void setSuggestions(List<TransportSuggestion> suggs) {
+
+	public void setSuggestions(final List<TransportSuggestion> suggs) {
 		this.suggs = suggs;
-		createChoiceList();
-		populateList();
-		if (choiceList.getItemCount() == 0) {
-			close();
+		this.suggs.sort(new Comparator<TransportSuggestion>() {
+			@Override
+			public int compare(final TransportSuggestion o1, final TransportSuggestion o2) {
+				int ret = o1.group.compareTo(o2.group);
+				if (ret == 0) {
+					ret = o1.displayText.compareTo(o2.displayText);
+				}
+				return ret;
+			}
+		});
+		this.createChoiceList();
+		this.populateList();
+		if (this.choiceList.getItemCount() == 0) {
+			this.close();
 		}
 	}
 
-    protected void populateList() {
-		choiceList.clear();
-		visibleSuggs.clear();
+	protected void populateList() {
+		this.populateList(null);
+	}
+
+	/**
+	 * @param group
+	 * @return Number of elements in this group or -1 if null.
+	 */
+	protected int populateList(final String group) {
+		int nb = group == null ? -1 : 0;
+		this.choiceList.clear();
+		this.visibleSuggs.clear();
+		final List<Integer> paddings = new ArrayList<>();
+		final List<Boolean> disableds = new ArrayList<>();
 		int i = 0;
-		for (TransportSuggestion s : suggs) {
-			if (s.suggestionText.toLowerCase().startsWith(startOfValue)) {
-				visibleSuggs.add(s);
-				choiceList.addItem(s.displayText, "" + i);
+		String currentFullGroup = "";
+		String[] currentGroupTree = {};
+		for (final TransportSuggestion s : this.suggs) {
+			if (s.suggestionText.toLowerCase().startsWith(this.startOfValue)) {
+				if (! currentFullGroup.equals(s.group)) {
+					final String[] groupTree = s.group.split("\\/");
+					boolean same = true;
+					String fullGroup = "";
+					for (int igrp = 0 ; igrp < groupTree.length && ("".equals(fullGroup) || this.visibleGroups.contains(fullGroup)) ; ++igrp) {
+						final String parentGroup = fullGroup;
+						fullGroup += (igrp == 0 ? "" : "/") + groupTree[igrp];
+						if (same && (currentGroupTree.length <= igrp || !currentGroupTree[igrp].equals(groupTree[igrp]))) {
+							same = false;
+						}
+						if (!same) {
+							this.visibleSuggs.add(new VisibleSugg(null, fullGroup));
+							this.choiceList.addItem((this.visibleGroups.contains(fullGroup) ? '-' : '+') + groupTree[igrp], Integer.toString(i++));
+							paddings.add(SuggestPopup.PLUSES[igrp]);
+							disableds.add(Boolean.FALSE);
+							if (group != null && group.equals(parentGroup)) {
+								++nb;
+							}
+						}
+					}
+					currentFullGroup = s.group;
+					currentGroupTree = groupTree;
+				}
+				if ("".equals(currentFullGroup) || this.visibleGroups.contains(currentFullGroup)) {
+					this.visibleSuggs.add(new VisibleSugg(s, currentFullGroup));
+					this.choiceList.addItem(s.displayText, Integer.toString(i++));
+					paddings.add(SuggestPopup.SPACES[currentGroupTree.length]);
+					disableds.add(s.disabled);
+					if (group != null && group.equals(currentFullGroup)) {
+						++nb;
+					}
+				}
 			}
-			i++;
 		}
-		if (choiceList.getItemCount() > 0) {
-			int vic = Math.max(2, Math.min(10, choiceList.getItemCount()));
-			choiceList.setVisibleItemCount(vic);
-			choiceList.setSelectedIndex(0);
+		if (this.choiceList.getItemCount() > 0) {
+			final int vic = Math.max(2, Math.min(10, this.choiceList.getItemCount()));
+			this.choiceList.setVisibleItemCount(vic);
+			this.choiceList.setSelectedIndex(0);
 			this.onChange(null);
 		}
+
+		final SelectElement selectElement = SelectElement.as(this.choiceList.getElement());
+		final NodeList<OptionElement> options = selectElement.getOptions();
+
+		for (i = 0; i < options.getLength(); i++) {
+			Style style = options.getItem(i).getStyle();
+			style.setPaddingLeft(paddings.get(i), Unit.PX);
+			if (disableds.get(i) != null && disableds.get(i)) {
+				style.setFontStyle(FontStyle.ITALIC);
+				style.setColor("#555555");
+			}
+		}
+		return nb;
 	}
 
 	public void close() {
-		hide();
-		if (listener != null)
-			listener.noSuggestionSelected();
+		this.hide();
+		if (this.listener != null) {
+			this.listener.noSuggestionSelected();
+		}
 	}
 
 	@Override
 	public void hide() {
 		super.hide();
-		if (descriptionPopup != null)
-			descriptionPopup.hide();
-		descriptionPopup = null;
+		if (this.descriptionPopup != null) {
+			this.descriptionPopup.hide();
+		}
+		this.descriptionPopup = null;
 	}
 
 	@Override
-	public void hide(boolean ac) {
+	public void hide(final boolean ac) {
 		super.hide(ac);
 		if (ac) {
 			// This happens when user clicks outside this popup (or something
 			// similar) while autohide is on. We must cancel the suggestion.
-			if (listener != null)
-				listener.noSuggestionSelected();
+			if (this.listener != null) {
+				this.listener.noSuggestionSelected();
+			}
 		}
-		if (descriptionPopup != null)
-			descriptionPopup.hide();
-		descriptionPopup = null;
+		if (this.descriptionPopup != null) {
+			this.descriptionPopup.hide();
+		}
+		this.descriptionPopup = null;
 	}
 
 	@Override
-	public void onKeyDown(KeyDownEvent event) {
-		int keyCode = event.getNativeKeyCode();
+	public void onKeyDown(final KeyDownEvent event) {
+		final int keyCode = event.getNativeKeyCode();
 		if (keyCode == KeyCodes.KEY_ENTER
-				&& choiceList.getSelectedIndex() != -1) {
+				&& this.choiceList.getSelectedIndex() != -1) {
 			event.preventDefault();
 			event.stopPropagation();
-			select();
+			this.select();
 		} else if (keyCode == KeyCodes.KEY_ESCAPE) {
 			event.preventDefault();
-			close();
+			this.close();
+		} else if (keyCode == KeyCodes.KEY_RIGHT) {
+			event.preventDefault();
+			event.stopPropagation();
+			this.openOrCloseGroup(true);
+		} else if (keyCode == KeyCodes.KEY_LEFT) {
+			event.preventDefault();
+			event.stopPropagation();
+			this.openOrCloseGroup(false);
 		}
 	}
 
 	@Override
-	public void onDoubleClick(DoubleClickEvent event) {
+	public void onKeyPress(final KeyPressEvent event) {
 		event.preventDefault();
 		event.stopPropagation();
-		select();
 	}
 
 	@Override
-	public void onBrowserEvent(Event event) {
+	public void onDoubleClick(final DoubleClickEvent event) {
+		event.preventDefault();
+		event.stopPropagation();
+		this.select();
+	}
+
+	@Override
+	public void onBrowserEvent(final Event event) {
 		if (event.getTypeInt() == Event.ONCONTEXTMENU) {
 			event.stopPropagation();
 			event.preventDefault();
@@ -162,11 +297,11 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 	}
 
 	public void up() {
-		if (suggs==null) {
+		if (this.suggs==null) {
 			return;
 		}
-		int current = this.choiceList.getSelectedIndex();
-		int next = (current - 1 >= 0) ? current - 1 : 0;
+		final int current = this.choiceList.getSelectedIndex();
+		final int next = (current - 1 >= 0) ? current - 1 : 0;
 		this.choiceList.setSelectedIndex(next);
 		// Note that setting the selection programmatically does not cause the
 		// ChangeHandler.onChange(ChangeEvent) event to be fired.
@@ -175,11 +310,11 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 	}
 
 	public void down() {
-		if (suggs==null) {
+		if (this.suggs==null) {
 			return;
 		}
-		int current = this.choiceList.getSelectedIndex();
-		int next = (current + 1 < choiceList.getItemCount()) ? current + 1
+		final int current = this.choiceList.getSelectedIndex();
+		final int next = (current + 1 < this.choiceList.getItemCount()) ? current + 1
 				: current;
 		this.choiceList.setSelectedIndex(next);
 		// Note that setting the selection programmatically does not cause the
@@ -189,79 +324,176 @@ public class SuggestPopup extends VOverlay implements KeyDownHandler,
 	}
 
 	public void select() {
-		if (suggs==null) {
+		if (this.suggs==null) {
 			return;
 		}
-		
-		int selected = choiceList.getSelectedIndex();
-		if (listener != null) {
+
+		if (this.listener != null) {
+			final int selected = this.choiceList.getSelectedIndex();
 			if (selected == -1) {
 				this.hide();
-				listener.noSuggestionSelected();
+				this.listener.noSuggestionSelected();
 			} else {
-				startLoading();
-				listener.suggestionSelected(visibleSuggs.get(selected));
+				final VisibleSugg selectedSugg = this.visibleSuggs.get(selected);
+				if (selectedSugg.ts == null) {
+					//Group
+					this.openOrCloseGroup(! this.visibleGroups.contains(selectedSugg.fullGroup));
+				} else if (selectedSugg.ts.disabled == null || ! selectedSugg.ts.disabled) {
+					//Not a group
+					this.startLoading();
+					this.listener.suggestionSelected(selectedSugg.ts);
+				}
+			}
+		}
+	}
+
+	public void openOrCloseGroup(final boolean open) {
+		if (this.suggs==null) {
+			return;
+		}
+
+		final int selected = this.choiceList.getSelectedIndex();
+		if (selected != -1) {
+			final VisibleSugg selectedSugg = this.visibleSuggs.get(selected);
+			if (selectedSugg.ts == null) {
+				//Group
+				boolean go = false;
+				boolean close = false;
+				if (!open && this.visibleGroups.contains(selectedSugg.fullGroup)) {
+					this.visibleGroups.remove(selectedSugg.fullGroup);
+					final Iterator<String> it = this.visibleGroups.iterator();
+					while (it.hasNext()) {
+						if (it.next().startsWith(selectedSugg.fullGroup)) {
+							it.remove();
+						}
+					}
+					close = true;
+					go = true;
+				}
+				if (open && !this.visibleGroups.contains(selectedSugg.fullGroup)) {
+					this.visibleGroups.add(selectedSugg.fullGroup);
+					go = true;
+				}
+				if (go) {
+					final int scroll = this.choiceList.getElement().getScrollTop();
+					final int nb = this.populateList(selectedSugg.fullGroup);
+
+					//Set content of group visible at best.
+
+					//Re scroll to last position or to 1 of no scroll: Trick so that it works in any case.
+					if (scroll != 0) {
+						this.choiceList.getElement().setScrollTop(scroll);
+					} else {
+						this.choiceList.getElement().setScrollTop(1);
+					}
+					if (this.choiceList.getElement().getScrollTop() != 0) {
+						if (!close) {
+							//Set last element of the group selected and scroll down if necessary
+							this.choiceList.setSelectedIndex(selected+nb);
+						}
+						//Set select and scroll up if necessary
+						this.choiceList.setSelectedIndex(selected);
+					}
+					this.onChange(null);
+				}
 			}
 		}
 	}
 
 	@Override
-	public void onChange(ChangeEvent event) {
-		if (descriptionPopup == null) {
-			createDescriptionPopup();
+	public void onChange(final ChangeEvent event) {
+		if (this.descriptionPopup == null) {
+			this.createDescriptionPopup();
 		}
 
-		int selected = choiceList.getSelectedIndex();
-		String descr = visibleSuggs.get(selected).descriptionText;
+		final int selected = this.choiceList.getSelectedIndex();
+		final VisibleSugg selectedSugg = this.visibleSuggs.get(selected);
+		final String descr = selectedSugg.ts == null ? null : selectedSugg.ts.descriptionText;
 
 		if (descr != null && !descr.isEmpty()) {
-			((HTML) descriptionPopup.getWidget()).setHTML(descr);
-            if (showDescriptions) {
-                descriptionPopup.show();
-            }
-        } else {
-			descriptionPopup.hide();
+			((HTML) this.descriptionPopup.getWidget()).setHTML(descr);
+			if (this.showDescriptions) {
+				this.descriptionPopup.show();
+			}
+		} else {
+			this.descriptionPopup.hide();
 		}
 	}
 
 	@Override
-	public void setPopupPosition(int left, int top) {
+	public void setPopupPosition(final int left, final int top) {
 		super.setPopupPosition(left, top);
-		if (descriptionPopup!=null) {
-			updateDescriptionPopupPosition();
+		if (this.descriptionPopup!=null) {
+			this.updateDescriptionPopupPosition();
 		}
 	}
-	
+
 	protected void updateDescriptionPopupPosition() {
-		int x = getAbsoluteLeft() + WIDTH;
-		int y = getAbsoluteTop();
-		descriptionPopup.setPopupPosition(x, y);
-		if (descriptionPopup!=null) {
-			descriptionPopup.setPopupPosition(x, y);
+		if (this.descriptionPopup!=null) {
+			final int x = this.getAbsoluteLeft() + this.choiceList.getOffsetWidth();
+			final int y = this.getAbsoluteTop();
+			this.descriptionPopup.setPopupPosition(x, y);
 		}
+	}
+
+	public void windowResized(final ResizeEvent event) {
+		this.updateDescriptionPopupPosition();
 	}
 
 	protected void createDescriptionPopup() {
-		descriptionPopup = new VOverlay();
-		descriptionPopup.setOwner(getOwner());
-		descriptionPopup.setStylePrimaryName("aceeditor-suggestpopup-description");
-		HTML lbl = new HTML();
+		this.descriptionPopup = GWT.create(Overlay.class);
+		this.descriptionPopup.setOwner(this.getOwner());
+		this.descriptionPopup.setStylePrimaryName("aceeditor-suggestpopup-description");
+		final HTML lbl = new HTML();
 		lbl.setWordWrap(true);
-		descriptionPopup.setWidget(lbl);
-		updateDescriptionPopupPosition();
-		descriptionPopup.setWidth(DESCRIPTION_WIDTH+"px");
-//		descriptionPopup.setSize(DESCRIPTION_WIDTH+"px", HEIGHT+"px");
+		this.descriptionPopup.setWidget(lbl);
+		this.updateDescriptionPopupPosition();
+		this.descriptionPopup.setWidth(this.descriptionWidth + this.descriptionWidthUnit.getType());
 	}
 
-	public void setStartOfValue(String startOfValue) {
+	public void setStartOfValue(final String startOfValue) {
 		this.startOfValue = startOfValue.toLowerCase();
-		if (suggs==null) {
+		if (this.suggs==null) {
 			return;
 		}
-		populateList();
-		if (choiceList.getItemCount() == 0) {
-			close();
+		this.populateList();
+		if (this.choiceList.getItemCount() == 0) {
+			this.close();
 		}
 	}
 
+	/**
+	 * Default unit : PIXEL.
+	 */
+	public void setWidth(final int width){
+		this.setWidth(width, Unit.PX);
+	}
+	public void setWidth(final int width, final Unit unit){
+		this.width = width;
+		this.widthUnit = unit;
+		this.setWidth(width + unit.getType());
+	}
+
+	/**
+	 * Default unit : PIXEL.
+	 */
+	public void setHeight(final int height){
+		this.setHeight(height, Unit.PX);
+	}
+	public void setHeight(final int height, final Unit unit){
+		this.height = height;
+		this.heightUnit = unit;
+		this.setHeight(height + unit.getType());
+	}
+
+	/**
+	 * Default unit : PIXEL.
+	 */
+	public void setDescriptionWidth(final int width){
+		this.setDescriptionWidth(width, Unit.PX);
+	}
+	public void setDescriptionWidth(final int width, final Unit unit){
+		this.descriptionWidth = width;
+		this.descriptionWidthUnit = unit;
+	}
 }

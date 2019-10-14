@@ -2,7 +2,7 @@ package org.vaadin.aceeditor;
 
 /**
  * Ace theme defines the appearance of the editor.
- * 
+ *
  */
 public enum AceTheme {
 	ambiance,
@@ -34,7 +34,7 @@ public enum AceTheme {
 	twilight,
 	vibrant_ink,
 	xcode;
-	
+
 	public String getRequireString() {
 		return "ace/theme/"+this.toString();
 	}

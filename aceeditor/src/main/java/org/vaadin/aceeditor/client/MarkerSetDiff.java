@@ -14,32 +14,32 @@ import org.vaadin.aceeditor.client.TransportDiff.TransportMarkerSetDiff;
 
 @SuppressWarnings("serial")
 public class MarkerSetDiff implements Serializable {
-	
+
 	private final Map<String, MarkerAddition> added;
 	private final Map<String, MarkerDiff> moved;
 	private final Set<String> removed;
-	
-	public MarkerSetDiff(Map<String, MarkerAddition> added, Set<String> removed) {
+
+	public MarkerSetDiff(final Map<String, MarkerAddition> added, final Set<String> removed) {
 		this.added = added;
 		this.moved = Collections.emptyMap();
 		this.removed = removed;
 	}
-	
-	public MarkerSetDiff(Map<String, MarkerAddition> added,
-			Map<String, MarkerDiff> moved, Set<String> removed) {
+
+	public MarkerSetDiff(final Map<String, MarkerAddition> added,
+			final Map<String, MarkerDiff> moved, final Set<String> removed) {
 		this.added = added;
 		this.moved = moved;
 		this.removed = removed;
 	}
 
-	public static MarkerSetDiff diff(Map<String, AceMarker> m1, Map<String, AceMarker> m2, String text2) {
+	public static MarkerSetDiff diff(final Map<String, AceMarker> m1, final Map<String, AceMarker> m2, final String text2) {
 
-		Map<String, MarkerAddition> added = new HashMap<String, MarkerAddition>();
-		Map<String, MarkerDiff> diffs = new HashMap<String, MarkerDiff>();
-		for (Entry<String, AceMarker> e : m2.entrySet()) {
-			AceMarker c1 = m1.get(e.getKey());
+		final Map<String, MarkerAddition> added = new HashMap<>();
+		final Map<String, MarkerDiff> diffs = new HashMap<>();
+		for (final Entry<String, AceMarker> e : m2.entrySet()) {
+			final AceMarker c1 = m1.get(e.getKey());
 			if (c1 != null) {
-				MarkerDiff d = MarkerDiff.diff(c1, e.getValue());
+				final MarkerDiff d = MarkerDiff.diff(c1, e.getValue());
 				if (!d.isIdentity()) {
 					diffs.put(e.getKey(), d);
 				}
@@ -48,61 +48,33 @@ public class MarkerSetDiff implements Serializable {
 			}
 		}
 
-		Set<String> removedIds = new HashSet<String>(m1.keySet());
+		final Set<String> removedIds = new HashSet<>(m1.keySet());
 		removedIds.removeAll(m2.keySet());
 
 		return new MarkerSetDiff(added, diffs, removedIds);
 	}
 
-//	public Map<String, TransportMarker> applyTo(Map<String, TransportMarker> markers) {
-//		Map<String, TransportMarker> markers2 = new HashMap<String, TransportMarker>();
-//		for (Entry<String, TransportMarkerAddition> e : added.entrySet()) {
-//			TransportMarker adjusted = e.getValue().marker; // TODO: adjust
-//			if (adjusted != null) {
-//				markers2.put(e.getKey(), adjusted);
-//			}
-//		}
-//
-//		for (Entry<String, TransportMarker> e : markers.entrySet()) {
-//			if (removed.contains(e.getKey())) {
-//				continue;
-//			}
-//			TransportMarker m = e.getValue();
-//			if (added.containsKey(e.getKey())) {
-//				 m = added.get(e.getKey()).marker;
-//			}
-//			TransportMarkerDiff md = moved.get(e.getKey());
-//			if (md != null) {
-//				markers2.put(e.getKey(), md.applyTo(m));
-//			} else {
-//				markers2.put(e.getKey(), m);
-//			}
-//		}
-//
-//		return markers2;
-//	}
-	
-	public Map<String, AceMarker> applyTo(Map<String, AceMarker> markers, String text2) {
-		Map<String, AceMarker> markers2 = new HashMap<String, AceMarker>();
-		for (Entry<String, MarkerAddition> e : added.entrySet()) {
-			AceMarker adjusted = e.getValue().getAdjustedMarker(text2);
+	public Map<String, AceMarker> applyTo(final Map<String, AceMarker> markers, final String text2) {
+		final Map<String, AceMarker> markers2 = new HashMap<>();
+		for (final Entry<String, MarkerAddition> e : this.added.entrySet()) {
+			final AceMarker adjusted = e.getValue().getAdjustedMarker(text2);
 			if (adjusted != null) {
 				markers2.put(e.getKey(), adjusted);
 			}
 		}
 
-		for (Entry<String, AceMarker> e : markers.entrySet()) {
-			if (removed.contains(e.getKey())) {
+		for (final Entry<String, AceMarker> e : markers.entrySet()) {
+			if (this.removed.contains(e.getKey())) {
 				continue;
 			}
 			AceMarker m = e.getValue();
-			
+
 			// ???
 			if (markers2.containsKey(e.getKey())) {
-				 m = markers2.get(e.getKey());
+				m = markers2.get(e.getKey());
 			}
-			
-			MarkerDiff md = moved.get(e.getKey());
+
+			final MarkerDiff md = this.moved.get(e.getKey());
 			if (md != null) {
 				markers2.put(e.getKey(), md.applyTo(m));
 			} else {
@@ -115,70 +87,70 @@ public class MarkerSetDiff implements Serializable {
 
 	@Override
 	public String toString() {
-		return "added: " + added + "\n" +
-				"moved: " + moved + "\n" +
-				"removed: " + removed;
+		return "added: " + this.added + "\n" +
+				"moved: " + this.moved + "\n" +
+				"removed: " + this.removed;
 	}
 
 	public boolean isIdentity() {
-		return added.isEmpty() && moved.isEmpty() && removed.isEmpty();
+		return this.added.isEmpty() && this.moved.isEmpty() && this.removed.isEmpty();
 	}
 
 	public TransportMarkerSetDiff asTransportDiff() {
-		TransportMarkerSetDiff msd = new TransportMarkerSetDiff();
-		msd.added = getTransportAdded();
-		msd.moved = getTransportMoved();
-		msd.removed = getTransportRemoved();
+		final TransportMarkerSetDiff msd = new TransportMarkerSetDiff();
+		msd.added = this.getTransportAdded();
+		msd.moved = this.getTransportMoved();
+		msd.removed = this.getTransportRemoved();
 		return msd;
 	}
 
 	private Map<String, TransportMarkerAddition> getTransportAdded() {
-		HashMap<String, TransportMarkerAddition> ta = new HashMap<String, TransportMarkerAddition>();
-		for (Entry<String, MarkerAddition> e : added.entrySet()) {
+		final HashMap<String, TransportMarkerAddition> ta = new HashMap<>();
+		for (final Entry<String, MarkerAddition> e : this.added.entrySet()) {
 			ta.put(e.getKey(), e.getValue().asTransport());
 		}
 		return ta;
 	}
 
 	private Map<String, TransportMarkerDiff> getTransportMoved() {
-		HashMap<String, TransportMarkerDiff> ta = new HashMap<String, TransportMarkerDiff>();
-		for (Entry<String, MarkerDiff> e : moved.entrySet()) {
+		final HashMap<String, TransportMarkerDiff> ta = new HashMap<>();
+		for (final Entry<String, MarkerDiff> e : this.moved.entrySet()) {
 			ta.put(e.getKey(), e.getValue().asTransport());
 		}
 		return ta;
 	}
 
 	private Set<String> getTransportRemoved() {
-		return removed; // No need for a defensive copy??
+		return this.removed; // No need for a defensive copy??
 	}
 
-	public static MarkerSetDiff fromTransportDiff(TransportMarkerSetDiff td) {
+	public static MarkerSetDiff fromTransportDiff(final TransportMarkerSetDiff td) {
 		return new MarkerSetDiff(
-				addedFromTransport(td.added),
-				movedFromTransport(td.moved),
-				removedFromTransport(td.removed));
+				MarkerSetDiff.addedFromTransport(td.added),
+				MarkerSetDiff.movedFromTransport(td.moved),
+				MarkerSetDiff.removedFromTransport(td.removed));
 	}
 
 	private static Map<String, MarkerAddition> addedFromTransport(
-			Map<String, TransportMarkerAddition> added2) {
-		HashMap<String, MarkerAddition> added = new HashMap<String, MarkerAddition>();
-		for (Entry<String, TransportMarkerAddition> e : added2.entrySet()) {
+			final Map<String, TransportMarkerAddition> added2) {
+		final HashMap<String, MarkerAddition> added = new HashMap<>();
+		for (final Entry<String, TransportMarkerAddition> e : added2.entrySet()) {
 			added.put(e.getKey(), MarkerAddition.fromTransport(e.getValue()));
 		}
 		return added;
 	}
 
 	private static Map<String, MarkerDiff> movedFromTransport(
-			Map<String, TransportMarkerDiff> mt) {
-		HashMap<String, MarkerDiff> moved = new HashMap<String, MarkerDiff>();
-		for (Entry<String, TransportMarkerDiff> e : mt.entrySet()) {
+			final Map<String, TransportMarkerDiff> mt) {
+		final HashMap<String, MarkerDiff> moved = new HashMap<>();
+		for (final Entry<String, TransportMarkerDiff> e : mt.entrySet()) {
 			moved.put(e.getKey(), MarkerDiff.fromTransport(e.getValue()));
 		}
 		return moved;
 	}
 
-	private static Set<String> removedFromTransport(Set<String> tr) {
+	private static Set<String> removedFromTransport(final Set<String> tr) {
 		return tr; // No need for a defensive copy??
 	}
-	
+
 }
