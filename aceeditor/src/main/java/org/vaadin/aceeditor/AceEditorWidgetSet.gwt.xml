@@ -1,3 +1,5 @@
 <module>
 	<inherits name="com.vaadin.DefaultWidgetSet" />
+	<inherits name="com.google.gwt.user.User" />
+	<inherits name="com.google.gwt.core.Core" />
 </module>

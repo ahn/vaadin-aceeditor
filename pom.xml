@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.vaadin.addons</groupId>
 	<artifactId>aceeditor-parent</artifactId>
-	<version>0.8.22-mrules</version>
+	<version>0.8.23-mrules</version>
 	<packaging>pom</packaging>
 
 	<name>Vaadin AceEditor Parent Project</name>
@@ -19,8 +19,8 @@
 	<properties>
 		<maven.javadoc.skip>true</maven.javadoc.skip>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<vaadin.version>8.0.1</vaadin.version>
-		<vaadin.plugin.version>8.0.1</vaadin.plugin.version>
+		<vaadin.version>8.9.1</vaadin.version>
+		<vaadin.plugin.version>8.9.1</vaadin.plugin.version>
 	</properties>
 
 	<build>
