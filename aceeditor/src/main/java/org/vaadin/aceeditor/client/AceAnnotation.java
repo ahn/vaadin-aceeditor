@@ -14,130 +14,130 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportableAs;
  */
 public class AceAnnotation implements Serializable {
 	private static final long serialVersionUID = 1L;
-	
+
 	public enum Type {
 		error,
 		warning,
 		info
 	}
-	
+
 	private final String message;
 	private final Type type;
-	
-	public AceAnnotation(String message, Type type) {
+
+	public AceAnnotation(final String message, final Type type) {
 		this.message = message;
 		this.type = type;
 	}
 
 	public String getMessage() {
-		return message;
+		return this.message;
 	}
 
 	public Type getType() {
-		return type;
+		return this.type;
 	}
 
 	public TransportAnnotation asTransport() {
-		return new TransportAnnotation(message, type);
+		return new TransportAnnotation(this.message, this.type);
 	}
-	
-	public static AceAnnotation fromTransport(TransportAnnotation ta) {
+
+	public static AceAnnotation fromTransport(final TransportAnnotation ta) {
 		return new AceAnnotation(ta.message, ta.type);
 	}
-	
+
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (o instanceof AceAnnotation) {
-			AceAnnotation oa = (AceAnnotation)o;
-			return type.equals(oa.type) && message.equals(oa.message);
+			final AceAnnotation oa = (AceAnnotation)o;
+			return this.type.equals(oa.type) && this.message.equals(oa.message);
 		}
 		return false;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return message.hashCode(); // ?
+		return this.message.hashCode(); // ?
 	}
-	
+
 	@Override
 	public String toString() {
-		return "<"+message+", "+type+">";
+		return "<"+this.message+", "+this.type+">";
 	}
-	
-	
+
+
 	public static class MarkerAnnotation implements TransportableAs<TransportMarkerAnnotation>, Serializable {
 		private static final long serialVersionUID = 1L;
-		
+
 		private final String markerId;
 		private final AceAnnotation ann;
-		public MarkerAnnotation(String markerId, AceAnnotation ann) {
+		public MarkerAnnotation(final String markerId, final AceAnnotation ann) {
 			this.markerId = markerId;
 			this.ann = ann;
 		}
 		public String getMarkerId() {
-			return markerId;
+			return this.markerId;
 		}
 		public AceAnnotation getAnnotation() {
-			return ann;
+			return this.ann;
 		}
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(final Object o) {
 			if (o instanceof MarkerAnnotation) {
-				MarkerAnnotation oma = (MarkerAnnotation)o;
-				return markerId.equals(oma.markerId) && ann.equals(oma.ann);
+				final MarkerAnnotation oma = (MarkerAnnotation)o;
+				return this.markerId.equals(oma.markerId) && this.ann.equals(oma.ann);
 			}
 			return false;
 		}
 		@Override
 		public int hashCode() {
-			return markerId.hashCode(); // ?
+			return this.markerId.hashCode(); // ?
 		}
-		
+
 		@Override
 		public TransportMarkerAnnotation asTransport() {
-			return new TransportMarkerAnnotation(markerId, ann.asTransport());
+			return new TransportMarkerAnnotation(this.markerId, this.ann.asTransport());
 		}
-		
+
 		@Override
 		public String toString() {
-			return markerId+": " + ann;
+			return this.markerId+": " + this.ann;
 		}
 	}
-	
+
 	public static class RowAnnotation implements TransportableAs<TransportRowAnnotation>, Serializable {
 		private static final long serialVersionUID = 1L;
-		
+
 		private final int row;
 		private final AceAnnotation ann;
-		public RowAnnotation(int row, AceAnnotation ann) {
+		public RowAnnotation(final int row, final AceAnnotation ann) {
 			this.row = row;
 			this.ann = ann;
 		}
 		public int getRow() {
-			return row;
+			return this.row;
 		}
 		public AceAnnotation getAnnotation() {
-			return ann;
+			return this.ann;
 		}
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(final Object o) {
 			if (o instanceof RowAnnotation) {
-				RowAnnotation ora = (RowAnnotation)o;
-				return row==ora.row && ann.equals(ora.ann);
+				final RowAnnotation ora = (RowAnnotation)o;
+				return this.row==ora.row && this.ann.equals(ora.ann);
 			}
 			return false;
 		}
 		@Override
 		public int hashCode() {
-			return row; // ?
+			return this.row; // ?
 		}
 		@Override
 		public TransportRowAnnotation asTransport() {
-			return new TransportRowAnnotation(row, ann.asTransport());
+			return new TransportRowAnnotation(this.row, this.ann.asTransport());
 		}
 		@Override
 		public String toString() {
-			return row+": " + ann;
+			return this.row+": " + this.ann;
 		}
 	}
 }

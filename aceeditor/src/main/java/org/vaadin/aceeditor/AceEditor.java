@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.vaadin.shared.Registration;
 import org.vaadin.aceeditor.client.AceAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.MarkerAnnotation;
 import org.vaadin.aceeditor.client.AceAnnotation.RowAnnotation;
@@ -32,34 +31,35 @@ import com.vaadin.event.FieldEvents.BlurNotifier;
 import com.vaadin.event.FieldEvents.FocusEvent;
 import com.vaadin.event.FieldEvents.FocusListener;
 import com.vaadin.event.FieldEvents.FocusNotifier;
+import com.vaadin.shared.Registration;
 import com.vaadin.ui.AbstractField;
 import com.vaadin.util.ReflectTools;
 
 /**
- * 
+ *
  * AceEditor wraps an Ace code editor inside a TextField-like Vaadin component.
- * 
+ *
  */
 @SuppressWarnings("serial")
 @JavaScript({ "client/js/ace/ace.js", "client/js/ace/ext-searchbox.js",
-		"client/js/diff_match_patch.js" })
+"client/js/diff_match_patch.js" })
 @StyleSheet("client/css/ace-gwt.css")
 public class AceEditor extends AbstractField<String> implements BlurNotifier,
-		FocusNotifier {
+FocusNotifier {
 
-    private String value;
+	private String value;
 
-    public static class DiffEvent extends Event {
+	public static class DiffEvent extends Event {
 		public static String EVENT_ID = "aceeditor-diff";
 		private final ServerSideDocDiff diff;
 
-		public DiffEvent(AceEditor ed, ServerSideDocDiff diff) {
+		public DiffEvent(final AceEditor ed, final ServerSideDocDiff diff) {
 			super(ed);
 			this.diff = diff;
 		}
 
 		public ServerSideDocDiff getDiff() {
-			return diff;
+			return this.diff;
 		}
 	}
 
@@ -71,16 +71,16 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	public static class SelectionChangeEvent extends Event {
-		public static String EVENT_ID = "aceeditor-selection";
+		public static final String EVENT_ID = "aceeditor-selection";
 		private final TextRange selection;
 
-		public SelectionChangeEvent(AceEditor ed) {
+		public SelectionChangeEvent(final AceEditor ed) {
 			super(ed);
 			this.selection = ed.getSelection();
 		}
 
 		public TextRange getSelection() {
-			return selection;
+			return this.selection;
 		}
 	}
 
@@ -96,26 +96,18 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 		private final TextRange selection;
 		private final String text;
 
-		private TextChangeEventImpl(final AceEditor ace, String text,
-				AceRange selection) {
+		private TextChangeEventImpl(final AceEditor ace, final String text) {
 			super(ace);
 			this.text = text;
 			this.selection = ace.getSelection();
 		}
 
-//		@Override
-//		public AbstractTextField getComponent() {
-//			return (AbstractTextField) super.getComponent();
-//		}
-
-//		@Override
 		public int getCursorPosition() {
-			return selection.getEnd();
+			return this.selection.getEnd();
 		}
 
-//		@Override
 		public String getText() {
-			return text;
+			return this.text;
 		}
 	}
 
@@ -135,17 +127,17 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 
 	private boolean onRoundtrip = false;
 
-	private AceEditorServerRpc rpc = new AceEditorServerRpc() {
+	private final AceEditorServerRpc rpc = new AceEditorServerRpc() {
 		@Override
-		public void changed(TransportDiff diff, TransportRange selection,
-				boolean focused) {
-			clientChanged(diff, selection, focused);
+		public void changed(final TransportDiff diff, final TransportRange trSelection,
+				final boolean focused) {
+			AceEditor.this.clientChanged(diff, trSelection, focused);
 		}
 
 		@Override
-		public void changedDelayed(TransportDiff diff,
-				TransportRange selection, boolean focused) {
-			clientChanged(diff, selection, focused);
+		public void changedDelayed(final TransportDiff diff,
+				final TransportRange trSelection, final boolean focused) {
+			AceEditor.this.clientChanged(diff, trSelection, focused);
 		}
 	};
 
@@ -155,64 +147,64 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	private AceDoc shadow = new AceDoc();
 
 	{
-		logger.setLevel(Level.WARNING);
+		AceEditor.logger.setLevel(Level.WARNING);
 	}
 
 	public AceEditor() {
 		super();
-		setWidth("300px");
-		setHeight("200px");
+		this.setWidth("300px");
+		this.setHeight("200px");
 
-		setModePath(DEFAULT_ACE_PATH);
-		setThemePath(DEFAULT_ACE_PATH);
-		setWorkerPath(DEFAULT_ACE_PATH);
+		this.setModePath(AceEditor.DEFAULT_ACE_PATH);
+		this.setThemePath(AceEditor.DEFAULT_ACE_PATH);
+		this.setWorkerPath(AceEditor.DEFAULT_ACE_PATH);
 
-		registerRpc(rpc);
+		this.registerRpc(this.rpc);
 	}
 
-    @Override
-    protected void doSetValue(String s) {
-	    this.value = s;
-    }
+	@Override
+	protected void doSetValue(final String s) {
+		this.value = s;
+	}
 
-    public void addDiffListener(DiffListener listener) {
-		addListener(DiffEvent.EVENT_ID, DiffEvent.class, listener,
+	public void addDiffListener(final DiffListener listener) {
+		this.addListener(DiffEvent.EVENT_ID, DiffEvent.class, listener,
 				DiffListener.diffMethod);
 	}
 
 	@Override
-	public Registration addFocusListener(FocusListener listener) {
-        Registration registration = addListener(FocusEvent.EVENT_ID, FocusEvent.class, listener,
-                FocusListener.focusMethod);
-        getState().listenToFocusChanges = true;
-        return registration;
-    }
+	public Registration addFocusListener(final FocusListener listener) {
+		final Registration registration = this.addListener(FocusEvent.EVENT_ID, FocusEvent.class, listener,
+				FocusListener.focusMethod);
+		this.getState().listenToFocusChanges = true;
+		return registration;
+	}
 
 	@Override
-	public Registration addBlurListener(BlurListener listener) {
-        Registration registration = addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
-                BlurListener.blurMethod);
-        getState().listenToFocusChanges = true;
-        return registration;
-    }
+	public Registration addBlurListener(final BlurListener listener) {
+		final Registration registration = this.addListener(BlurEvent.EVENT_ID, BlurEvent.class, listener,
+				BlurListener.blurMethod);
+		this.getState().listenToFocusChanges = true;
+		return registration;
+	}
 
 	/**
 	 * Adds an ace marker. The id of the marker must be unique within this
 	 * editor.
-	 * 
+	 *
 	 * @param marker
 	 * @return marker id
 	 */
-	public String addMarker(AceMarker marker) {
-		doc = doc.withAdditionalMarker(marker);
-		markAsDirty();
+	public String addMarker(final AceMarker marker) {
+		this.doc = this.doc.withAdditionalMarker(marker);
+		this.markAsDirty();
 		return marker.getMarkerId();
 	}
 
 	/**
 	 * Adds an ace marker with a generated id. The id is unique within this
 	 * editor.
-	 * 
+	 *
 	 * @param range
 	 * @param cssClass
 	 * @param type
@@ -220,209 +212,206 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	 * @param onChange
 	 * @return marker id
 	 */
-	public String addMarker(AceRange range, String cssClass, Type type,
-			boolean inFront, OnTextChange onChange) {
-		return addMarker(new AceMarker(newMarkerId(), range, cssClass, type,
+	public String addMarker(final AceRange range, final String cssClass, final Type type,
+			final boolean inFront, final OnTextChange onChange) {
+		return this.addMarker(new AceMarker(this.newMarkerId(), range, cssClass, type,
 				inFront, onChange));
 	}
 
-	public void addMarkerAnnotation(AceAnnotation ann, AceMarker marker) {
-		addMarkerAnnotation(ann, marker.getMarkerId());
+	public void addMarkerAnnotation(final AceAnnotation ann, final AceMarker marker) {
+		this.addMarkerAnnotation(ann, marker.getMarkerId());
 	}
 
-	public void addMarkerAnnotation(AceAnnotation ann, String markerId) {
-		doc = doc.withAdditionalMarkerAnnotation(new MarkerAnnotation(markerId,
+	public void addMarkerAnnotation(final AceAnnotation ann, final String markerId) {
+		this.doc = this.doc.withAdditionalMarkerAnnotation(new MarkerAnnotation(markerId,
 				ann));
-		markAsDirty();
+		this.markAsDirty();
 	}
 
-	public void addRowAnnotation(AceAnnotation ann, int row) {
-		doc = doc.withAdditionalRowAnnotation(new RowAnnotation(row, ann));
-		markAsDirty();
+	public void addRowAnnotation(final AceAnnotation ann, final int row) {
+		this.doc = this.doc.withAdditionalRowAnnotation(new RowAnnotation(row, ann));
+		this.markAsDirty();
 	}
 
-	public void addSelectionChangeListener(SelectionChangeListener listener) {
-		addListener(SelectionChangeEvent.EVENT_ID, SelectionChangeEvent.class,
+	public void addSelectionChangeListener(final SelectionChangeListener listener) {
+		this.addListener(SelectionChangeEvent.EVENT_ID, SelectionChangeEvent.class,
 				listener, SelectionChangeListener.selectionChangedMethod);
-		getState().listenToSelectionChanges = true;
+		this.getState().listenToSelectionChanges = true;
 	}
 
 	@Override
-	public void beforeClientResponse(boolean initial) {
+	public void beforeClientResponse(final boolean initial) {
 		super.beforeClientResponse(initial);
 		if (initial) {
-			getState().initialValue = doc.asTransport();
-			shadow = doc;
-		} else if (onRoundtrip) {
-			ServerSideDocDiff diff = ServerSideDocDiff.diff(shadow, doc);
-			shadow = doc;
-			TransportDiff td = diff.asTransport();
-			getRpcProxy(AceEditorClientRpc.class).diff(td);
+			this.getState().initialValue = this.doc.asTransport();
+			this.shadow = this.doc;
+		} else if (this.onRoundtrip) {
+			final ServerSideDocDiff diff = ServerSideDocDiff.diff(this.shadow, this.doc);
+			this.shadow = this.doc;
+			final TransportDiff td = diff.asTransport();
+			this.getRpcProxy(AceEditorClientRpc.class).diff(td);
 
-			onRoundtrip = false;
+			this.onRoundtrip = false;
 		} else if (true /* TODO !shadow.equals(doc) */) {
-			getRpcProxy(AceEditorClientRpc.class).changedOnServer();
+			this.getRpcProxy(AceEditorClientRpc.class).changedOnServer();
 		}
 
-		if (selectionToClient != null) {
+		if (this.selectionToClient != null) {
 			// {startPos,endPos}
-			if (selectionToClient.length == 2) {
-				AceRange r = AceRange.fromPositions(selectionToClient[0],
-						selectionToClient[1], doc.getText());
-				getState().selection = r.asTransport();
+			if (this.selectionToClient.length == 2) {
+				final AceRange r = AceRange.fromPositions(this.selectionToClient[0],
+						this.selectionToClient[1], this.doc.getText());
+				this.getState().selection = r.asTransport();
 			}
 			// {startRow,startCol,endRow,endCol}
-			else if (selectionToClient.length == 4) {
-				TransportRange tr = new TransportRange(selectionToClient[0],
-						selectionToClient[1], selectionToClient[2],
-						selectionToClient[3]);
-				getState().selection = tr;
+			else if (this.selectionToClient.length == 4) {
+				final TransportRange tr = new TransportRange(this.selectionToClient[0],
+						this.selectionToClient[1], this.selectionToClient[2],
+						this.selectionToClient[3]);
+				this.getState().selection = tr;
 			}
-			selectionToClient = null;
+			this.selectionToClient = null;
 		}
 	}
 
 	public void clearMarkerAnnotations() {
-		Set<MarkerAnnotation> manns = Collections.emptySet();
-		doc = doc.withMarkerAnnotations(manns);
-		markAsDirty();
+		final Set<MarkerAnnotation> manns = Collections.emptySet();
+		this.doc = this.doc.withMarkerAnnotations(manns);
+		this.markAsDirty();
 	}
 
 	public void clearMarkers() {
-		doc = doc.withoutMarkers();
-		markAsDirty();
+		this.doc = this.doc.withoutMarkers();
+		this.markAsDirty();
 	}
 
 	public void clearRowAnnotations() {
-		Set<RowAnnotation> ranns = Collections.emptySet();
-		doc = doc.withRowAnnotations(ranns);
-		markAsDirty();
+		final Set<RowAnnotation> ranns = Collections.emptySet();
+		this.doc = this.doc.withRowAnnotations(ranns);
+		this.markAsDirty();
 	}
 
 	public int getCursorPosition() {
-		return selection.getEnd();
+		return this.selection.getEnd();
 	}
 
 	public AceDoc getDoc() {
-		return doc;
+		return this.doc;
 	}
 
 	public TextRange getSelection() {
-		return selection;
+		return this.selection;
 	}
 
 	public Class<? extends String> getType() {
 		return String.class;
 	}
 
-	public void removeDiffListener(DiffListener listener) {
-		removeListener(DiffEvent.EVENT_ID, DiffEvent.class, listener);
+	@SuppressWarnings("deprecation")
+	public void removeDiffListener(final DiffListener listener) {
+		this.removeListener(DiffEvent.EVENT_ID, DiffEvent.class, listener);
 	}
 
-	public void removeFocusListener(FocusListener listener) {
-		removeListener(FocusEvent.EVENT_ID, FocusEvent.class, listener);
-		getState().listenToFocusChanges = !getListeners(FocusEvent.class)
-				.isEmpty() || !getListeners(BlurEvent.class).isEmpty();
+	@SuppressWarnings("deprecation")
+	public void removeFocusListener(final FocusListener listener) {
+		this.removeListener(FocusEvent.EVENT_ID, FocusEvent.class, listener);
+		this.getState().listenToFocusChanges = !this.getListeners(FocusEvent.class)
+				.isEmpty() || !this.getListeners(BlurEvent.class).isEmpty();
 	}
 
-	public void removeBlurListener(BlurListener listener) {
-		removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
-		getState().listenToFocusChanges = !getListeners(FocusEvent.class)
-				.isEmpty() || !getListeners(BlurEvent.class).isEmpty();
+	@SuppressWarnings("deprecation")
+	public void removeBlurListener(final BlurListener listener) {
+		this.removeListener(BlurEvent.EVENT_ID, BlurEvent.class, listener);
+		this.getState().listenToFocusChanges = !this.getListeners(FocusEvent.class)
+				.isEmpty() || !this.getListeners(BlurEvent.class).isEmpty();
 	}
 
 
-	public void removeMarker(AceMarker marker) {
-		removeMarker(marker.getMarkerId());
+	public void removeMarker(final AceMarker marker) {
+		this.removeMarker(marker.getMarkerId());
 	}
 
-	public void removeMarker(String markerId) {
-		doc = doc.withoutMarker(markerId);
-		markAsDirty();
+	public void removeMarker(final String markerId) {
+		this.doc = this.doc.withoutMarker(markerId);
+		this.markAsDirty();
 	}
 
-	public void removeSelectionChangeListener(SelectionChangeListener listener) {
-		removeListener(SelectionChangeEvent.EVENT_ID,
+	@SuppressWarnings("deprecation")
+	public void removeSelectionChangeListener(final SelectionChangeListener listener) {
+		this.removeListener(SelectionChangeEvent.EVENT_ID,
 				SelectionChangeEvent.class, listener);
-		getState().listenToSelectionChanges = !getListeners(
-				SelectionChangeEvent.class).isEmpty();
+		this.getState().listenToSelectionChanges = true; //The AceEditor must listen always for the correct cursorposition
 	}
 
-//	@Override
-//	public void removeTextChangeListener(ValueChangeListener<String> listener) {
-//		removeListener(listener);
-//	}
-
-	public void setBasePath(String path) {
-		setAceConfig("basePath", path);
+	public void setBasePath(final String path) {
+		this.setAceConfig("basePath", path);
 	}
 
 	/**
 	 * Sets the cursor position to be pos characters from the beginning of the
 	 * text.
-	 * 
+	 *
 	 * @param pos
 	 */
-	public void setCursorPosition(int pos) {
-		setSelection(pos, pos);
+	public void setCursorPosition(final int pos) {
+		this.setSelection(pos, pos);
 	}
 
 	/**
 	 * Sets the cursor on the given row and column.
-	 * 
+	 *
 	 * @param row
 	 *            starting from 0
 	 * @param col
 	 *            starting from 0
 	 */
-	public void setCursorRowCol(int row, int col) {
-		setSelectionRowCol(row, col, row, col);
+	public void setCursorRowCol(final int row, final int col) {
+		this.setSelectionRowCol(row, col, row, col);
 	}
 
-	public void setDoc(AceDoc doc) {
+	public void setDoc(final AceDoc doc) {
 		if (this.doc.equals(doc)) {
 			return;
 		}
 		this.doc = doc;
-		boolean wasReadOnly = isReadOnly();
-		setReadOnly(false);
-		setValue(doc.getText());
-		setReadOnly(wasReadOnly);
-		markAsDirty();
+		final boolean wasReadOnly = this.isReadOnly();
+		this.setReadOnly(false);
+		this.setValue(doc.getText());
+		this.setReadOnly(wasReadOnly);
+		this.markAsDirty();
 	}
 
-	public void setMode(AceMode mode) {
-		getState().mode = mode.toString();
+	public void setMode(final AceMode mode) {
+		this.getState().mode = mode.toString();
 	}
 
-	public void setMode(String mode) {
-		getState().mode = mode;
+	public void setMode(final String mode) {
+		this.getState().mode = mode;
 	}
 
-	public void setModePath(String path) {
-		setAceConfig("modePath", path);
+	public void setModePath(final String path) {
+		this.setAceConfig("modePath", path);
 	}
 
 	/**
 	 * Sets the selection to be between characters [start,end).
-	 * 
+	 *
 	 * The cursor will be at the end.
-	 * 
+	 *
 	 * @param start
 	 * @param end
 	 */
-	// TODO
-	public void setSelection(int start, int end) {
-		setSelectionToClient(new Integer[] { start, end });
-		setInternalSelection(new TextRange(getValue(), start, end));
+	public void setSelection(final int start, final int end) {
+		this.setSelectionToClient(new Integer[] { start, end });
+		this.setInternalSelection(new TextRange(this.getValue(), start, end));
 	}
 
 	/**
 	 * Sets the selection to be between the given (startRow,startCol) and
 	 * (endRow, endCol).
-	 * 
+	 *
 	 * The cursor will be at the end.
-	 * 
+	 *
 	 * @param startRow
 	 *            starting from 0
 	 * @param startCol
@@ -432,103 +421,77 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	 * @param endCol
 	 *            starting from 0
 	 */
-	public void setSelectionRowCol(int startRow, int startCol, int endRow,
-			int endCol) {
-		setSelectionToClient(new Integer[] { startRow, startCol, endRow, endCol });
-		setInternalSelection(new TextRange(doc.getText(), startRow, startCol,
+	public void setSelectionRowCol(final int startRow, final int startCol, final int endRow,
+			final int endCol) {
+		this.setSelectionToClient(new Integer[] { startRow, startCol, endRow, endCol });
+		this.setInternalSelection(new TextRange(this.doc.getText(), startRow, startCol,
 				endRow, endCol));
 	}
 
-//	/**
-//	 * Sets the mode how the TextField triggers {@link TextChangeEvent}s.
-//	 *
-//	 * @param inputEventMode
-//	 *            the new mode
-//	 *
-//	 * @see TextChangeEventMode
-//	 */
-//	public void setTextChangeEventMode(TextChangeEventMode inputEventMode) {
-//		getState().changeMode = inputEventMode.toString();
-//	}
-//
-//	/**
-//	 * The text change timeout modifies how often text change events are
-//	 * communicated to the application when {@link #setTextChangeEventMode} is
-//	 * {@link TextChangeEventMode#LAZY} or {@link TextChangeEventMode#TIMEOUT}.
-//	 *
-//	 *
-//	 * @param timeoutMs
-//	 *            the timeout in milliseconds
-//	 */
-//	public void setTextChangeTimeout(int timeoutMs) {
-//		getState().changeTimeout = timeoutMs;
-//
-//	}
-
 	/**
 	 * Scrolls to the given row. First row is 0.
-	 * 
+	 *
 	 */
-	public void scrollToRow(int row) {
-		getState().scrollToRow = row;
+	public void scrollToRow(final int row) {
+		this.getState().scrollToRow = row;
 	}
 
 	/**
 	 * Scrolls the to the given position (characters from the start of the
 	 * file).
-	 * 
+	 *
 	 */
-	public void scrollToPosition(int pos) {
-		int[] rowcol = Util.lineColFromCursorPos(getValue(), pos, 0);
-		scrollToRow(rowcol[0]);
+	public void scrollToPosition(final int pos) {
+		final int[] rowcol = Util.lineColFromCursorPos(this.getValue(), pos, 0);
+		this.scrollToRow(rowcol[0]);
 	}
 
-	public void setTheme(AceTheme theme) {
-		getState().theme = theme.toString();
+	public void setTheme(final AceTheme theme) {
+		this.getState().theme = theme.toString();
 	}
 
-	public void setTheme(String theme) {
-		getState().theme = theme;
+	public void setTheme(final String theme) {
+		this.getState().theme = theme;
 	}
 
-	public void setThemePath(String path) {
-		setAceConfig("themePath", path);
+	public void setThemePath(final String path) {
+		this.setAceConfig("themePath", path);
 	}
 
-	public void setUseWorker(boolean useWorker) {
-		getState().useWorker = useWorker;
+	public void setUseWorker(final boolean useWorker) {
+		this.getState().useWorker = useWorker;
 	}
 
-	public void setWordWrap(boolean ww) {
-		getState().wordwrap = ww;
+	public void setWordWrap(final boolean ww) {
+		this.getState().wordwrap = ww;
 	}
 
-	public void setShowGutter(boolean showGutter) {
-		getState().showGutter = showGutter;
+	public void setShowGutter(final boolean showGutter) {
+		this.getState().showGutter = showGutter;
 	}
 
 	public boolean isShowGutter() {
-		return getState(false).showGutter;
+		return this.getState(false).showGutter;
 	}
 
-	public void setShowPrintMargin(boolean showPrintMargin) {
-		getState().showPrintMargin = showPrintMargin;
+	public void setShowPrintMargin(final boolean showPrintMargin) {
+		this.getState().showPrintMargin = showPrintMargin;
 	}
 
 	public boolean isShowPrintMargin() {
-		return getState(false).showPrintMargin;
+		return this.getState(false).showPrintMargin;
 	}
 
-	public void setHighlightActiveLine(boolean highlightActiveLine) {
-		getState().highlightActiveLine = highlightActiveLine;
+	public void setHighlightActiveLine(final boolean highlightActiveLine) {
+		this.getState().highlightActiveLine = highlightActiveLine;
 	}
 
 	public boolean isHighlightActiveLine() {
-		return getState(false).highlightActiveLine;
+		return this.getState(false).highlightActiveLine;
 	}
 
-	public void setWorkerPath(String path) {
-		setAceConfig("workerPath", path);
+	public void setWorkerPath(final String path) {
+		this.setAceConfig("workerPath", path);
 	}
 
 	/**
@@ -537,70 +500,69 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	 * @param size
 	 *            auto or font size
 	 */
-	public void setFontSize(String size) {
-		getState().fontSize = size;
+	public void setFontSize(final String size) {
+		this.getState().fontSize = size;
 	}
 
 	public String getFontSize() {
-		return getState(false).fontSize;
+		return this.getState(false).fontSize;
 	}
 
-	public void setHighlightSelectedWord(boolean highlightSelectedWord) {
-		getState().highlightSelectedWord = highlightSelectedWord;
+	public void setHighlightSelectedWord(final boolean highlightSelectedWord) {
+		this.getState().highlightSelectedWord = highlightSelectedWord;
 	}
 
 	public boolean isHighlightSelectedWord() {
-		return getState(false).highlightSelectedWord;
+		return this.getState(false).highlightSelectedWord;
 	}
 
-	public void setShowInvisibles(boolean showInvisibles) {
-		getState().showInvisibles = showInvisibles;
+	public void setShowInvisibles(final boolean showInvisibles) {
+		this.getState().showInvisibles = showInvisibles;
 	}
 
 	public boolean isShowInvisibles() {
-		return getState(false).showInvisibles;
+		return this.getState(false).showInvisibles;
 	}
 
-	public void setDisplayIndentGuides(boolean displayIndentGuides) {
-		getState().displayIndentGuides = displayIndentGuides;
+	public void setDisplayIndentGuides(final boolean displayIndentGuides) {
+		this.getState().displayIndentGuides = displayIndentGuides;
 	}
 
 	public boolean isDisplayIndentGuides() {
-		return getState(false).displayIndentGuides;
-	}
-	
-	public void setTabSize(int size) {
-		getState().tabSize = size;
+		return this.getState(false).displayIndentGuides;
 	}
 
-	public void setUseSoftTabs(boolean softTabs) {
-		getState().softTabs = softTabs;
+	public void setTabSize(final int size) {
+		this.getState().tabSize = size;
 	}
 
-	protected void clientChanged(TransportDiff diff, TransportRange selection,
-			boolean focused) {
-		diffFromClient(diff);
-		selectionFromClient(selection);
-		if (latestFocus != focused) {
-			latestFocus = focused;
+	public void setUseSoftTabs(final boolean softTabs) {
+		this.getState().softTabs = softTabs;
+	}
+
+	protected void clientChanged(final TransportDiff diff, final TransportRange trSelection,
+			final boolean focused) {
+		this.diffFromClient(diff);
+		this.selectionFromClient(trSelection);
+		if (this.latestFocus != focused) {
+			this.latestFocus = focused;
 			if (focused) {
-				fireFocus();
+				this.fireFocus();
 			} else {
-				fireBlur();
+				this.fireBlur();
 			}
 		}
 
-		clearStateFromServerToClient();
+		this.clearStateFromServerToClient();
 	}
 
 	// Here we clear the selection etc. we sent earlier.
 	// The client has already received the values,
 	// and we must clear them at some point to not keep
 	// setting the same selection etc. over and over.
-	// TODO: this is a bit messy...
 	private void clearStateFromServerToClient() {
-		getState().selection = null;
-		getState().scrollToRow = -1;
+		this.getState().selection = null;
+		this.getState().scrollToRow = -1;
 	}
 
 	@Override
@@ -609,90 +571,90 @@ public class AceEditor extends AbstractField<String> implements BlurNotifier,
 	}
 
 	@Override
-	protected AceEditorState getState(boolean markAsDirty) {
+	protected AceEditorState getState(final boolean markAsDirty) {
 		return (AceEditorState) super.getState(markAsDirty);
 	}
 
 	@Override
-    public void setValue(String newValue) {
+	public void setValue(final String newValue) {
 		super.setValue(newValue);
-		doc = doc.withText(newValue);
+		this.doc = this.doc.withText(newValue);
 	}
 
-    @Override
-    public String getValue() {
-        return value;
-    }
+	@Override
+	public String getValue() {
+		return this.value;
+	}
 
-    private void diffFromClient(TransportDiff d) {
-		String previousText = doc.getText();
-		ServerSideDocDiff diff = ServerSideDocDiff.fromTransportDiff(d);
-		shadow = diff.applyTo(shadow);
-		doc = diff.applyTo(doc);
-		if (!TextUtils.equals(doc.getText(), previousText)) {
-			setValue(doc.getText(), true);
-			fireTextChangeEvent();
+	private void diffFromClient(final TransportDiff d) {
+		final String previousText = this.doc.getText();
+		final ServerSideDocDiff diff = ServerSideDocDiff.fromTransportDiff(d);
+		this.shadow = diff.applyTo(this.shadow);
+		this.doc = diff.applyTo(this.doc);
+		if (!TextUtils.equals(this.doc.getText(), previousText)) {
+			this.setValue(this.doc.getText(), true);
+			this.fireTextChangeEvent();
 		}
 		if (!diff.isIdentity()) {
-			fireDiff(diff);
+			this.fireDiff(diff);
 		}
-		onRoundtrip = true;
-		markAsDirty();
+		this.onRoundtrip = true;
+		this.markAsDirty();
 	}
 
 	private void fireBlur() {
-		fireEvent(new BlurEvent(this));
+		this.fireEvent(new BlurEvent(this));
 	}
 
-	private void fireDiff(ServerSideDocDiff diff) {
-		fireEvent(new DiffEvent(this, diff));
+	private void fireDiff(final ServerSideDocDiff diff) {
+		this.fireEvent(new DiffEvent(this, diff));
 	}
 
 	private void fireFocus() {
-		fireEvent(new FocusEvent(this));
+		this.fireEvent(new FocusEvent(this));
 	}
 
 	private void fireSelectionChanged() {
-		fireEvent(new SelectionChangeEvent(this));
+		this.fireEvent(new SelectionChangeEvent(this));
 	}
 
 	private void fireTextChangeEvent() {
-		if (!isFiringTextChangeEvent) {
-			isFiringTextChangeEvent = true;
+		if (!this.isFiringTextChangeEvent) {
+			this.isFiringTextChangeEvent = true;
 			try {
-				fireEvent(new TextChangeEventImpl(this, getValue(), selection));
+				this.fireEvent(new TextChangeEventImpl(this, this.getValue()));
 			} finally {
-				isFiringTextChangeEvent = false;
+				this.isFiringTextChangeEvent = false;
 			}
 		}
 	}
 
 	private String newMarkerId() {
-		return "m" + (++latestMarkerId);
+		return "m" + (++this.latestMarkerId);
 	}
 
-	private void selectionFromClient(TransportRange sel) {
-		TextRange newSel = new TextRange(doc.getText(),
+	private void selectionFromClient(final TransportRange sel) {
+		final TextRange newSel = new TextRange(this.doc.getText(),
 				AceRange.fromTransport(sel));
-		if (newSel.equals(selection)) {
+		if (newSel.equals(this.selection)) {
 			return;
 		}
-		setInternalSelection(newSel);
-		fireSelectionChanged();
+		this.setInternalSelection(newSel);
+		this.fireSelectionChanged();
 	}
 
-	private void setAceConfig(String key, String value) {
-		getState().config.put(key, value);
+	private void setAceConfig(final String key, final String value) {
+		this.getState().config.put(key, value);
 	}
 
-	private void setInternalSelection(TextRange selection) {
+	private void setInternalSelection(final TextRange selection) {
 		this.selection = selection;
-		getState().selection = selection.asTransport();
+		this.getState().selection = selection.asTransport();
 	}
 
-	private void setSelectionToClient(Integer[] stc) {
-		selectionToClient = stc;
-		markAsDirty();
+	private void setSelectionToClient(final Integer[] stc) {
+		this.selectionToClient = stc;
+		this.markAsDirty();
 	}
 
 }

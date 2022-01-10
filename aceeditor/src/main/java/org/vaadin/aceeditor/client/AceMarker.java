@@ -7,11 +7,11 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
 
 
 /**
- * 
+ *
  * Ace marker.
- * 
+ *
  * The cssClass must be defined in some css file. Example:
- * 
+ *
  * .ace_marker-layer .mymarker1 {
  *		background: red;
  *  	border-bottom: 2px solid black;
@@ -21,9 +21,9 @@ import org.vaadin.aceeditor.client.TransportDoc.TransportMarker;
  */
 public class AceMarker implements Serializable {
 	private static final long serialVersionUID = 1L;
-	
+
 	/**
-	 * 
+	 *
 	 * Ace Marker type.
 	 *
 	 */
@@ -33,10 +33,10 @@ public class AceMarker implements Serializable {
 		cursor,
 		cursorRow
 	}
-	
+
 	/**
 	 * What to do with the marker when the text changes.
-	 * 
+	 *
 	 * By default, Ace just keeps the marker in its place (DEFAULT).
 	 * Alternatively, you can set the marker to ADJUST to text insertion/deletion.
 	 * Or, you can set the marker to be REMOVE'd on text change.
@@ -56,19 +56,19 @@ public class AceMarker implements Serializable {
 		 */
 		REMOVE
 	}
-	
+
 	private final String markerId;
 	private final AceRange range;
 	private final OnTextChange onChange;
 	private final String cssClass;
 	private final Type type;
 	private final boolean inFront;
-	
-	
-	
-	
-	
-	public AceMarker(String markerId, AceRange range, String cssClass, Type type, boolean inFront, OnTextChange onChange) {
+
+
+
+
+
+	public AceMarker(final String markerId, final AceRange range, final String cssClass, final Type type, final boolean inFront, final OnTextChange onChange) {
 		this.markerId = markerId;
 		this.range = range.isBackwards() ? range.reversed() : range;
 		this.cssClass = cssClass;
@@ -78,86 +78,65 @@ public class AceMarker implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (o instanceof AceMarker) {
-			AceMarker om = (AceMarker)o;
-			return markerId.equals(om.markerId) && range.equals(om.range) && onChange.equals(om.onChange) &&
-					cssClass.equals(om.cssClass) && type.equals(om.type) && inFront==om.inFront;
+			final AceMarker om = (AceMarker)o;
+			return this.markerId.equals(om.markerId) && this.range.equals(om.range) && this.onChange.equals(om.onChange) &&
+					this.cssClass.equals(om.cssClass) && this.type.equals(om.type) && this.inFront==om.inFront;
 		}
 		return false;
 	}
 	@Override
 	public int hashCode() {
-		return range.hashCode(); // ?
+		return this.range.hashCode(); // ?
 	}
 
 	@Override
 	public String toString() {
-		return "("+range+";"+cssClass+";"+type+";"+inFront+")";
+		return "("+this.range+";"+this.cssClass+";"+this.type+";"+this.inFront+")";
 	}
 
-
-
-//	@Override
-//	public int compareTo(AceMarker other) {
-//		if (range.row1 < other.range.row1) {
-//			return -1;
-//		}
-//		if (range.row1 > other.range.row1) {
-//			return 1;
-//		}
-//		if (range.col1 < other.range.col1) {
-//			return -1;
-//		}
-//		if (range.col1 > other.range.col1) {
-//			return 1;
-//		}
-//		return 0;
-//	}
-	
 	public TransportMarker asTransport() {
-		TransportMarker tm = new TransportMarker();
-		tm.markerId = markerId;
-		tm.range = range.asTransport();
-		tm.cssClass = cssClass;
-		tm.type = type.toString();
-		tm.inFront = inFront;
-		tm.onChange = onChange.toString();
+		final TransportMarker tm = new TransportMarker();
+		tm.markerId = this.markerId;
+		tm.range = this.range.asTransport();
+		tm.cssClass = this.cssClass;
+		tm.type = this.type.toString();
+		tm.inFront = this.inFront;
+		tm.onChange = this.onChange.toString();
 		return tm;
 	}
 
-
-
 	public String getMarkerId() {
-		return markerId;
+		return this.markerId;
 	}
 
-	public static AceMarker fromTransport(TransportMarker im) {
+	public static AceMarker fromTransport(final TransportMarker im) {
 		return new AceMarker(im.markerId, AceRange.fromTransport(im.range),
 				im.cssClass, Type.valueOf(im.type), im.inFront, OnTextChange.valueOf(im.onChange));
 	}
 
 	public AceRange getRange() {
-		return range;
+		return this.range;
 	}
-	
+
 	public OnTextChange getOnChange() {
-		return onChange;
+		return this.onChange;
 	}
 
 	public String getCssClass() {
-		return cssClass;
+		return this.cssClass;
 	}
 
 	public Type getType() {
-		return type;
+		return this.type;
 	}
 
 	public boolean isInFront() {
-		return inFront;
+		return this.inFront;
 	}
 
-	public AceMarker withNewPosition(AceRange newRange) {
-		return new AceMarker(markerId, newRange, cssClass, type, inFront, onChange);
+	public AceMarker withNewPosition(final AceRange newRange) {
+		return new AceMarker(this.markerId, newRange, this.cssClass, this.type, this.inFront, this.onChange);
 	}
 }

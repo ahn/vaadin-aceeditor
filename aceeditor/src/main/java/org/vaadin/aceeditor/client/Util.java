@@ -7,14 +7,14 @@ import java.util.Set;
 public class Util {
 
 	// TODO: A better way to convert would be better. This is a bit inefficient.
-	public static int cursorPosFromLineCol(String text, int line, int col,
-			int firstLineNum) {
-		return cursorPosFromLineCol(text.split("\n", -1), line, col,
+	public static int cursorPosFromLineCol(final String text, final int line, final int col,
+			final int firstLineNum) {
+		return Util.cursorPosFromLineCol(text.split("\n", -1), line, col,
 				firstLineNum);
 	}
 
-	public static int cursorPosFromLineCol(String[] lines, int line, int col,
-			int firstLineNum) {
+	public static int cursorPosFromLineCol(final String[] lines, int line, final int col,
+			final int firstLineNum) {
 		line -= firstLineNum;
 		int pos = 0;
 		for (int currLine = 0; currLine < lines.length; ++currLine) {
@@ -27,9 +27,9 @@ public class Util {
 		}
 		return pos;
 	}
-	
-	public static int cursorPosFromLineCol(int[] lineLengths, int line, int col,
-			int firstLineNum) {
+
+	public static int cursorPosFromLineCol(final int[] lineLengths, int line, final int col,
+			final int firstLineNum) {
 		line -= firstLineNum;
 		int pos = 0;
 		for (int currLine = 0; currLine < lineLengths.length; ++currLine) {
@@ -44,16 +44,16 @@ public class Util {
 	}
 
 	// TODO: A better way to convert would be better. This is a bit inefficient.
-	public static int[] lineColFromCursorPos(String text, int pos,
-			int firstLineNum) {
-		return lineColFromCursorPos(text.split("\n", -1), pos, firstLineNum);
+	public static int[] lineColFromCursorPos(final String text, final int pos,
+			final int firstLineNum) {
+		return Util.lineColFromCursorPos(text.split("\n", -1), pos, firstLineNum);
 	}
 
-	public static int[] lineColFromCursorPos(String[] lines, int pos,
-			int firstLineNum) {
+	public static int[] lineColFromCursorPos(final String[] lines, final int pos,
+			final int firstLineNum) {
 		int lineno = 0;
 		int col = pos;
-		for (String li : lines) {
+		for (final String li : lines) {
 			if (col <= li.length()) {
 				break;
 			}
@@ -64,12 +64,12 @@ public class Util {
 
 		return new int[] { lineno, col };
 	}
-	
-	public static int[] lineColFromCursorPos(int[] lineLengths, int pos,
-			int firstLineNum) {
+
+	public static int[] lineColFromCursorPos(final int[] lineLengths, final int pos,
+			final int firstLineNum) {
 		int lineno = 0;
 		int col = pos;
-		for (int len : lineLengths) {
+		for (final int len : lineLengths) {
 			if (col <= len) {
 				break;
 			}
@@ -81,11 +81,11 @@ public class Util {
 		return new int[] { lineno, col };
 	}
 
-	public static int count(char c, String text) {
+	public static int count(final char c, final String text) {
 		int n = 0;
 		int from = 0;
 		while (true) {
-			int index = text.indexOf(c, from);
+			final int index = text.indexOf(c, from);
 			if (index == -1) {
 				return n;
 			} else {
@@ -95,10 +95,10 @@ public class Util {
 		}
 	}
 
-	public static int startColOfCursorLine(String text, int cursor) {
+	public static int startColOfCursorLine(final String text, final int cursor) {
 		int i = cursor;
 		while (i > 0) {
-			char c = text.charAt(i - 1);
+			final char c = text.charAt(i - 1);
 			if (c == '\n') {
 				break;
 			}
@@ -107,8 +107,8 @@ public class Util {
 		return i;
 	}
 
-	public static String indentationStringOfCursorLine(String text, int cursor) {
-		int lineStart = startColOfCursorLine(text, cursor);
+	public static String indentationStringOfCursorLine(final String text, final int cursor) {
+		final int lineStart = Util.startColOfCursorLine(text, cursor);
 		int firstCharAt = lineStart;
 		while (firstCharAt < text.length()) {
 			// TODO: tab indentation?
@@ -121,10 +121,10 @@ public class Util {
 	}
 
 	// There's no string join method in java libs??
-	public static String join(String[] lines) {
-		StringBuilder sb = new StringBuilder();
+	public static String join(final String[] lines) {
+		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (String li : lines) {
+		for (final String li : lines) {
 			if (first) {
 				sb.append(li);
 				first = false;
@@ -135,16 +135,16 @@ public class Util {
 		}
 		return sb.toString();
 	}
-	
+
 	public static <K,V> boolean sameMaps(
-			Map<K, V> map1,
-			Map<K, V> map2) {
+			final Map<K, V> map1,
+			final Map<K, V> map2) {
 		if (map1.size() != map2.size()) {
 			return false;
 		}
-		for(Entry<K, V> e : map1.entrySet()) {
-			V m1 = e.getValue();
-			V m2 = map2.get(e.getKey());
+		for(final Entry<K, V> e : map1.entrySet()) {
+			final V m1 = e.getValue();
+			final V m2 = map2.get(e.getKey());
 			if (!m1.equals(m2)) {
 				return false;
 			}
@@ -152,11 +152,11 @@ public class Util {
 		return true;
 	}
 
-	public static <V> boolean sameSets(Set<V> set1, Set<V> set2) {
+	public static <V> boolean sameSets(final Set<V> set1, final Set<V> set2) {
 		if (set1.size()!=set2.size()) {
 			return false;
 		}
-		for (V v : set1) {
+		for (final V v : set1) {
 			if (!set2.contains(v)) {
 				return false;
 			}
@@ -164,10 +164,10 @@ public class Util {
 		return true;
 	}
 
-	public static String replaceContents(AceRange ofThis, String inText, String withThis) {
-		String[] lines = inText.split("\n", -1);
-		int start = Util.cursorPosFromLineCol(lines, ofThis.getStartRow(), ofThis.getStartCol(), 0);
-		int end = Util.cursorPosFromLineCol(lines, ofThis.getEndRow(), ofThis.getEndCol(), 0);
+	public static String replaceContents(final AceRange ofThis, final String inText, final String withThis) {
+		final String[] lines = inText.split("\n", -1);
+		final int start = Util.cursorPosFromLineCol(lines, ofThis.getStartRow(), ofThis.getStartCol(), 0);
+		final int end = Util.cursorPosFromLineCol(lines, ofThis.getEndRow(), ofThis.getEndCol(), 0);
 		return inText.substring(0, start) + withThis + inText.substring(end);
 	}
 

@@ -5,6 +5,8 @@ Vaadin AceEditor
 
 Available as an [add-on in Vaadin Directory](http://vaadin.com/addon/aceeditor).
 
+**This fork has been made by the [MRules](https://mrules.xyz) dev team in order to create a rich web editor to configure its rule engine.**
+
 ### NOTE
 **Unfortunately I (@ahn) currently don't have time to maintain this project.
 I can accept pull requests and put a new version to Vaadin Directory once in a while but not do much beyond that.

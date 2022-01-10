@@ -5,7 +5,7 @@ package org.vaadin.aceeditor;
  * @version $Id$
  */
 public class TextUtils {
-    public static boolean equals(String a, String b) {
-        return a == null ? b == null : a.equals(b);
-    }
+	public static boolean equals(final String a, final String b) {
+		return a == null ? b == null : a.equals(b);
+	}
 }

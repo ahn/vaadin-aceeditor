@@ -9,6 +9,10 @@ import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardEvent;
 import org.vaadin.aceeditor.client.gwt.GwtAceKeyboardHandler;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.vaadin.client.ServerConnector;
 import com.vaadin.client.communication.RpcProxy;
@@ -22,42 +26,60 @@ import com.vaadin.shared.ui.Connect;
  * the invisible marker auto-adjusts to contain what's typed.
  * (This takes advantage of how AceEditorWidget.moveMarkerOnInsert happens
  * to be implemented. It's bit of a mess...)
- * 
+ *
  * When a suggestion is selected what's inside of the invisible marker is deleted
  * before applying the suggestion.
- * 
- * 
+ *
+ *
  */
 @SuppressWarnings("serial")
 @Connect(SuggestionExtension.class)
 public class SuggesterConnector extends AbstractExtensionConnector implements
-		GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener {
+GwtAceKeyboardHandler, SuggestionSelectedListener, SelectionChangeListener, ResizeHandler {
 
 	protected static final int Y_OFFSET = 20;
 
-//	private final Logger logger = Logger.getLogger(SuggesterConnector.class.getName());
+	protected AceEditorConnector connector;
+	protected AceEditorWidget widget;
+	private String suggestText = ".";
 
-    protected AceEditorConnector connector;
-    protected AceEditorWidget widget;
-
-    protected SuggesterServerRpc serverRpc = RpcProxy.create(
+	protected SuggesterServerRpc serverRpc = RpcProxy.create(
 			SuggesterServerRpc.class, this);
 
 	protected String suggStartText;
-    protected AceRange suggStartCursor;
-	
-	private SuggesterClientRpc clientRpc = new SuggesterClientRpc() {
+	protected AceRange suggStartCursor;
+
+	private final SuggesterClientRpc clientRpc = new SuggesterClientRpc() {
 		@Override
-		public void showSuggestions(List<TransportSuggestion> suggs) {
-			setSuggs(suggs);
+		public void showSuggestions(final List<TransportSuggestion> suggs) {
+			SuggesterConnector.this.setSuggs(suggs);
 		}
 
 		@Override
-		public void applySuggestionDiff(TransportDiff td) {
-			stopSuggesting();
-			ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(td);
-			widget.setTextAndAdjust(diff.applyTo(widget.getDoc()).getText());
-			widget.fireTextChanged(); // XXX we need to do this here to alert AceEditorConnector...
+		public void applySuggestionDiff(final TransportDiff td) {
+			SuggesterConnector.this.stopSuggesting();
+			final ClientSideDocDiff diff = ClientSideDocDiff.fromTransportDiff(td);
+			final String text = diff.applyTo(SuggesterConnector.this.widget.getDoc()).getText();
+			SuggesterConnector.this.widget.setTextAndAdjust(text);
+			SuggesterConnector.this.widget.fireTextChanged(); // XXX we need to do this here to alert AceEditorConnector...
+			if (td.selectionStart != null && td.selectionEnd != null) {
+				SuggesterConnector.this.widget.setSelection(AceRange.fromPositions(td.selectionStart, td.selectionEnd, text));
+			} else {
+				final AceRange sel = SuggesterConnector.this.widget.getSelection();
+				AceRange newSel;
+				if (sel.getStartRow() < sel.getEndRow()) {
+					newSel = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
+				} else if (sel.getStartRow() == sel.getEndRow()) {
+					if (sel.getStartCol() < sel.getEndCol()) {
+						newSel = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
+					} else {
+						newSel = new AceRange(sel.getStartRow(), sel.getStartCol(), sel.getStartRow(), sel.getStartCol());
+					}
+				} else {
+					newSel = new AceRange(sel.getStartRow(), sel.getStartCol(), sel.getStartRow(), sel.getStartCol());
+				}
+				SuggesterConnector.this.widget.setSelection(newSel);
+			}
 		}
 	};
 
@@ -71,66 +93,93 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 
 	protected boolean suggestOnDot = true;
 
-    protected boolean showDescriptions = true;
+	protected boolean showDescriptions = true;
+
+	protected int popupWidth = 150;
+	protected Unit popupWidthUnit = Unit.PX;
+
+	protected int popupHeight = 200;
+	protected Unit popupHeightUnit = Unit.PX;
+
+	protected int popupDescriptionWidth = 225;
+	protected Unit popupDescriptionWidthUnit = Unit.PX;
 
 	public SuggesterConnector() {
-		registerRpc(SuggesterClientRpc.class, clientRpc);
+		this.registerRpc(SuggesterClientRpc.class, this.clientRpc);
+		Window.addResizeHandler(this);
 	}
-	
+
 	@Override
-	public void onStateChanged(StateChangeEvent stateChangeEvent) {
+	public void onStateChanged(final StateChangeEvent stateChangeEvent) {
 		super.onStateChanged(stateChangeEvent);
 
-		this.suggestOnDot = getState().suggestOnDot;
-        this.showDescriptions = getState().showDescriptions;
+		this.suggestOnDot = this.getState().suggestOnDot;
+		this.showDescriptions = this.getState().showDescriptions;
+		this.suggestText = this.getState().suggestText;
+
+		this.popupWidth = this.getState().popupWidth;
+		this.popupWidthUnit = this.fromType(this.getState().popupWidthUnit);
+		this.popupHeight = this.getState().popupHeight;
+		this.popupHeightUnit = this.fromType(this.getState().popupHeightUnit);
+		this.popupDescriptionWidth = this.getState().popupDescriptionWidth;
+		this.popupDescriptionWidthUnit = this.fromType(this.getState().popupDescriptionWidthUnit);
 	}
-	
+
+	private Unit fromType(final String s) {
+		for (final Unit u: Unit.values()) {
+			if (u.getType().equals(s)) {
+				return u;
+			}
+		}
+		return Unit.PX;
+	}
+
 	@Override
 	public SuggesterState getState() {
 		return (SuggesterState) super.getState();
 	}
 
-	protected void setSuggs(List<TransportSuggestion> suggs) {
-		if (suggesting) {
-			popup.setSuggestions(suggs);
+	protected void setSuggs(final List<TransportSuggestion> suggs) {
+		if (this.suggesting) {
+			this.popup.setSuggestions(suggs);
 		}
 	}
 
 	protected SuggestPopup createSuggestionPopup() {
-		SuggestPopup sp = new SuggestPopup();
-		sp.setOwner(widget);
-		updatePopupPosition(sp);
+		final SuggestPopup sp = new SuggestPopup();
+		sp.setOwner(this.widget);
+		this.updatePopupPosition(sp);
 		sp.setSuggestionSelectedListener(this);
+		sp.setWidth(this.popupWidth, this.popupWidthUnit);
+		sp.setHeight(this.popupHeight, this.popupHeightUnit);
+		sp.setDescriptionWidth(this.popupDescriptionWidth, this.popupDescriptionWidthUnit);
 		sp.show();
 		return sp;
 	}
 
 	@Override
-	protected void extend(ServerConnector target) {
-		connector = (AceEditorConnector) target;
-		widget = connector.getWidget();
-		widget.setKeyboardHandler(this);
+	protected void extend(final ServerConnector target) {
+		this.connector = (AceEditorConnector) target;
+		this.widget = this.connector.getWidget();
+		this.widget.setKeyboardHandler(this);
 	}
 
 	@Override
-	public Command handleKeyboard(JavaScriptObject data, int hashId,
-			String keyString, int keyCode, GwtAceKeyboardEvent e) {
-		if (suggesting) {
-			return keyPressWhileSuggesting(keyCode);
+	public Command handleKeyboard(final JavaScriptObject data, final int hashId,
+			final String keyString, final int keyCode, final GwtAceKeyboardEvent e) {
+		if (this.suggesting) {
+			return this.keyPressWhileSuggesting(keyCode);
 		}
 		if (e == null) {
 			return Command.DEFAULT;
 		}
-//		logger.info("handleKeyboard(" + data + ", " + hashId + ", " + keyString
-//				+ ", " + keyCode + ", " + e.getKeyCode() + "---"
-//				+ e.isCtrlKey() + ")");
 
 		if (keyCode == 32 && e.isCtrlKey()) {
-			startSuggesting();
+			this.startSuggesting();
 			return Command.NULL;
-		} else if (suggestOnDot && ".".equals(keyString)) {
-			startSuggestingOnNextSelectionChange = true;
-			widget.addSelectionChangeListener(this);
+		} else if (this.suggestOnDot && this.suggestText.equals(keyString)) {
+			this.startSuggestingOnNextSelectionChange = true;
+			this.widget.addSelectionChangeListener(this);
 			return Command.DEFAULT;
 		}
 
@@ -138,111 +187,115 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 	}
 
 	protected void startSuggesting() {
-        // ensure valid value of component on server before suggesting
-        connector.sendToServerImmediately();
+		// ensure valid value of component on server before suggesting
+		this.connector.sendToServerImmediately();
 
-		AceRange sel = widget.getSelection();
+		final AceRange sel = this.widget.getSelection();
 
-		suggStartText = widget.getText();
-		suggStartCursor = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
-		serverRpc.suggest(suggStartText, suggStartCursor.asTransport());
+		this.suggStartText = this.widget.getText();
+		this.suggStartCursor = new AceRange(sel.getEndRow(), sel.getEndCol(), sel.getEndRow(), sel.getEndCol());
+		this.serverRpc.suggest(this.suggStartText, this.suggStartCursor.asTransport());
 
-		suggestionStartId = widget.addInvisibleMarker(suggStartCursor);
-		widget.addSelectionChangeListener(this);
-		popup = createSuggestionPopup();
-        popup.showDescriptions = this.showDescriptions;
-		suggesting = true;
+		this.suggestionStartId = this.widget.addInvisibleMarker(this.suggStartCursor);
+		this.widget.addSelectionChangeListener(this);
+		this.popup = this.createSuggestionPopup();
+		this.popup.showDescriptions = this.showDescriptions;
+		this.suggesting = true;
 	}
 
 	@Override
-	public void suggestionSelected(TransportSuggestion s) {
+	public void suggestionSelected(final TransportSuggestion s) {
 		// ???
 		//connector.setOnRoundtrip(true);
-//		AceRange suggMarker = widget.getInvisibleMarker(suggestionStartId);
-		serverRpc.suggestionSelected(s.index);
-		stopAskingForSuggestions();
+		//		AceRange suggMarker = widget.getInvisibleMarker(suggestionStartId);
+		this.serverRpc.suggestionSelected(s.index);
+		this.stopAskingForSuggestions();
 	}
 
 	@Override
 	public void noSuggestionSelected() {
-		stopAskingForSuggestions();
+		this.stopAskingForSuggestions();
 	}
 
 	protected void stopAskingForSuggestions() {
-		widget.removeSelectionChangeListener(this);
-		suggesting = false;
-		widget.setFocus(true);
+		this.widget.removeSelectionChangeListener(this);
+		this.suggesting = false;
+		this.widget.setFocus(true);
 	}
-	
+
 	protected void stopSuggesting() {
-		if (popup!=null) {
-			popup.hide();
-			popup = null;
+		if (this.popup!=null) {
+			this.popup.hide();
+			this.popup = null;
 		}
-		if (suggestionStartId != null) {
-			widget.removeContentsOfInvisibleMarker(suggestionStartId);
-			widget.removeInvisibleMarker(suggestionStartId);
+		if (this.suggestionStartId != null) {
+			this.widget.removeContentsOfInvisibleMarker(this.suggestionStartId);
+			this.widget.removeInvisibleMarker(this.suggestionStartId);
 		}
 	}
 
-	protected Command keyPressWhileSuggesting(int keyCode) {
-		if (keyCode == 38 /* UP */) {
-			popup.up();
-		} else if (keyCode == 40 /* DOWN */) {
-			popup.down();
-		} else if (keyCode == 13 /* ENTER */) {
-			popup.select();
-		} else if (keyCode == 27 /* ESC */) {
-			popup.close();
+	protected Command keyPressWhileSuggesting(final int keyCode) {
+		if (keyCode == KeyCodes.KEY_UP) {
+			this.popup.up();
+		} else if (keyCode == KeyCodes.KEY_DOWN) {
+			this.popup.down();
+		} else if (keyCode == KeyCodes.KEY_RIGHT) {
+			this.popup.openOrCloseGroup(true);
+		} else if (keyCode == KeyCodes.KEY_LEFT) {
+			this.popup.openOrCloseGroup(false);
+		} else if (keyCode == KeyCodes.KEY_ENTER) {
+			this.popup.select();
+		} else if (keyCode == KeyCodes.KEY_ESCAPE) {
+			this.popup.close();
 		} else {
 			return Command.DEFAULT;
 		}
 		return Command.NULL;
 	}
 
-	protected String getWord(String text, int row, int col1, int col2) {
+	protected String getWord(final String text, final int row, final int col1, final int col2) {
 		if (col1 == col2) {
 			return "";
 		}
-		String[] lines = text.split("\n", -1);
-		int start = Util.cursorPosFromLineCol(lines, row, col1, 0);
-		int end = Util.cursorPosFromLineCol(lines, row, col2, 0);
+		final String[] lines = text.split("\n", -1);
+		final int start = Util.cursorPosFromLineCol(lines, row, col1, 0);
+		final int end = Util.cursorPosFromLineCol(lines, row, col2, 0);
 		return text.substring(start, end);
 	}
 
 	@Override
 	public void selectionChanged() {
-		if (startSuggestingOnNextSelectionChange) {
-			widget.removeSelectionChangeListener(this);
-			startSuggesting();
-			startSuggestingOnNextSelectionChange = false;
+		if (this.startSuggestingOnNextSelectionChange) {
+			this.widget.removeSelectionChangeListener(this);
+			this.startSuggesting();
+			this.startSuggestingOnNextSelectionChange = false;
 			return;
 		}
-		
-		AceRange sel = widget.getSelection();
-		
-		AceRange sug = widget.getInvisibleMarker(suggestionStartId);
+
+		final AceRange sel = this.widget.getSelection();
+
+		final AceRange sug = this.widget.getInvisibleMarker(this.suggestionStartId);
 		if (sug.getStartRow()!=sug.getEndRow()) {
-			popup.close();
+			this.popup.close();
 		}
 		else if (sel.getEndRow() != sug.getStartRow() || sel.getEndRow() != sug.getEndRow()) {
-			popup.close();
+			this.popup.close();
 		} else if (sel.getEndCol()<sug.getStartCol() || sel.getEndCol()>sug.getEndCol()) {
-			popup.close();
+			this.popup.close();
 		} else {
-			updatePopupPosition(popup);
-			String s = getWord(widget.getText(), sug.getEndRow(),
+			this.updatePopupPosition(this.popup);
+			final String s = this.getWord(this.widget.getText(), sug.getEndRow(),
 					sug.getStartCol(), sug.getEndCol());
-			popup.setStartOfValue(s);
+			this.popup.setStartOfValue(s);
 		}
 	}
 
-	protected void updatePopupPosition(SuggestPopup popup) {
-		int[] coords = widget.getCursorCoords();
-		int sx = Window.getScrollLeft();
-		int sy = Window.getScrollTop();
-		int x = coords[0] - sx;
-		int y = coords[1] - sy + Y_OFFSET;
+	protected void updatePopupPosition(final SuggestPopup popupToUpdate) {
+		final int[] coords = this.widget.getCursorCoords();
+		final int sx = Window.getScrollLeft();
+		final int sy = Window.getScrollTop();
+		final int x = coords[0] - sx;
+		final int y = coords[1] - sy + SuggesterConnector.Y_OFFSET;
 		/*
 		int wx = Window.getClientWidth();
 		int wy = Window.getClientHeight();
@@ -254,7 +307,23 @@ public class SuggesterConnector extends AbstractExtensionConnector implements
 		if (y > maxy) {
 			y -= SuggestPopup.HEIGHT + 50;
 		}
-		*/
-		popup.setPopupPosition(x, y);
+		 */
+		popupToUpdate.setPopupPosition(x, y);
 	}
+
+	public String getSuggestText() {
+		return this.suggestText;
+	}
+
+	public void setSuggestText(final String suggestText) {
+		this.suggestText = suggestText;
+	}
+
+	@Override
+	public void onResize(final ResizeEvent event) {
+		if (this.popup != null) {
+			this.popup.windowResized(event);
+		}
+	}
+
 }
